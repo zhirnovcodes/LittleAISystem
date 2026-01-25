@@ -9,11 +9,14 @@ using Unity.Mathematics;
 public partial struct TestActionChainFillSystem : ISystem
 {
     private Random Random;
+    private double NextUpdateTime;
+    private const float UpdateInterval = 0.5f; // Run every 0.5 seconds
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         Random = new Random((uint)SystemAPI.Time.ElapsedTime + 1);
+        NextUpdateTime = 0.0;
         
         state.RequireForUpdate<ActionRunnerComponent>();
         state.RequireForUpdate<ActionChainItem>();
@@ -23,11 +26,32 @@ public partial struct TestActionChainFillSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var random = Random;
+        // Check if enough time has passed since last update
+        if (SystemAPI.Time.ElapsedTime < NextUpdateTime)
+        {
+            return;
+        }
 
-        foreach (var (chain, visionItems) in SystemAPI.Query<
-            DynamicBuffer<ActionChainItem>,
-            DynamicBuffer<VisibleItem>>())
+        // Update the next scheduled time
+        NextUpdateTime = SystemAPI.Time.ElapsedTime + UpdateInterval;
+
+        var job = new FillActionChainJob
+        {
+            RandomSeed = Random.NextUInt()
+        };
+
+        state.Dependency = job.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    private partial struct FillActionChainJob : IJobEntity
+    {
+        public uint RandomSeed;
+
+        private void Execute(
+            [EntityIndexInQuery] int entityIndex,
+            DynamicBuffer<ActionChainItem> chain,
+            DynamicBuffer<VisibleItem> visionItems)
         {
             // Only add action if chain is empty and currently idle
             if (chain.IsEmpty == false)
@@ -41,6 +65,9 @@ public partial struct TestActionChainFillSystem : ISystem
                 return;
             }
 
+            // Create unique random for this entity using seed + entity index
+            var random = new Random(RandomSeed + (uint)entityIndex);
+
             // Pick a random item from vision
             var randomIndex = random.NextInt(0, visionItems.Length);
             var targetEntity = visionItems[randomIndex].Target;
@@ -52,8 +79,6 @@ public partial struct TestActionChainFillSystem : ISystem
                 Target = targetEntity
             });
         }
-
-        Random = random;
     }
 }
 
