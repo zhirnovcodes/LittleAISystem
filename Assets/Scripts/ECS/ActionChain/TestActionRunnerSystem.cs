@@ -26,6 +26,7 @@ public partial struct TestActionRunnerSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        return;
         TransformLookup.Update(ref state);
 
         var ecbSingleton = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>();

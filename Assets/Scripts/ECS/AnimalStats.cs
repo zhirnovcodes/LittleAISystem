@@ -57,7 +57,7 @@ public struct AnimalStats
     // Method to get total weight (sum of all stats)
     public float GetWeight()
     {
-        return Energy + Fullness + Toilet + Social + Safety + Health;
+        return Stats.GetWeight();
     }
 
     // Operator overloads
