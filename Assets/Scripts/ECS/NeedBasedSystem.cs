@@ -72,6 +72,7 @@ public partial struct NeedBasedSystem : ISystem
     public partial struct NeedBasedCalculationJob : IJobEntity
     {
         private void Execute(
+            Entity entity,
             in LocalTransform selfTransform,
             in DynamicBuffer<NeedBasedInputItem> needBasedInputs,
             in AnimalStatsComponent statsComponent,
@@ -104,6 +105,14 @@ public partial struct NeedBasedSystem : ISystem
                     // TODO: Determine action type based on the advertised stats
                     bestAction = ActionTypes.Idle; // Placeholder
                 }
+            }
+
+            // If weight is not positive, set action to Idle
+            if (maxWeight <= 0)
+            {   
+                bestTarget = entity;
+                maxWeight = 0;
+                bestAction = ActionTypes.Idle;
             }
 
             // Set output
