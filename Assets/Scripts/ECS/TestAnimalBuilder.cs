@@ -24,6 +24,16 @@ public struct TestAnimalBuilder
         return this;
     }
 
+    public TestAnimalBuilder WithConditionFlags(ConditionFlags flags)
+    {
+        CommandBuffer.AddComponent(Entity, new ConditionFlagsComponent
+        {
+            Conditions = flags
+        });
+
+        return this;
+    }
+
     public Entity Build()
     {
         return Entity;

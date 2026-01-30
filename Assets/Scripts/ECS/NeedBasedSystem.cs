@@ -37,6 +37,7 @@ public partial struct NeedBasedSystem : ISystem
         [ReadOnly] public BufferLookup<StatAdvertiserItem> StatAdvertiserLookup;
 
         private void Execute(
+            in ConditionFlagsComponent selfConditions,
             in DynamicBuffer<VisibleItem> visibleItems,
             ref DynamicBuffer<NeedBasedInputItem> needBasedInputs)
         {
@@ -56,10 +57,16 @@ public partial struct NeedBasedSystem : ISystem
                 // For each advertiser, create a NeedBasedInputItem
                 for (int j = 0; j < statAdvertisers.Length; j++)
                 {
+                    var advertiser = statAdvertisers[j];
+                    
+                    // Check if conditions are met
+                    if (!selfConditions.Conditions.IsConditionMet(advertiser.ActorConditions))
+                        continue;
+
                     needBasedInputs.Add(new NeedBasedInputItem
                     {
                         Target = targetEntity,
-                        StatsAdvertised = statAdvertisers[j].AdvertisedValue,
+                        StatsAdvertised = advertiser.AdvertisedValue,
                         Position = targetTransform.Position,
                         Scale = targetTransform.Scale
                     });
