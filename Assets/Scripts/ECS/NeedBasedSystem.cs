@@ -71,7 +71,7 @@ public partial struct NeedBasedSystem : ISystem
     [BurstCompile]
     public partial struct NeedBasedCalculationJob : IJobEntity
     {
-        private void Execute(
+        public void Execute(
             Entity entity,
             in LocalTransform selfTransform,
             in DynamicBuffer<NeedBasedInputItem> needBasedInputs,
@@ -121,7 +121,7 @@ public partial struct NeedBasedSystem : ISystem
             output.StatsWeight = (int)maxWeight;
         }
 
-        private static float CalculateWeight(
+        public static float CalculateWeight(
             in LocalTransform selfTransform,
             in NeedBasedInputItem item,
             in AnimalStatsComponent statsComponent,
