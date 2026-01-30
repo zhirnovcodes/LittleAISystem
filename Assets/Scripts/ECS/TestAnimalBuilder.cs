@@ -34,6 +34,32 @@ public struct TestAnimalBuilder
         return this;
     }
 
+    public TestAnimalBuilder WithSafetyCheck(NativeArray<SafetyCheckItem> items)
+    {
+        var buffer = CommandBuffer.AddBuffer<SafetyCheckItem>(Entity);
+
+        for (int i = 0; i < items.Length; i++)
+        {
+            buffer.Add(items[i]);
+        }
+
+        return this;
+    }
+
+    public TestAnimalBuilder AddSafetyCheck(ConditionFlags ActorConditions, float SafetyRecession)
+    {
+        // Get or add the buffer
+        var buffer = CommandBuffer.AddBuffer<SafetyCheckItem>(Entity);
+
+        buffer.Add(new SafetyCheckItem
+        {
+            ActorConditions = ActorConditions,
+            SafetyRecession = SafetyRecession
+        });
+
+        return this;
+    }
+
     public Entity Build()
     {
         return Entity;
