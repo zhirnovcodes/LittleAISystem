@@ -63,18 +63,16 @@ public struct AnimalStats
     // Operator overloads
     public static AnimalStats operator +(AnimalStats a, AnimalStats b)
     {
-        AnimalStats result = new AnimalStats();
-        result.Stats.c0 = a.Stats.c0 + b.Stats.c0;
-        result.Stats.c1 = a.Stats.c1 + b.Stats.c1;
-        return result;
+        a.Stats += b.Stats;
+        a.Stats = a.Stats.Clamp(0, 100f);
+        return a;
     }
 
     public static AnimalStats operator -(AnimalStats a, AnimalStats b)
     {
-        AnimalStats result = new AnimalStats();
-        result.Stats.c0 = a.Stats.c0 - b.Stats.c0;
-        result.Stats.c1 = a.Stats.c1 - b.Stats.c1;
-        return result;
+        a.Stats -= b.Stats;
+        a.Stats = a.Stats.Clamp(0, 100f);
+        return a;
     }
 }
 

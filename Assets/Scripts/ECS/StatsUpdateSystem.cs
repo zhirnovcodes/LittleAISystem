@@ -33,7 +33,7 @@ public partial struct StatsUpdateSystem : ISystem
             
             for (int i = 0; i < statsChanges.Length; i++)
             {
-                totalChange = totalChange + statsChanges[i].StatsChange;
+                totalChange += statsChanges[i].StatsChange;
             }
 
             // Clamp all values between 0 and 100

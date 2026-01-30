@@ -12,6 +12,15 @@ public static class float4x2Extensions
         new float4(0f, 0f, 0f, 0f)
     );
 
+    public static float4x2 Clamp(this float4x2 matrix, float minValue, float maxValue)
+    {
+        var minBounds = One * minValue;
+        var maxBounds = One * maxValue;
+        matrix.c0 = math.clamp(matrix.c0, minBounds.c0, maxBounds.c0);
+        matrix.c1 = math.clamp(matrix.c1, minBounds.c1, maxBounds.c1);
+        return matrix;
+    }
+
     public static float4x2 InverseLerp(float4x2 a, float4x2 b, float4x2 value)
     {
         float4x2 result = new float4x2();
