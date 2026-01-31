@@ -123,6 +123,12 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &1313055873 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1169937375181218624, guid: 79e1c06724a18e546a8afbb663724a56,
+    type: 3}
+  m_PrefabInstance: {fileID: 3288976288296971032}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1971157950
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -194,6 +200,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1971157952}
+    - targetCorrespondingSourceObject: {fileID: 6012004025461367740, guid: 7693b0d2e95baf94db50295872285de7,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1971157954}
   m_SourcePrefab: {fileID: 100100000, guid: 7693b0d2e95baf94db50295872285de7, type: 3}
 --- !u!1 &1971157951 stripped
 GameObject:
@@ -214,6 +224,30 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Target: {fileID: 3288976288296971033}
+--- !u!114 &1971157954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1971157951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf49a9a834a93d5438029d5f7d97a9b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InitialStats:
+    Stats:
+      c0:
+        x: 0
+        y: 0
+        z: 0
+        w: 0
+      c1:
+        x: 0
+        y: 0
+        z: 0
+        w: 0
 --- !u!1001 &3288976288296971032
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -280,7 +314,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4969360255086927433, guid: 79e1c06724a18e546a8afbb663724a56,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3288976288296971035}
   m_SourcePrefab: {fileID: 100100000, guid: 79e1c06724a18e546a8afbb663724a56, type: 3}
 --- !u!1 &3288976288296971033 stripped
 GameObject:
@@ -288,6 +326,20 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 3288976288296971032}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3288976288296971035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3288976288296971033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fedf9f3f4a7d8e44d8068f812ff17b5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EdibleBody: {fileID: 1313055873}
+  Nutrition: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 
-[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateInGroup(typeof(LateSimulationSystemGroup))]
 public partial struct StatsUpdateSystem : ISystem
 {
     [BurstCompile]
@@ -15,7 +15,7 @@ public partial struct StatsUpdateSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var job = new StatsUpdateJob();
-        job.ScheduleParallel();
+        job.Run();
     }
 
     [BurstCompile]

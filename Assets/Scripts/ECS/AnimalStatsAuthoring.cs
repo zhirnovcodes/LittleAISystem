@@ -4,6 +4,7 @@ using UnityEngine;
 public class AnimalStatsAuthoring : MonoBehaviour
 {
     public AnimalStats InitialStats;
+    public bool WithStatsChangeBuffer = true;
 
     public class AnimalStatsBaker : Baker<AnimalStatsAuthoring>
     {
@@ -14,6 +15,11 @@ public class AnimalStatsAuthoring : MonoBehaviour
             {
                 Stats = authoring.InitialStats
             });
+
+            if (authoring.WithStatsChangeBuffer)
+            {
+                AddBuffer<StatsChangeItem>(entity);
+            }
         }
     }
 }
