@@ -67,17 +67,28 @@ public class WalkToTalk : ISubActionState
             }
 
             // Too close - move away and rotate away
-            var transformMoveAway = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime, MoveSpeedMin);
-
-            // Rotate away from target
-            var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
-            transformMoveAway = transformMoveAway.RotateTowards(directionAwayFromTarget, RotationSpeed * timer.DeltaTime, 0.01f);
-
-            buffer.SetComponent(entity, transformMoveAway);
-
+            MoveOut(entity, entityTransform, targetTransform, buffer, timer);
             return SubActionResult.Running();
         }
 
+        // Move towards target
+        MoveTowards(entity, entityTransform, targetTransform, buffer, timer);
+        return SubActionResult.Running();
+    }
+
+    private void MoveOut(Entity entity, LocalTransform entityTransform, LocalTransform targetTransform, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    {
+        var transformMoveAway = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * MoveSpeedMin);
+
+        // Rotate away from target
+        var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
+        transformMoveAway = transformMoveAway.RotateTowards(directionAwayFromTarget, RotationSpeed * timer.DeltaTime, 0.01f);
+
+        buffer.SetComponent(entity, transformMoveAway);
+    }
+
+    private void MoveTowards(Entity entity, LocalTransform entityTransform, LocalTransform targetTransform, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    {
         // Determine move speed based on distance
         var isDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance + MaxDistance);
         float moveSpeed = isDistanceGreaterThan ? MoveSpeedMax : MoveSpeedMin;
@@ -89,8 +100,6 @@ public class WalkToTalk : ISubActionState
         newTransform = newTransform.RotateTowards(targetTransform, RotationSpeed * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
-
-        return SubActionResult.Running();
     }
 }
 

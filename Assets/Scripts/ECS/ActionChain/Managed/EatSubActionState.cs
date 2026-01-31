@@ -96,38 +96,7 @@ public class EatSubActionState : ISubActionState
         // Check if it's time for another bite using IsTimerTick
         if (timer.IsTimerTick(Interval, true))
         {
-            // Calculate actual bite size (might be less than BiteSize if remaining is smaller)
-            var actualBiteSize = BiteSize;
-            var newScale = edibleBodyTransform.Scale - BiteSize;
-            
-            if (newScale < 0)
-            {
-                actualBiteSize = edibleBodyTransform.Scale;
-                newScale = 0;
-            }
-
-            // Update the scale of EdibleBody
-            edibleBodyTransform.Scale = newScale;
-            buffer.SetComponent(edibleComponent.EdibleBody, edibleBodyTransform);
-
-            // Calculate nutrition gained from this bite
-            var nutritionGained = actualBiteSize * edibleComponent.Nutrition;
-
-            // Add StatsChangeItem with Fullness
-            var statsChange = new AnimalStats();
-            statsChange.SetFullness(nutritionGained);
-
-            buffer.AppendToBuffer(entity, new StatsChangeItem
-            {
-                StatsChange = statsChange
-            });
-
-            // if after bite scale is <= 0 - destroys target
-            if (newScale <= 0)
-            {
-                buffer.DestroyEntity(target);
-                // Could return success here, but let's continue to check nutrition
-            }
+            Bite(entity, target, edibleComponent, edibleBodyTransform, buffer);
         }
 
         // Check if Fullness >= 100 - returns Success
@@ -138,6 +107,41 @@ public class EatSubActionState : ISubActionState
         }
 
         return SubActionResult.Running();
+    }
+
+    private void Bite(Entity entity, Entity target, EdibleComponent edibleComponent, LocalTransform edibleBodyTransform, EntityCommandBuffer buffer)
+    {
+        // Calculate actual bite size (might be less than BiteSize if remaining is smaller)
+        var actualBiteSize = BiteSize;
+        var newScale = edibleBodyTransform.Scale - BiteSize;
+        
+        if (newScale < 0)
+        {
+            actualBiteSize = edibleBodyTransform.Scale;
+            newScale = 0;
+        }
+
+        // Update the scale of EdibleBody
+        edibleBodyTransform.Scale = newScale;
+        buffer.SetComponent(edibleComponent.EdibleBody, edibleBodyTransform);
+
+        // Calculate nutrition gained from this bite
+        var nutritionGained = actualBiteSize * edibleComponent.Nutrition;
+
+        // Add StatsChangeItem with Fullness
+        var statsChange = new AnimalStatsBuilder().WithFullness(nutritionGained).Build();
+
+        buffer.AppendToBuffer(entity, new StatsChangeItem
+        {
+            StatsChange = statsChange
+        });
+
+        // if after bite scale is <= 0 - destroys target
+        if (newScale <= 0)
+        {
+            buffer.DestroyEntity(target);
+            // Could return success here, but let's continue to check nutrition
+        }
     }
 }
 

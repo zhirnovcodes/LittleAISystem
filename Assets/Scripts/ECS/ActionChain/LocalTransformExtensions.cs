@@ -72,7 +72,7 @@ public static class LocalTransformExtensions
         return transform.MovePositionTowards(target.Position, target.Scale, distance, speed);
     }
 
-    public static LocalTransform MovePositionAwayFrom(this LocalTransform transform, float3 targetPosition, float targetScale, float distance, float speed)
+    public static LocalTransform MovePositionAwayFrom(this LocalTransform transform, float3 targetPosition, float targetScale, float speed)
     {
         var directionFromTarget = transform.Position - targetPosition;
         var distanceFromTarget = math.length(directionFromTarget);
@@ -87,7 +87,7 @@ public static class LocalTransformExtensions
             directionFromTarget = directionFromTarget / distanceFromTarget;
         }
 
-        var moveDistance = speed * distance;
+        var moveDistance = speed;
         var newPosition = transform.Position + directionFromTarget * moveDistance;
 
         return new LocalTransform
@@ -98,9 +98,9 @@ public static class LocalTransformExtensions
         };
     }
 
-    public static LocalTransform MovePositionAwayFrom(this LocalTransform transform, LocalTransform target, float distance, float speed)
+    public static LocalTransform MovePositionAwayFrom(this LocalTransform transform, LocalTransform target, float speed)
     {
-        return transform.MovePositionAwayFrom(target.Position, target.Scale, distance, speed);
+        return transform.MovePositionAwayFrom(target.Position, target.Scale, speed);
     }
 
     public static LocalTransform RotateTowards(this LocalTransform transform, float3 targetDirection, float speed, float delta = 0.01f)

@@ -2,6 +2,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 
+//TODO non run
 [UpdateInGroup(typeof(LateSimulationSystemGroup))]
 public partial struct StatsUpdateSystem : ISystem
 {

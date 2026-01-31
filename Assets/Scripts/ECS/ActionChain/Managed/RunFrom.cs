@@ -55,7 +55,7 @@ public class RunFrom : ISubActionState
         }
 
         // Move in direction opposite from target
-        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime, MoveSpeed);
+        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * MoveSpeed);
 
         // Rotate away from target
         var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
