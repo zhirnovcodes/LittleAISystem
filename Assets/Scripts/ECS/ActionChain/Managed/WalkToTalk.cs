@@ -1,13 +1,12 @@
-using LittleAI.Enums;
 using Unity.Entities;
-using Unity.Mathematics;
 using Unity.Transforms;
 
 public class WalkToTalk : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
 
-    private const float Distance = 1.0f;
+    private const float MaxDistance = 1.0f;
+    private const float MinDistance = 0.6f;
     private const float MoveSpeedMax = 1.0f;
     private const float MoveSpeedMin = 0.5f;
     private const float SpeedReduceDistance = 0.5f;
@@ -58,13 +57,29 @@ public class WalkToTalk : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Check if we've reached the target distance
-        if (entityTransform.IsTargetReached(targetTransform, Distance))
+        if (entityTransform.IsTargetReached(targetTransform, MaxDistance))
         {
-            return SubActionResult.Success();
+            // Check if we're too close (less than MinDistance)
+            if (entityTransform.IsDistanceGreaterThan(targetTransform, MinDistance))
+            {
+            // In the sweet spot between MinDistance and MaxDistance
+                return SubActionResult.Success();
+            }
+
+            // Too close - move away and rotate away
+            var transformMoveAway = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime, MoveSpeedMin);
+
+            // Rotate away from target
+            var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
+            transformMoveAway = transformMoveAway.RotateTowards(directionAwayFromTarget, RotationSpeed * timer.DeltaTime, 0.01f);
+
+            buffer.SetComponent(entity, transformMoveAway);
+
+            return SubActionResult.Running();
         }
 
         // Determine move speed based on distance
-        var isDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance + Distance);
+        var isDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance + MaxDistance);
         float moveSpeed = isDistanceGreaterThan ? MoveSpeedMax : MoveSpeedMin;
 
         // Move towards target
