@@ -12,6 +12,7 @@ public class WalkToTalk : ISubActionState
     private const float MoveSpeedMin = 0.5f;
     private const float SpeedReduceDistance = 0.5f;
     private const float FailTime = 15f;
+    private const float RotationSpeed = 30f;
 
     public WalkToTalk(ComponentLookup<LocalTransform> transformLookup)
     {
@@ -63,11 +64,14 @@ public class WalkToTalk : ISubActionState
         }
 
         // Determine move speed based on distance
-        var IsDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance + Distance);
-        float moveSpeed = IsDistanceGreaterThan ? MoveSpeedMin : MoveSpeedMax;
+        var isDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance + Distance);
+        float moveSpeed = isDistanceGreaterThan ? MoveSpeedMax : MoveSpeedMin;
 
         // Move towards target
         var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, moveSpeed);
+
+        // Rotate towards target
+        newTransform = newTransform.RotateTowards(targetTransform, RotationSpeed * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

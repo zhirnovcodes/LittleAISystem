@@ -9,6 +9,7 @@ public class RunFrom : ISubActionState
 
     private const float MoveSpeed = 1.0f;
     private const float SafeDistance = 5.0f;
+    private const float RotationSpeed = 30f;
 
     public RunFrom(ComponentLookup<LocalTransform> transformLookup)
     {
@@ -55,6 +56,10 @@ public class RunFrom : ISubActionState
 
         // Move in direction opposite from target
         var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime, MoveSpeed);
+
+        // Rotate away from target
+        var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
+        newTransform = newTransform.RotateTowards(directionAwayFromTarget, RotationSpeed * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

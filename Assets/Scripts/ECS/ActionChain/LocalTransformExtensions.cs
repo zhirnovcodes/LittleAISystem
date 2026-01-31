@@ -103,12 +103,10 @@ public static class LocalTransformExtensions
         return transform.MovePositionAwayFrom(target.Position, target.Scale, distance, speed);
     }
 
-    public static LocalTransform RotateTowards(this LocalTransform transform, float3 targetPosition, float speed, float delta = 0.01f)
+    public static LocalTransform RotateTowards(this LocalTransform transform, float3 targetDirection, float speed, float delta = 0.01f)
     {
-        var directionToTarget = targetPosition - transform.Position;
-
         // Calculate target rotation to look at target position
-        var targetRotation = quaternion.LookRotationSafe(directionToTarget, math.up());
+        var targetRotation = quaternion.LookRotationSafe(targetDirection, math.up());
 
         // Convert rotation speed from degrees to radians (speed should be degrees * deltaTime from outside)
         float rotationRadians = math.radians(speed);
@@ -127,7 +125,8 @@ public static class LocalTransformExtensions
 
     public static LocalTransform RotateTowards(this LocalTransform transform, LocalTransform target, float speed, float delta = 0.01f)
     {
-        return transform.RotateTowards(target.Position, speed, delta);
+        var directionToTarget = target.Position - transform.Position;
+        return transform.RotateTowards(directionToTarget, speed, delta);
     }
 }
 

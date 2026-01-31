@@ -8,7 +8,7 @@ public class RotateTowards : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
 
     private const float FailTime = 4f;
-    private const float RotationSpeed = 10f; // speed in degrees per second
+    private const float RotationSpeed = 30f; // speed in degrees per second
 
     public RotateTowards(ComponentLookup<LocalTransform> transformLookup)
     {

@@ -9,7 +9,7 @@ public class TestSubActionComponentAuthoring : MonoBehaviour
     {
         public override void Bake(TestSubActionComponentAuthoring authoring)
         {
-            var entity = GetEntity(TransformUsageFlags.None);
+            var entity = GetEntity(TransformUsageFlags.Dynamic);
             
             var targetEntity = Entity.Null;
             if (authoring.Target != null)

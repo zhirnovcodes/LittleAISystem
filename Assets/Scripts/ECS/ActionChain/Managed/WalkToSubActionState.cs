@@ -11,6 +11,7 @@ public class WalkToSubActionState : ISubActionState
     private const float MoveSpeedMin = 0.5f;
     private const float SpeedReduceDistance = 0.5f;
     private const float FailTime = 15f;
+    private const float RotationSpeed = 30f;
 
     public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup)
     {
@@ -63,10 +64,13 @@ public class WalkToSubActionState : ISubActionState
 
         // Determine move speed based on distance
         var IsDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance);
-        float moveSpeed = IsDistanceGreaterThan ? MoveSpeedMin : MoveSpeedMax;
+        float moveSpeed = IsDistanceGreaterThan ? MoveSpeedMax : MoveSpeedMin;
 
         // Move towards target
         var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, moveSpeed);
+
+        // Rotate towards target
+        newTransform = newTransform.RotateTowards(targetTransform, RotationSpeed * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 
