@@ -59,20 +59,20 @@ public partial class TestSubActionsSystem : SystemBase
         // Create a dummy timer for testing
         var timer = new SubActionTimeComponent { TimeElapsed = 0, DeltaTime = SystemAPI.Time.DeltaTime };
         
-        var status = subAction.Update(Entity.Null, testComponent.ValueRO.Target, buffer, timer);
+        var result = subAction.Update(Entity.Null, testComponent.ValueRO.Target, buffer, timer);
 
         buffer.Playback(EntityManager);
         buffer.Dispose();
 
         // Handle Success or Fail status
-        if (status == SubActionStatus.Success)
+        if (result.Status == SubActionStatus.Success)
         {
             Debug.Log($"SubAction {currentIndex} returned Success");
             testComponent.ValueRW.CurrentSubActionIndex = -1;
         }
-        else if (status == SubActionStatus.Fail)
+        else if (result.Status == SubActionStatus.Fail)
         {
-            Debug.Log($"SubAction {currentIndex} returned Fail");
+            Debug.Log($"SubAction {currentIndex} returned Fail with code {result.FailCode}");
             testComponent.ValueRW.CurrentSubActionIndex = -1;
         }
     }

@@ -31,12 +31,12 @@ public class TestMoveTo : ISubActionState
         // Nothing to disable for move
     }
 
-    public SubActionStatus Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
     {
         // Check if both entities have required components
         if (!TransformLookup.HasComponent(entity) || !TransformLookup.HasComponent(target))
         {
-            return SubActionStatus.Fail;
+            return SubActionResult.Fail(1);
         }
 
         var entityTransform = TransformLookup[entity];
@@ -49,7 +49,7 @@ public class TestMoveTo : ISubActionState
         var reachDistance = entityTransform.Scale / 2f + targetTransform.Scale / 2f;
         if (distanceToTarget <= reachDistance)
         {
-            return SubActionStatus.Success;
+            return SubActionResult.Success();
         }
 
         // Move towards target using transform position
@@ -71,7 +71,7 @@ public class TestMoveTo : ISubActionState
             Scale = entityTransform.Scale
         });
 
-        return SubActionStatus.Running;
+        return SubActionResult.Running();
     }
 }
 

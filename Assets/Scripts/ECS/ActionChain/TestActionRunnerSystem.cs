@@ -76,9 +76,9 @@ public partial struct TestActionRunnerSystem : ISystem
             timer.DeltaTime = DeltaTime;
             timer.TimeElapsed += DeltaTime;
 
-            var status = UpdateSubAction(currentSubActionType, entity, runner.Target, Ecb, timer, TransformLookup, ref RandomGenerator);
+            var result = UpdateSubAction(currentSubActionType, entity, runner.Target, Ecb, timer, TransformLookup, ref RandomGenerator);
 
-            switch (status)
+            switch (result.Status)
             {
                 case SubActionStatus.Running:
                     return;
@@ -178,7 +178,7 @@ public partial struct TestActionRunnerSystem : ISystem
 
         // Update method with switch for all SubActionTypes
         [BurstCompile]
-        private static SubActionStatus UpdateSubAction(SubActionTypes subActionType, Entity entity, Entity target,
+        private static SubActionResult UpdateSubAction(SubActionTypes subActionType, Entity entity, Entity target,
             EntityCommandBuffer ecb, in SubActionTimeComponent timer, ComponentLookup<LocalTransform> transformLookup,
             ref Random randomGenerator)
         {
@@ -199,9 +199,9 @@ public partial struct TestActionRunnerSystem : ISystem
                 case SubActionTypes.StumbleUpon:
                 case SubActionTypes.Communicate:
                     // Not implemented yet
-                    return SubActionStatus.Success;
+                    return SubActionResult.Success();
                 default:
-                    return SubActionStatus.Fail;
+                    return SubActionResult.Fail();
             }
         }
 
@@ -241,14 +241,14 @@ public partial struct TestActionRunnerSystem : ISystem
         }
 
         [BurstCompile]
-        private static SubActionStatus UpdateIdle(Entity entity, Entity target, EntityCommandBuffer ecb, in SubActionTimeComponent timer)
+        private static SubActionResult UpdateIdle(Entity entity, Entity target, EntityCommandBuffer ecb, in SubActionTimeComponent timer)
         {
             if (timer.TimeElapsed >= 2.0f)
             {
-                return SubActionStatus.Success;
+                return SubActionResult.Success();
             }
 
-            return SubActionStatus.Running;
+            return SubActionResult.Running();
         }
 
         [BurstCompile]
@@ -267,13 +267,13 @@ public partial struct TestActionRunnerSystem : ISystem
         }
 
         [BurstCompile]
-        private static SubActionStatus UpdateMoveTo(Entity entity, Entity target, EntityCommandBuffer ecb,
+        private static SubActionResult UpdateMoveTo(Entity entity, Entity target, EntityCommandBuffer ecb,
             in SubActionTimeComponent timer, ComponentLookup<LocalTransform> transformLookup, ref Random randomGenerator)
         {
             // Check if both entities have required components
             if (!transformLookup.HasComponent(entity) || !transformLookup.HasComponent(target))
             {
-                return SubActionStatus.Fail;
+                return SubActionResult.Fail(1);
             }
 
             var entityTransform = transformLookup[entity];
@@ -286,7 +286,7 @@ public partial struct TestActionRunnerSystem : ISystem
             var reachDistance = entityTransform.Scale / 2f + targetTransform.Scale / 2f;
             if (distanceToTarget <= reachDistance)
             {
-                return SubActionStatus.Success;
+                return SubActionResult.Success();
             }
 
             // Move towards target using transform position
@@ -308,7 +308,7 @@ public partial struct TestActionRunnerSystem : ISystem
                 Scale = entityTransform.Scale
             });
 
-            return SubActionStatus.Running;
+            return SubActionResult.Running();
         }
 
         [BurstCompile]
@@ -328,13 +328,13 @@ public partial struct TestActionRunnerSystem : ISystem
         }
 
         [BurstCompile]
-        private static SubActionStatus UpdateEat(Entity entity, Entity target, EntityCommandBuffer ecb,
+        private static SubActionResult UpdateEat(Entity entity, Entity target, EntityCommandBuffer ecb,
             in SubActionTimeComponent timer, ComponentLookup<LocalTransform> transformLookup)
         {
             // Check if both entities have required components
             if (!transformLookup.HasComponent(entity) || !transformLookup.HasComponent(target))
             {
-                return SubActionStatus.Fail;
+                return SubActionResult.Fail(1);
             }
 
             var entityTransform = transformLookup[entity];
@@ -366,10 +366,10 @@ public partial struct TestActionRunnerSystem : ISystem
             // Check if eating duration is complete
             if (timer.TimeElapsed >= EatDuration)
             {
-                return SubActionStatus.Success;
+                return SubActionResult.Success();
             }
 
-            return SubActionStatus.Running;
+            return SubActionResult.Running();
         }
 
         [BurstCompile]

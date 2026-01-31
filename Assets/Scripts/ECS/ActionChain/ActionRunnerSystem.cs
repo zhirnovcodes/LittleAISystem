@@ -54,9 +54,9 @@ public partial class ActionRunnerSystem : SystemBase
             timer.DeltaTime = deltaTime;
             timer.TimeElapsed += deltaTime;
 
-            var status = subActionState.Update(entity, runner.Target, buffer, timer);
+            var result = subActionState.Update(entity, runner.Target, buffer, timer);
 
-            switch (status)
+            switch (result.Status)
             {
                 case SubActionStatus.Running:
                     return;
