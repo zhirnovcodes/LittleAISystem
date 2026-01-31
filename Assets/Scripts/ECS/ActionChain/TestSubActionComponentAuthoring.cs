@@ -22,6 +22,12 @@ public class TestSubActionComponentAuthoring : MonoBehaviour
                 CurrentSubActionIndex = -1,
                 Target = targetEntity
             });
+            
+            AddComponent(entity, new SubActionTimeComponent
+            {
+                TimeElapsed = 0f,
+                DeltaTime = 0f
+            });
         }
     }
 }

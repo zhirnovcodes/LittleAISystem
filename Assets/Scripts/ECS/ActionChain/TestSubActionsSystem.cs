@@ -1,37 +1,38 @@
 using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Transforms;
 using UnityEngine;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial class TestSubActionsSystem : SystemBase
 {
     private List<ISubActionState> SubActions;
-    private int PreviousSubActionIndex = -1;
 
     protected override void OnCreate()
     {
-        RequireForUpdate<TestSubActionComponent>();
+        var transformLookup = GetComponentLookup<LocalTransform>(false);
 
-        // Initialize empty list of ISubActionState (can be populated later)
-        SubActions = new List<ISubActionState>();
+        // Initialize list of ISubActionState
+        SubActions = new List<ISubActionState>
+        {
+            new IdleSubActionState(),
+            new WalkToSubActionState(transformLookup),
+            new WalkToTalk(transformLookup),
+            new RunFrom(transformLookup),
+            new RotateTowards(transformLookup)
+        };
     }
 
     protected override void OnUpdate()
     {
-        var testComponent = SystemAPI.GetSingletonRW<TestSubActionComponent>();
-        var currentIndex = testComponent.ValueRO.CurrentSubActionIndex;
-
-        // Handle keyboard input for keys 1-9
+        // Handle keyboard input for keys 1-9 (applies to all entities)
+        int keyboardInput = -2; // -2 means no input, -1 means reset (space), 0-8 means action
         for (int i = 0; i < 9; i++)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1 + i) 
-                && (i < SubActions.Count))
+            if (Input.GetKeyDown(KeyCode.Alpha1 + i) && (i < SubActions.Count))
             {
-                PreviousSubActionIndex = currentIndex;
-                testComponent.ValueRW.CurrentSubActionIndex = i;
-                currentIndex = i;
-                HandleStateChange(ref testComponent);
+                keyboardInput = i;
                 break;
             }
         }
@@ -39,66 +40,78 @@ public partial class TestSubActionsSystem : SystemBase
         // Handle Space key to reset
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            PreviousSubActionIndex = currentIndex;
-            testComponent.ValueRW.CurrentSubActionIndex = -1;
-            currentIndex = -1;
-            HandleStateChange(ref testComponent);
+            keyboardInput = -1;
         }
 
-        // If active, call Refresh and Update
-        if (currentIndex == -1)
-        {
-            return;
-        }
-
-        var subAction = SubActions[currentIndex];
         var buffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
-        
-        subAction.Refresh(this);
 
-        // Create a dummy timer for testing
-        var timer = new SubActionTimeComponent { TimeElapsed = 0, DeltaTime = SystemAPI.Time.DeltaTime };
-        
-        var result = subAction.Update(Entity.Null, testComponent.ValueRO.Target, buffer, timer);
+        // Query for all entities with TestSubActionComponent and SubActionTimeComponent
+        foreach (var (testComponent, timer, entity) in SystemAPI.Query<RefRW<TestSubActionComponent>, RefRW<SubActionTimeComponent>>().WithEntityAccess())
+        {
+            var currentIndex = testComponent.ValueRO.CurrentSubActionIndex;
+
+            // Apply keyboard input
+            if (keyboardInput != -2)
+            {
+                int previousIndex = currentIndex;
+                testComponent.ValueRW.CurrentSubActionIndex = keyboardInput;
+                currentIndex = keyboardInput;
+                HandleStateChange(entity, previousIndex, currentIndex, testComponent.ValueRO.Target, timer, buffer);
+            }
+
+            // If active, call Refresh and Update
+            if (currentIndex == -1)
+            {
+                continue;
+            }
+
+            var subAction = SubActions[currentIndex];
+            
+            subAction.Refresh(this);
+
+            // Update timer
+            float deltaTime = SystemAPI.Time.DeltaTime;
+            timer.ValueRW.TimeElapsed += deltaTime;
+            timer.ValueRW.DeltaTime = deltaTime;
+            
+            var result = subAction.Update(entity, testComponent.ValueRO.Target, buffer, timer.ValueRO);
+
+            // Handle Success or Fail status
+            if (result.Status == SubActionStatus.Success)
+            {
+                Debug.Log($"Entity {entity.Index} SubAction {currentIndex} returned Success after {timer.ValueRO.TimeElapsed:F2}s");
+                testComponent.ValueRW.CurrentSubActionIndex = -1;
+                timer.ValueRW.TimeElapsed = 0f;
+            }
+            else if (result.Status == SubActionStatus.Fail)
+            {
+                Debug.Log($"Entity {entity.Index} SubAction {currentIndex} returned Fail with code {result.FailCode} after {timer.ValueRO.TimeElapsed:F2}s");
+                testComponent.ValueRW.CurrentSubActionIndex = -1;
+                timer.ValueRW.TimeElapsed = 0f;
+            }
+        }
 
         buffer.Playback(EntityManager);
         buffer.Dispose();
-
-        // Handle Success or Fail status
-        if (result.Status == SubActionStatus.Success)
-        {
-            Debug.Log($"SubAction {currentIndex} returned Success");
-            testComponent.ValueRW.CurrentSubActionIndex = -1;
-        }
-        else if (result.Status == SubActionStatus.Fail)
-        {
-            Debug.Log($"SubAction {currentIndex} returned Fail with code {result.FailCode}");
-            testComponent.ValueRW.CurrentSubActionIndex = -1;
-        }
     }
 
-    private void HandleStateChange(ref RefRW<TestSubActionComponent> testComponent)
+    private void HandleStateChange(Entity entity, int previousIndex, int currentIndex, Entity target, RefRW<SubActionTimeComponent> timer, EntityCommandBuffer buffer)
     {
-        var buffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
-        var currentIndex = testComponent.ValueRO.CurrentSubActionIndex;
-        var target = testComponent.ValueRO.Target;
+        timer.ValueRW.TimeElapsed = 0f;
 
         // Disable previous state
-        if (PreviousSubActionIndex >= 0)
+        if (previousIndex >= 0)
         {
-            SubActions[PreviousSubActionIndex].Disable(Entity.Null, target, buffer);
-            Debug.Log($"Disabled SubAction {PreviousSubActionIndex}");
+            SubActions[previousIndex].Disable(entity, target, buffer);
+            Debug.Log($"Entity {entity.Index} Disabled SubAction {previousIndex}");
         }
 
         // Enable next state
         if (currentIndex >= 0)
         {
-            SubActions[currentIndex].Enable(Entity.Null, target, buffer);
-            Debug.Log($"Enabled SubAction {currentIndex}");
+            SubActions[currentIndex].Enable(entity, target, buffer);
+            Debug.Log($"Entity {entity.Index} Enabled SubAction {currentIndex}");
         }
-
-        buffer.Playback(EntityManager);
-        buffer.Dispose();
     }
 }
 
