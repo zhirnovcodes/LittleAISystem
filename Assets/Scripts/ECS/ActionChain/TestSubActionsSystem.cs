@@ -15,6 +15,7 @@ public partial class TestSubActionsSystem : SystemBase
         var transformLookup = GetComponentLookup<LocalTransform>(true);
         var edibleLookup = GetComponentLookup<EdibleComponent>(true);
         var animalStatsLookup = GetComponentLookup<AnimalStatsComponent>(true);
+        var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
@@ -24,7 +25,9 @@ public partial class TestSubActionsSystem : SystemBase
             new WalkToTalk(transformLookup),
             new RunFrom(transformLookup),
             new RotateTowards(transformLookup),
-            new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup)
+            new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup),
+            new LayDownState(transformLookup),
+            new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup)
         };
     }
 
