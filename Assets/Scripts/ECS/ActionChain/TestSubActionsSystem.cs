@@ -11,7 +11,7 @@ public partial class TestSubActionsSystem : SystemBase
 
     protected override void OnCreate()
     {
-        var transformLookup = GetComponentLookup<LocalTransform>(false);
+        var transformLookup = GetComponentLookup<LocalTransform>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>

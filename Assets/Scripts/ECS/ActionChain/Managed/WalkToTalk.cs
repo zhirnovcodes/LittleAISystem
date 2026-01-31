@@ -63,22 +63,13 @@ public class WalkToTalk : ISubActionState
         }
 
         // Determine move speed based on distance
-        float moveSpeed = !entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance + Distance) ? MoveSpeedMin : MoveSpeedMax;
+        var IsDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance + Distance);
+        float moveSpeed = IsDistanceGreaterThan ? MoveSpeedMin : MoveSpeedMax;
 
         // Move towards target
-        var directionToTarget = targetTransform.Position - entityTransform.Position;
-        var distance = math.length(directionToTarget);
-        var normalizedDirection = directionToTarget / distance;
-        var moveDistance = moveSpeed * timer.DeltaTime;
+        var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, moveSpeed);
 
-        var newPosition = entityTransform.Position + normalizedDirection * moveDistance;
-
-        buffer.SetComponent(entity, new LocalTransform
-        {
-            Position = newPosition,
-            Rotation = entityTransform.Rotation,
-            Scale = entityTransform.Scale
-        });
+        buffer.SetComponent(entity, newTransform);
 
         return SubActionResult.Running();
     }

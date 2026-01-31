@@ -54,18 +54,9 @@ public class RunFrom : ISubActionState
         }
 
         // Move in direction opposite from target
-        var directionFromTarget = entityTransform.Position - targetTransform.Position;
-        var normalizedDirection = math.normalize(directionFromTarget);
-        var moveDistance = MoveSpeed * timer.DeltaTime;
+        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime, MoveSpeed);
 
-        var newPosition = entityTransform.Position + normalizedDirection * moveDistance;
-
-        buffer.SetComponent(entity, new LocalTransform
-        {
-            Position = newPosition,
-            Rotation = entityTransform.Rotation,
-            Scale = entityTransform.Scale
-        });
+        buffer.SetComponent(entity, newTransform);
 
         return SubActionResult.Running();
     }

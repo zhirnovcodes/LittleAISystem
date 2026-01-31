@@ -53,31 +53,16 @@ public class RotateTowards : ISubActionState
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
 
-        // Calculate direction to target
-        var directionToTarget = targetTransform.Position - entityTransform.Position;
-        
         // Check if already facing target
-        if (entityTransform.Rotation.IsRotationTowardsTargetReached(directionToTarget, 0.01f))
+        if (entityTransform.IsRotationTowardsTargetReached(targetTransform.Position, 0.01f))
         {
             return SubActionResult.Success();
         }
 
-        // Calculate target rotation
-        var targetRotation = quaternion.LookRotationSafe(directionToTarget, math.up());
+        // Rotate towards target (multiply speed by deltaTime)
+        var newTransform = entityTransform.RotateTowards(targetTransform, RotationSpeed * timer.DeltaTime, 0.01f);
 
-        // Convert rotation speed from degrees to radians per second
-        float rotationRadians = math.radians(RotationSpeed);
-
-        // Slerp towards target rotation
-        float t = math.min(1.0f, rotationRadians * timer.DeltaTime);
-        var newRotation = math.slerp(entityTransform.Rotation, targetRotation, t);
-
-        buffer.SetComponent(entity, new LocalTransform
-        {
-            Position = entityTransform.Position,
-            Rotation = newRotation,
-            Scale = entityTransform.Scale
-        });
+        buffer.SetComponent(entity, newTransform);
 
         return SubActionResult.Running();
     }
