@@ -5,6 +5,6 @@ public struct NeedBasedOutputComponent : IComponentData
 {
     public Entity Target;
     public ActionTypes Action;
-    public int StatsWeight;
+    public float StatsWeight;
 }
 

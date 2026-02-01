@@ -17,12 +17,6 @@ public struct AnimalStatsAttenuationBuilder
         return this;
     }
 
-    public AnimalStatsAttenuationBuilder WithMaxDistances(float4x2 distances)
-    {
-        Attenuation.MaxDistance = distances;
-        return this;
-    }
-
     public AnimalStatsAttenuation Build()
     {
         return Attenuation;

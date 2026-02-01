@@ -320,6 +320,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 3288976288296971035}
+    - targetCorrespondingSourceObject: {fileID: 4969360255086927433, guid: 79e1c06724a18e546a8afbb663724a56,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3288976288296971036}
   m_SourcePrefab: {fileID: 100100000, guid: 79e1c06724a18e546a8afbb663724a56, type: 3}
 --- !u!1 &3288976288296971033 stripped
 GameObject:
@@ -341,6 +345,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EdibleBody: {fileID: 1313055873}
   Nutrition: 10
+--- !u!114 &3288976288296971036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3288976288296971033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7bfffdd5cbe9134e8961ae90ece20ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EnergyReplanish: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

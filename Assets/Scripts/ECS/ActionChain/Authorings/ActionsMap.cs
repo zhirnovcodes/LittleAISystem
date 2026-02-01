@@ -12,7 +12,7 @@ public class ActionsMapItem
 
 public class ActionsMap : MonoBehaviour
 {
-    public List<ActionsMapItem> GetActionsMapList()
+    public List<ActionsMapItem>GetActionsMapList()
     {
         return new List<ActionsMapItem> {
             BuildMapItem(ActionTypes.Idle, SubActionTypes.Idle),

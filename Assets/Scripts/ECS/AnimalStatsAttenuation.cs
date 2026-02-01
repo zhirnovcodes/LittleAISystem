@@ -5,7 +5,6 @@ public struct AnimalStatsAttenuation
 {
     public HermiteCurve4x2 NeedsAttenuation;
     public HermiteCurve4x2 DistanceAttenuation;
-    public float4x2 MaxDistance;
 
     // Matrix layout (matching AnimalStats):
     // c0.x (0,0) - Energy
@@ -87,43 +86,6 @@ public struct AnimalStatsAttenuation
     {
         get => DistanceAttenuation.Value21;
         set => DistanceAttenuation.Value21 = value;
-    }
-
-    // Getters/Setters for MaxDistance
-    public float EnergyMaxDistance
-    {
-        get => MaxDistance.c0.x;
-        set => MaxDistance.c0.x = value;
-    }
-
-    public float FullnessMaxDistance
-    {
-        get => MaxDistance.c0.y;
-        set => MaxDistance.c0.y = value;
-    }
-
-    public float ToiletMaxDistance
-    {
-        get => MaxDistance.c0.z;
-        set => MaxDistance.c0.z = value;
-    }
-
-    public float SocialMaxDistance
-    {
-        get => MaxDistance.c0.w;
-        set => MaxDistance.c0.w = value;
-    }
-
-    public float SafetyMaxDistance
-    {
-        get => MaxDistance.c1.x;
-        set => MaxDistance.c1.x = value;
-    }
-
-    public float HealthMaxDistance
-    {
-        get => MaxDistance.c1.y;
-        set => MaxDistance.c1.y = value;
     }
 }
 

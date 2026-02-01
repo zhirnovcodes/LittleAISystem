@@ -28,6 +28,7 @@ public partial struct NeedBasedAITestSystem : ISystem
         TestCase3();
         TestCase4();
         TestCase5();
+        TestCase6();
 
         Debug.Log("=== All NeedBasedAI Tests Complete ===");
     }
@@ -37,7 +38,6 @@ public partial struct NeedBasedAITestSystem : ISystem
         Debug.Log("\n--- Test Case 1: Attenuation off, biggest weight wins ---");
         
         var distanceAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear1);
-        var maxDistances = CreateFloat4x2(1f);
         var statsAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear01); // Identity function for no attenuation
         var currentStats = CreateAnimalStats(0f);
 
@@ -61,7 +61,6 @@ public partial struct NeedBasedAITestSystem : ISystem
 
         int resultIndex = RunTestCase(
             distanceAttenuation,
-            maxDistances,
             statsAttenuation,
             currentStats,
             adv0,
@@ -78,7 +77,6 @@ public partial struct NeedBasedAITestSystem : ISystem
         Debug.Log("\n--- Test Case 2: All advertisers advertise 0, should return idle ---");
         
         var distanceAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear1);
-        var maxDistances = CreateFloat4x2(1f);
         var statsAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear01); // Identity function
         var currentStats = CreateAnimalStats(0f);
 
@@ -102,7 +100,6 @@ public partial struct NeedBasedAITestSystem : ISystem
 
         int resultIndex = RunTestCase(
             distanceAttenuation,
-            maxDistances,
             statsAttenuation,
             currentStats,
             adv0,
@@ -118,8 +115,21 @@ public partial struct NeedBasedAITestSystem : ISystem
     {
         Debug.Log("\n--- Test Case 3: Same value, best distance wins (Linear10 - closer is better) ---");
         
-        var distanceAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear10);
-        var maxDistances = CreateFloat4x2(3f);
+        // Create distance attenuation that goes from 1 at distance 0 to 0 at distance 3
+        var distanceAttenuation = new HermiteCurve4x2();
+        var distCurve = new HermiteCurve
+        {
+            points = new float4(0f, 1f, 3f, 0f),
+            tangents = new float2(-1f / 3f, -1f / 3f)
+        };
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                distanceAttenuation[i, j] = distCurve;
+            }
+        }
+        
         var statsAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear01); // Identity function
         var currentStats = CreateAnimalStats(0f);
 
@@ -143,7 +153,6 @@ public partial struct NeedBasedAITestSystem : ISystem
 
         int resultIndex = RunTestCase(
             distanceAttenuation,
-            maxDistances,
             statsAttenuation,
             currentStats,
             adv0,
@@ -159,8 +168,21 @@ public partial struct NeedBasedAITestSystem : ISystem
     {
         Debug.Log("\n--- Test Case 4: Same value, best distance wins (Linear01 - farther is better) ---");
         
-        var distanceAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear01);
-        var maxDistances = CreateFloat4x2(3f);
+        // Create distance attenuation that goes from 0 at distance 0 to 1 at distance 3
+        var distanceAttenuation = new HermiteCurve4x2();
+        var distCurve = new HermiteCurve
+        {
+            points = new float4(0f, 0f, 3f, 1f),
+            //tangents = new float2(1f / 3f, 1f / 3f)
+        };
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                distanceAttenuation[i, j] = distCurve;
+            }
+        }
+        
         var statsAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear01); // Identity function
         var currentStats = CreateAnimalStats(0f);
 
@@ -184,7 +206,6 @@ public partial struct NeedBasedAITestSystem : ISystem
 
         int resultIndex = RunTestCase(
             distanceAttenuation,
-            maxDistances,
             statsAttenuation,
             currentStats,
             adv0,
@@ -220,7 +241,6 @@ public partial struct NeedBasedAITestSystem : ISystem
         statsAttenuation[3, 1] = CreateHermiteCurve(HermiteCurveType.Linear01);
 
         var distanceAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear1);
-        var maxDistances = CreateFloat4x2(1f);
         var currentStats = CreateAnimalStats(50f);
 
         var adv0 = new TestAdvertiser
@@ -243,7 +263,6 @@ public partial struct NeedBasedAITestSystem : ISystem
 
         int resultIndex = RunTestCase(
             distanceAttenuation,
-            maxDistances,
             statsAttenuation,
             currentStats,
             adv0,
@@ -255,9 +274,55 @@ public partial struct NeedBasedAITestSystem : ISystem
         Debug.Log($"Test Case 5: Expected Advertiser1, Got {GetAdvertiserName(resultIndex)} - {(resultIndex == 1 ? "PASSED" : "FAILED")}");
     }
 
+    private void TestCase6()
+    {
+        Debug.Log("\n--- Test Case 6: Test new CalculateWeight method with distance attenuation ---");
+        
+        // Setup: ActorStats = zero, StatsAdvertised = 100 for all
+        AnimalStats ActorStats = CreateAnimalStats(0f);
+        AnimalStats StatsAdvertised = CreateAnimalStats(100f);
+        
+        // NeedsAttenuation = Linear01 for all (identity function)
+        HermiteCurve4x2 NeedsAttenuation = CreateHermiteCurve4x2(HermiteCurveType.Linear01);
+        
+        // DistanceAttenuation = linear with x from 0 to 100, y from 1 to 0
+        HermiteCurve4x2 DistanceAttenuation = new HermiteCurve4x2();
+        var distCurve = new HermiteCurve
+        {
+            points = new float4(0f, 1f, 100f, 0f),
+            tangents = new float2(-1f / 100f, -1f / 100f)
+        };
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                DistanceAttenuation[i, j] = distCurve;
+            }
+        }
+        
+        // Test at distance = 0
+        float weight0 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
+            0f, ActorStats, StatsAdvertised, NeedsAttenuation, DistanceAttenuation);
+        Debug.Log($"  Distance 0: Weight = {weight0} (expected 800)");
+        AssertEquals((int)weight0, 800, "TestCase6-Distance0");
+        
+        // Test at distance = 50
+        float weight50 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
+            50f, ActorStats, StatsAdvertised, NeedsAttenuation, DistanceAttenuation);
+        Debug.Log($"  Distance 50: Weight = {weight50} (expected 400)");
+        AssertEquals((int)weight50, 400, "TestCase6-Distance50");
+        
+        // Test at distance = 100
+        float weight100 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
+            100f, ActorStats, StatsAdvertised, NeedsAttenuation, DistanceAttenuation);
+        Debug.Log($"  Distance 100: Weight = {weight100} (expected 0)");
+        AssertEquals((int)weight100, 0, "TestCase6-Distance100");
+        
+        Debug.Log($"Test Case 6: {(weight0 == 800f && weight50 == 400f && weight100 == 0f ? "PASSED" : "FAILED")}");
+    }
+
     private int RunTestCase(
         HermiteCurve4x2 DistanceAttenuation,
-        float4x2 MaxDistances,
         HermiteCurve4x2 StatsAttenuation,
         AnimalStats CurrentStats,
         TestAdvertiser Advertiser0,
@@ -269,7 +334,6 @@ public partial struct NeedBasedAITestSystem : ISystem
         var attenuation = attenuationBuilder
             .WithNeedsAttenuations(StatsAttenuation)
             .WithDistanceAttenuations(DistanceAttenuation)
-            .WithMaxDistances(MaxDistances)
             .Build();
 
         var statsComponent = new AnimalStatsComponent { Stats = CurrentStats };

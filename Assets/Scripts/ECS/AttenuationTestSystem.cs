@@ -199,10 +199,6 @@ public partial struct AttenuationTestSystem : ISystem
         var attenuation = attenuationBuilder
             .WithNeedsAttenuations(needsCurves)
             .WithDistanceAttenuations(distanceCurves)
-            .WithMaxDistances(new float4x2(
-                new float4(10f, 10f, 10f, 10f),
-                new float4(10f, 10f, 0f, 0f)
-            ))
             .Build();
 
         // Test needs attenuation evaluation
@@ -225,16 +221,9 @@ public partial struct AttenuationTestSystem : ISystem
         Debug.Log($"Distance attenuation c0: {distanceAttenuationResults.c0}");
         Debug.Log($"Distance attenuation c1: {distanceAttenuationResults.c1}");
 
-        // Test individual property accessors
-        Debug.Log($"EnergyMaxDistance: {attenuation.EnergyMaxDistance}");
-        Debug.Log($"FullnessMaxDistance: {attenuation.FullnessMaxDistance}");
-        Debug.Log($"ToiletMaxDistance: {attenuation.ToiletMaxDistance}");
-        Debug.Log($"SocialMaxDistance: {attenuation.SocialMaxDistance}");
-        Debug.Log($"SafetyMaxDistance: {attenuation.SafetyMaxDistance}");
-        Debug.Log($"HealthMaxDistance: {attenuation.HealthMaxDistance}");
-
-        AssertApprox(attenuation.EnergyMaxDistance, 10f, "EnergyMaxDistance");
-        AssertApprox(attenuation.FullnessMaxDistance, 10f, "FullnessMaxDistance");
+        // Test individual property accessors for needs and distance attenuation
+        Debug.Log($"EnergyNeedsAttenuation: {attenuation.EnergyNeedsAttenuation.points}");
+        Debug.Log($"EnergyDistanceAttenuation: {attenuation.EnergyDistanceAttenuation.points}");
     }
 
     private void AssertApprox(float actual, float expected, string testName, float tolerance = 0.001f)

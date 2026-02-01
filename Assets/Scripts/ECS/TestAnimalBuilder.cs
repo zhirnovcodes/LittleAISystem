@@ -46,20 +46,6 @@ public struct TestAnimalBuilder
         return this;
     }
 
-    public TestAnimalBuilder AddSafetyCheck(ConditionFlags ActorConditions, float SafetyRecession)
-    {
-        // Get or add the buffer
-        var buffer = CommandBuffer.AddBuffer<SafetyCheckItem>(Entity);
-
-        buffer.Add(new SafetyCheckItem
-        {
-            ActorConditions = ActorConditions,
-            SafetyRecession = SafetyRecession
-        });
-
-        return this;
-    }
-
     public Entity Build()
     {
         return Entity;
