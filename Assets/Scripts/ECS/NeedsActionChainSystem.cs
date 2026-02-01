@@ -53,34 +53,22 @@ public partial struct NeedsActionChainSystem : ISystem
             }
 
             // Check if the need-based action is already in the action chain
-            bool isAlreadyInChain = false;
-
             for (int i = 0; i < actionChain.Length; i++)
             {
                 if (actionChain[i].Action == needBasedOutput.Action && 
                     actionChain[i].Target == needBasedOutput.Target)
                 {
-                    isAlreadyInChain = true;
-                    break;
+                    return;
                 }
             }
 
-            if (isAlreadyInChain)
-            {
-                return;
-            }
-
             // Calculate current action's weight (if not Idle)
-            float currentWeight = 0f;
-            if (runner.Target != Entity.Null)
-            {
-                currentWeight = CalculateCurrentActionWeight(
-                    runner.Target,
-                    selfTransform,
-                    statsComponent,
-                    attenuationComponent,
-                    runner.Action);
-            }
+            var currentWeight = CalculateCurrentActionWeight(
+                runner.Target,
+                selfTransform,
+                statsComponent,
+                attenuationComponent,
+                runner.Action);
 
             // Check if we should cancel current action and prioritize need-based action
             if (needBasedOutput.StatsWeight >= needsConfig.CancelThreshold + currentWeight)
@@ -114,6 +102,11 @@ public partial struct NeedsActionChainSystem : ISystem
             in AnimalStatsAttenuationComponent attenuationComponent,
             ActionTypes currentAction)
         {
+            if (targetEntity == Entity.Null)
+            {
+                return 0;
+            }
+
             // Check if target has required components
             if (!TransformLookup.TryGetComponent(targetEntity, out var targetTransform))
                 return 0f;
