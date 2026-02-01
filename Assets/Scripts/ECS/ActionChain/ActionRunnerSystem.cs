@@ -54,9 +54,9 @@ public partial class ActionRunnerSystem : SystemBase
             timer.DeltaTime = deltaTime;
             timer.TimeElapsed += deltaTime;
 
-            var result = subActionState.Update(entity, runner.Target, buffer, timer);
+            var status = runner.IsCancellationRequested ? SubActionStatus.Cancel : subActionState.Update(entity, runner.Target, buffer, timer).Status;
 
-            switch (result.Status)
+            switch (status)
             {
                 case SubActionStatus.Running:
                     return;
@@ -74,6 +74,7 @@ public partial class ActionRunnerSystem : SystemBase
                 case SubActionStatus.Cancel:
                     subActionState.Disable(entity, runner.Target, buffer);
 
+                    runner.IsCancellationRequested = false;
                     SetNextAction(ref runner, ref chain);
 
                     var idleState = GetState(in runner);

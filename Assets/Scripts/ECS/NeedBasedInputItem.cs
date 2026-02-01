@@ -1,3 +1,4 @@
+using LittleAI.Enums;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -7,5 +8,6 @@ public struct NeedBasedInputItem : IBufferElementData
     public AnimalStats StatsAdvertised;
     public float3 Position;
     public float Scale;
+    public ActionTypes ActionType;
 }
 

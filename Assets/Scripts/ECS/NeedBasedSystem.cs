@@ -68,7 +68,8 @@ public partial struct NeedBasedSystem : ISystem
                         Target = targetEntity,
                         StatsAdvertised = advertiser.AdvertisedValue,
                         Position = targetTransform.Position,
-                        Scale = targetTransform.Scale
+                        Scale = targetTransform.Scale,
+                        ActionType = advertiser.ActionType
                     });
                 }
             }
@@ -109,8 +110,7 @@ public partial struct NeedBasedSystem : ISystem
                 {
                     maxWeight = weight;
                     bestTarget = item.Target;
-                    // TODO: Determine action type based on the advertised stats
-                    bestAction = ActionTypes.Idle; // Placeholder
+                    bestAction = item.ActionType;
                 }
             }
 
@@ -135,9 +135,7 @@ public partial struct NeedBasedSystem : ISystem
             in AnimalStatsAttenuationComponent attenuationComponent)
         {
             // 1 - Calculate distance with scales (if distance = scale1/2 + scale2/2, distance = 0)
-            float3 deltaPos = item.Position - selfTransform.Position;
-            float rawDistance = math.length(deltaPos);
-            float distance = math.max(0, rawDistance - (selfTransform.Scale / 2.0f + item.Scale / 2.0f));
+            float distance = selfTransform.CalculateDistance(item.Position, item.Scale);
 
             // 2 - Use the new CalculateWeight method
             return CalculateWeight(

@@ -128,5 +128,18 @@ public static class LocalTransformExtensions
         var directionToTarget = target.Position - transform.Position;
         return transform.RotateTowards(directionToTarget, speed, delta);
     }
+
+    public static float CalculateDistance(this LocalTransform self, float3 position, float scale)
+    {
+        float3 deltaPos = position - self.Position;
+        float rawDistance = math.length(deltaPos);
+        float distance = math.max(0, rawDistance - (self.Scale / 2.0f + scale / 2.0f));
+        return distance;
+    }
+
+    public static float CalculateDistance(this LocalTransform self, LocalTransform other)
+    {
+        return self.CalculateDistance(other.Position, other.Scale);
+    }
 }
 
