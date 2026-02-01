@@ -30,7 +30,7 @@ public partial struct TestAnimalSpawnSystem : ISystem
                 var builtEntity = builder.Build();
                 
                 var testBuilder = new TestAnimalBuilder(builtEntity, buffer);
-                testBuilder.WithVisibleItems(visibleEntities).Build();
+                testBuilder.WithVisibleItems(visibleEntities).WithConditionFlags(spawnComponent.ValueRO.Flags).Build();
             }
         }
 

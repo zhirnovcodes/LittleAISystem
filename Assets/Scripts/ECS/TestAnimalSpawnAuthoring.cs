@@ -5,6 +5,7 @@ public class TestAnimalSpawnAuthoring : MonoBehaviour
 {
     public GameObject Prefab;
     public int AnimalsCount = 10;
+    public ConditionFlags Flags;
 
     public class TestAnimalSpawnBaker : Baker<TestAnimalSpawnAuthoring>
     {
@@ -14,7 +15,8 @@ public class TestAnimalSpawnAuthoring : MonoBehaviour
             AddComponent(entity, new TestAnimalSpawnComponent
             {
                 Prefab = GetEntity(authoring.Prefab, TransformUsageFlags.Dynamic),
-                AnimalsCount = authoring.AnimalsCount
+                AnimalsCount = authoring.AnimalsCount,
+                Flags = authoring.Flags
             });
         }
     }

@@ -2,5 +2,5 @@
 
 public struct ActionMapInitializeComponent : IComponentData
 {
-    public UnityObjectRef<ActionsMap> Map;
+    public UnityObjectRef<ActionMapBase> Map;
 }

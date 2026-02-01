@@ -1,7 +1,6 @@
 using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Transforms;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial class ActionRunnerSystem : SystemBase
@@ -10,25 +9,24 @@ public partial class ActionRunnerSystem : SystemBase
 
     private Dictionary<SubActionTypes, ISubActionState> SubActionStates;
 
+    private bool AreSubActionsInitialized;
+
     protected override void OnCreate()
     {
-        var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>();
-
         RequireForUpdate<ActionChainConfigComponent>();
         RequireForUpdate<ActionChainItem>();
         RequireForUpdate<ActionRunnerComponent>();
-
-        SubActionStates = new Dictionary<SubActionTypes, ISubActionState>
-        {
-            { SubActionTypes.Idle, new TestIdle() },
-            { SubActionTypes.MoveTo, new TestMoveTo(transformLookup) },
-            { SubActionTypes.Eat, new TestEat(transformLookup) }
-        };
+        RequireForUpdate<ActionMapInitializeComponent>();
     }
 
     protected override void OnUpdate()
     {
-        Enabled = false;
+        if (AreSubActionsInitialized == false)
+        {
+            var initializeComponent = SystemAPI.GetSingleton<ActionMapInitializeComponent>();
+            SubActionStates = initializeComponent.Map.Value.ConstructSubActionsStates(this);
+            AreSubActionsInitialized = true;
+        }
 
         EntityCommandBuffer buffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
 

@@ -1,7 +1,7 @@
 ﻿using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
-using UnityEngine;
+using Unity.Transforms;
 
 [System.Serializable]
 public class ActionsMapItem
@@ -10,9 +10,9 @@ public class ActionsMapItem
     public List<SubActionTypes> SubActions;
 }
 
-public class ActionsMap : MonoBehaviour
+public class ActionsMapTest : ActionMapBase
 {
-    public List<ActionsMapItem>GetActionsMapList()
+    public override List<ActionsMapItem>GetActionsMapList()
     {
         return new List<ActionsMapItem> {
             BuildMapItem(ActionTypes.Idle, SubActionTypes.Idle),
@@ -36,9 +36,23 @@ public class ActionsMap : MonoBehaviour
         return result;
     }
 
-    public class Baker : Baker<ActionsMap>
+    public override Dictionary<SubActionTypes, ISubActionState> ConstructSubActionsStates(SystemBase system)
     {
-        public override void Bake(ActionsMap authoring)
+        var transformLookup = system.GetComponentLookup<LocalTransform>();
+
+        var subActionStates = new Dictionary<SubActionTypes, ISubActionState>
+        {
+            { SubActionTypes.Idle, new TestIdle() },
+            { SubActionTypes.MoveTo, new TestMoveTo(transformLookup) },
+            { SubActionTypes.Eat, new TestEat(transformLookup) }
+        };
+
+        return subActionStates;
+    }
+
+    public class Baker : Baker<ActionsMapTest>
+    {
+        public override void Bake(ActionsMapTest authoring)
         {
             var entity = GetEntity(TransformUsageFlags.None);
             AddComponent(entity, new ActionMapInitializeComponent

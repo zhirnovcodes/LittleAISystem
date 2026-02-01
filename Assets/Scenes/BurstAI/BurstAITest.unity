@@ -274,7 +274,7 @@ GameObject:
   - component: {fileID: 1463514376}
   - component: {fileID: 1463514377}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: Test
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -304,7 +304,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1463514374}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e3328e0b06231a47a4d541baba0d40c, type: 3}
+  m_Script: {fileID: 11500000, guid: 5205147f6f79d2544a8379fb2cd4ae33, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1662188656
@@ -529,7 +529,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 2792616393133453418, guid: 8ecb19dbc5f7f3c47aa07545080e176a, type: 3}
-  AnimalsCount: 10000
+  AnimalsCount: 10
+  Flags: 4294967295
 --- !u!4 &1816357700
 Transform:
   m_ObjectHideFlags: 0
