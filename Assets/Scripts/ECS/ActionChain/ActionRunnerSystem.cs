@@ -52,7 +52,8 @@ public partial class ActionRunnerSystem : SystemBase
             timer.DeltaTime = deltaTime;
             timer.TimeElapsed += deltaTime;
 
-            var status = runner.IsCancellationRequested ? SubActionStatus.Cancel : subActionState.Update(entity, runner.Target, buffer, timer).Status;
+            var status = runner.IsCancellationRequested ? SubActionStatus.Cancel : 
+                subActionState.Update(entity, runner.Target, buffer, timer).Status;
 
             switch (status)
             {

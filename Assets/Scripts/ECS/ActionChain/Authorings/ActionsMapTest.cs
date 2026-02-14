@@ -15,26 +15,12 @@ public class ActionsMapTest : ActionMapBase
     public override List<ActionsMapItem>GetActionsMapList()
     {
         return new List<ActionsMapItem> {
-            BuildMapItem(ActionTypes.Idle, SubActionTypes.Idle),
-            BuildMapItem(ActionTypes.Eat, SubActionTypes.MoveTo, SubActionTypes.Eat )
+            ActionTypes.Idle.BuildMapItem( SubActionTypes.Idle),
+            ActionTypes.Eat. BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.Eat )
         };
     }
 
-    protected static ActionsMapItem BuildMapItem(ActionTypes action, params SubActionTypes[] subActions)
-    {
-        var result = new ActionsMapItem
-        {
-            ActionType = action,
-            SubActions = new List<SubActionTypes>()
-        };
 
-        foreach (var sub in subActions)
-        {
-            result.SubActions.Add(sub);
-        }
-
-        return result;
-    }
 
     public override Dictionary<SubActionTypes, ISubActionState> ConstructSubActionsStates(SystemBase system)
     {
