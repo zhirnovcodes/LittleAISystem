@@ -33,64 +33,13 @@ public class AnimalStatsDrawer : PropertyDrawer
             // Start drawing fields below the foldout
             Rect fieldRect = new Rect(position.x, position.y + lineHeight + spacing, position.width, lineHeight);
 
-            // Energy (c0.x)
-            SerializedProperty energyProp = c0.FindPropertyRelative("x");
-            EditorGUI.BeginChangeCheck();
-            float energy = EditorGUI.Slider(fieldRect, "Energy", energyProp.floatValue, 0f, 100f);
-            if (EditorGUI.EndChangeCheck())
-            {
-                energyProp.floatValue = Mathf.Clamp(energy, 0f, 100f);
-            }
-            fieldRect.y += lineHeight + spacing;
-
-            // Fullness (c0.y)
-            SerializedProperty fullnessProp = c0.FindPropertyRelative("y");
-            EditorGUI.BeginChangeCheck();
-            float fullness = EditorGUI.Slider(fieldRect, "Fullness", fullnessProp.floatValue, 0f, 100f);
-            if (EditorGUI.EndChangeCheck())
-            {
-                fullnessProp.floatValue = Mathf.Clamp(fullness, 0f, 100f);
-            }
-            fieldRect.y += lineHeight + spacing;
-
-            // Toilet (c0.z)
-            SerializedProperty toiletProp = c0.FindPropertyRelative("z");
-            EditorGUI.BeginChangeCheck();
-            float toilet = EditorGUI.Slider(fieldRect, "Toilet", toiletProp.floatValue, 0f, 100f);
-            if (EditorGUI.EndChangeCheck())
-            {
-                toiletProp.floatValue = Mathf.Clamp(toilet, 0f, 100f);
-            }
-            fieldRect.y += lineHeight + spacing;
-
-            // Social (c0.w)
-            SerializedProperty socialProp = c0.FindPropertyRelative("w");
-            EditorGUI.BeginChangeCheck();
-            float social = EditorGUI.Slider(fieldRect, "Social", socialProp.floatValue, 0f, 100f);
-            if (EditorGUI.EndChangeCheck())
-            {
-                socialProp.floatValue = Mathf.Clamp(social, 0f, 100f);
-            }
-            fieldRect.y += lineHeight + spacing;
-
-            // Safety (c1.x)
-            SerializedProperty safetyProp = c1.FindPropertyRelative("x");
-            EditorGUI.BeginChangeCheck();
-            float safety = EditorGUI.Slider(fieldRect, "Safety", safetyProp.floatValue, 0f, 100f);
-            if (EditorGUI.EndChangeCheck())
-            {
-                safetyProp.floatValue = Mathf.Clamp(safety, 0f, 100f);
-            }
-            fieldRect.y += lineHeight + spacing;
-
-            // Health (c1.y)
-            SerializedProperty healthProp = c1.FindPropertyRelative("y");
-            EditorGUI.BeginChangeCheck();
-            float health = EditorGUI.Slider(fieldRect, "Health", healthProp.floatValue, 0f, 100f);
-            if (EditorGUI.EndChangeCheck())
-            {
-                healthProp.floatValue = Mathf.Clamp(health, 0f, 100f);
-            }
+            // Draw all stats using the helper method
+            DrawStat(c0, "x", "Energy", ref fieldRect, lineHeight, spacing);
+            DrawStat(c0, "y", "Fullness", ref fieldRect, lineHeight, spacing);
+            DrawStat(c0, "z", "Toilet", ref fieldRect, lineHeight, spacing);
+            DrawStat(c0, "w", "Social", ref fieldRect, lineHeight, spacing);
+            DrawStat(c1, "x", "Safety", ref fieldRect, lineHeight, spacing);
+            DrawStat(c1, "y", "Health", ref fieldRect, lineHeight, spacing);
 
             // Restore indent
             EditorGUI.indentLevel--;
@@ -114,6 +63,18 @@ public class AnimalStatsDrawer : PropertyDrawer
             // Just the foldout line
             return lineHeight;
         }
+    }
+
+    private void DrawStat(SerializedProperty parentProperty, string component, string label, ref Rect fieldRect, float lineHeight, float spacing)
+    {
+        SerializedProperty statProp = parentProperty.FindPropertyRelative(component);
+        EditorGUI.BeginChangeCheck();
+        float value = EditorGUI.Slider(fieldRect, label, statProp.floatValue, 0f, 100f);
+        if (EditorGUI.EndChangeCheck())
+        {
+            statProp.floatValue = Mathf.Clamp(value, 0f, 100f);
+        }
+        fieldRect.y += lineHeight + spacing;
     }
 }
 

@@ -16,7 +16,7 @@ public partial struct StatsUpdateSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var job = new StatsUpdateJob();
-        job.Run();
+        job.Schedule();
     }
 
     [BurstCompile]

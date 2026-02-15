@@ -11,7 +11,6 @@ public partial struct NeedBasedSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        state.RequireForUpdate<VisibleComponent>();
     }
 
     [BurstCompile]
@@ -47,19 +46,15 @@ public partial struct NeedBasedSystem : ISystem
             {
                 var targetEntity = visibleItems[i].Target;
 
-                // Check if target has required components
                 if (!TransformLookup.TryGetComponent(targetEntity, out var targetTransform))
                     continue;
 
                 if (!StatAdvertiserLookup.TryGetBuffer(targetEntity, out var statAdvertisers))
                     continue;
 
-                // For each advertiser, create a NeedBasedInputItem
                 for (int j = 0; j < statAdvertisers.Length; j++)
                 {
                     var advertiser = statAdvertisers[j];
-                    
-                    // Check if conditions are met
                     if (!selfConditions.Conditions.IsConditionMet(advertiser.ActorConditions))
                         continue;
 
