@@ -26,6 +26,7 @@ public partial struct TestActionChainFillSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        return;
         // Check if enough time has passed since last update
         if (SystemAPI.Time.ElapsedTime < NextUpdateTime)
         {
