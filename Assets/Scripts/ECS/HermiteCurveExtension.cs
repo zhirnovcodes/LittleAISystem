@@ -29,25 +29,25 @@ public static class HermiteCurveExtension
         return h00 * y0 + h10 * outTan * dt + h01 * y1 + h11 * inTan * dt;
     }
 
+    public static float4 GetYs(this HermiteCurve4 curves, float4 inputs)
+    {
+        return new float4(
+            curves.x.GetY(inputs.x),
+            curves.y.GetY(inputs.y),
+            curves.z.GetY(inputs.z),
+            curves.w.GetY(inputs.w)
+        );
+    }
+
     public static float4x2 GetYs(this HermiteCurve4x2 curves, float4x2 inputs)
     {
         float4x2 result;
             
         // Process column 0
-        result.c0 = new float4(
-            curves.Value00.GetY(inputs.c0.x),
-            curves.Value10.GetY(inputs.c0.y),
-            curves.Value20.GetY(inputs.c0.z),
-            curves.Value30.GetY(inputs.c0.w)
-        );
+        result.c0 = curves.c0.GetYs(inputs.c0);
             
         // Process column 1
-        result.c1 = new float4(
-            curves.Value01.GetY(inputs.c1.x),
-            curves.Value11.GetY(inputs.c1.y),
-            curves.Value21.GetY(inputs.c1.z),
-            curves.Value31.GetY(inputs.c1.w)
-        );
+        result.c1 = curves.c1.GetYs(inputs.c1);
 
         return result;
     }

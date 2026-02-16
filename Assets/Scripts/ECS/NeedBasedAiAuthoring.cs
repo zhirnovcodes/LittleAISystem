@@ -34,8 +34,6 @@ public class NeedBasedAiAuthoring : MonoBehaviour
                     CancelThreshold = authoring.CancelThreshold,
                     AddThreshold = authoring.AddThreshold
                 });
-
-                SetComponentEnabled<NeedsActionChainComponent>(entity, true);
             }
         }
     }

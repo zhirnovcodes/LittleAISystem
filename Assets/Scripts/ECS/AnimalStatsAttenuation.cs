@@ -7,85 +7,85 @@ public struct AnimalStatsAttenuation
     public HermiteCurve4x2 DistanceAttenuation;
 
     // Matrix layout (matching AnimalStats):
-    // c0.x (0,0) - Energy
-    // c0.y (0,1) - Fullness
-    // c0.z (0,2) - Toilet
-    // c0.w (0,3) - Social
-    // c1.x (1,0) - Safety
-    // c1.y (1,1) - Health
+    // c0.x - Energy
+    // c0.y - Fullness
+    // c0.z - Toilet
+    // c0.w - Social
+    // c1.x - Safety
+    // c1.y - Health
 
     // Getters for NeedsAttenuation
     public HermiteCurve EnergyNeedsAttenuation
     {
-        get => NeedsAttenuation.Value00;
-        set => NeedsAttenuation.Value00 = value;
+        get => NeedsAttenuation.c0.x;
+        set => NeedsAttenuation.c0.x = value;
     }
 
     public HermiteCurve FullnessNeedsAttenuation
     {
-        get => NeedsAttenuation.Value01;
-        set => NeedsAttenuation.Value01 = value;
+        get => NeedsAttenuation.c0.y;
+        set => NeedsAttenuation.c0.y = value;
     }
 
     public HermiteCurve ToiletNeedsAttenuation
     {
-        get => NeedsAttenuation.Value10;
-        set => NeedsAttenuation.Value10 = value;
+        get => NeedsAttenuation.c0.z;
+        set => NeedsAttenuation.c0.z = value;
     }
 
     public HermiteCurve SocialNeedsAttenuation
     {
-        get => NeedsAttenuation.Value11;
-        set => NeedsAttenuation.Value11 = value;
+        get => NeedsAttenuation.c0.w;
+        set => NeedsAttenuation.c0.w = value;
     }
 
     public HermiteCurve SafetyNeedsAttenuation
     {
-        get => NeedsAttenuation.Value20;
-        set => NeedsAttenuation.Value20 = value;
+        get => NeedsAttenuation.c1.x;
+        set => NeedsAttenuation.c1.x = value;
     }
 
     public HermiteCurve HealthNeedsAttenuation
     {
-        get => NeedsAttenuation.Value21;
-        set => NeedsAttenuation.Value21 = value;
+        get => NeedsAttenuation.c1.y;
+        set => NeedsAttenuation.c1.y = value;
     }
 
     // Getters for DistanceAttenuation
     public HermiteCurve EnergyDistanceAttenuation
     {
-        get => DistanceAttenuation.Value00;
-        set => DistanceAttenuation.Value00 = value;
+        get => DistanceAttenuation.c0.x;
+        set => DistanceAttenuation.c0.x = value;
     }
 
     public HermiteCurve FullnessDistanceAttenuation
     {
-        get => DistanceAttenuation.Value01;
-        set => DistanceAttenuation.Value01 = value;
+        get => DistanceAttenuation.c0.y;
+        set => DistanceAttenuation.c0.y = value;
     }
 
     public HermiteCurve ToiletDistanceAttenuation
     {
-        get => DistanceAttenuation.Value10;
-        set => DistanceAttenuation.Value10 = value;
+        get => DistanceAttenuation.c0.z;
+        set => DistanceAttenuation.c0.z = value;
     }
 
     public HermiteCurve SocialDistanceAttenuation
     {
-        get => DistanceAttenuation.Value11;
-        set => DistanceAttenuation.Value11 = value;
+        get => DistanceAttenuation.c0.w;
+        set => DistanceAttenuation.c0.w = value;
     }
 
     public HermiteCurve SafetyDistanceAttenuation
     {
-        get => DistanceAttenuation.Value20;
-        set => DistanceAttenuation.Value20 = value;
+        get => DistanceAttenuation.c1.x;
+        set => DistanceAttenuation.c1.x = value;
     }
 
     public HermiteCurve HealthDistanceAttenuation
     {
-        get => DistanceAttenuation.Value21;
-        set => DistanceAttenuation.Value21 = value;
+        get => DistanceAttenuation.c1.y;
+        set => DistanceAttenuation.c1.y = value;
     }
 }
 

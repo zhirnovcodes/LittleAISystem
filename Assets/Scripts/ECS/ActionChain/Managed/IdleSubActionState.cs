@@ -3,7 +3,7 @@ using Unity.Entities;
 
 public class IdleSubActionState : ISubActionState
 {
-    private const float IdleTime = 3f;
+    private const float IdleTime = 0.5f;
 
     public IdleSubActionState()
     {

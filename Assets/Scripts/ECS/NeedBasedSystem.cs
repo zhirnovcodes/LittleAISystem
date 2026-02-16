@@ -26,7 +26,7 @@ public partial struct NeedBasedSystem : ISystem
 
         // Second job: Calculate need-based decisions
         var calculationJob = new NeedBasedCalculationJob();
-        state.Dependency = calculationJob.ScheduleParallel(state.Dependency);
+        state.Dependency = calculationJob.Schedule/*Parallel*/(state.Dependency);
     }
 
     [BurstCompile]
@@ -84,7 +84,7 @@ public partial struct NeedBasedSystem : ISystem
         {
             if (needBasedInputs.Length == 0)
             {
-                output.Target = Entity.Null;
+                output.Target = entity;
                 output.Action = ActionTypes.Idle;
                 output.StatsWeight = 0;
                 return;
@@ -94,11 +94,15 @@ public partial struct NeedBasedSystem : ISystem
             ActionTypes bestAction = ActionTypes.Idle;
             float maxWeight = float.MinValue;
 
+            UnityEngine.Debug.Log("-------------");
+
             for (int i = 0; i < needBasedInputs.Length; i++)
             {
                 var item = needBasedInputs[i];
 
                 float weight = CalculateWeight(selfTransform, item, statsComponent, attenuationComponent);
+
+                UnityEngine.Debug.Log(weight  + " " + item.ActionType);
 
                 // Check if this is the best option (advertiser with max weight wins)
                 if (weight > maxWeight)
@@ -164,11 +168,13 @@ public partial struct NeedBasedSystem : ISystem
             float4x2 stats0 = NeedsAttenuation.GetYs(currentStatsNormalized);
 
             // 5 - Calculate attenuated value of resulted stats (stats1 = NeedsAttenuation.GetYs((ActorStats.Stats + statsAttenuated) / 100))
-            float4x2 resultedStatsNormalized = (ActorStats.Stats + statsAttenuated) / 100.0f;
+            float4x2 resultedStatsNormalized = float4x2Extensions.Clamp(ActorStats.Stats + statsAttenuated, 0, 100) / 100.0f;
             float4x2 stats1 = NeedsAttenuation.GetYs(resultedStatsNormalized);
 
+            UnityEngine.Debug.Log(stats0 + " " + stats1);
+
             // 6 - Calculate stats difference attenuated (statsDifferenceAttenuated = (stats1 - stats0) * 100)
-            float4x2 statsDifferenceAttenuated = (stats1 - stats0) * 100f;
+            float4x2 statsDifferenceAttenuated = (stats0 - stats1) * 100f;
 
             // 7 - Calculate weight (sum of all stats difference values)
             return statsDifferenceAttenuated.GetWeight();

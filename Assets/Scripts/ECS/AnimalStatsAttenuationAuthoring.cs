@@ -47,23 +47,39 @@ public class AnimalStatsAttenuationAuthoring : MonoBehaviour
             // Build NeedsAttenuation HermiteCurve4x2
             var needsAttenuation = new HermiteCurve4x2
             {
-                Value00 = energyCurve,      // c0.x - Energy
-                Value01 = fullnessCurve,    // c0.y - Fullness
-                Value10 = toiletCurve,      // c0.z - Toilet
-                Value11 = socialCurve,      // c0.w - Social
-                Value20 = safetyCurve,      // c1.x - Safety
-                Value21 = healthCurve       // c1.y - Health
+                c0 = new HermiteCurve4
+                {
+                    x = energyCurve,      // c0.x - Energy
+                    y = fullnessCurve,    // c0.y - Fullness
+                    z = toiletCurve,      // c0.z - Toilet
+                    w = socialCurve       // c0.w - Social
+                },
+                c1 = new HermiteCurve4
+                {
+                    x = safetyCurve,      // c1.x - Safety
+                    y = healthCurve,      // c1.y - Health
+                    z = default,          // c1.z - unused
+                    w = default           // c1.w - unused
+                }
             };
 
             // Build DistanceAttenuation HermiteCurve4x2
             var distanceAttenuation = new HermiteCurve4x2
             {
-                Value00 = energyDistanceCurve,      // c0.x - Energy
-                Value01 = fullnessDistanceCurve,    // c0.y - Fullness
-                Value10 = toiletDistanceCurve,      // c0.z - Toilet
-                Value11 = socialDistanceCurve,      // c0.w - Social
-                Value20 = safetyDistanceCurve,      // c1.x - Safety
-                Value21 = healthDistanceCurve       // c1.y - Health
+                c0 = new HermiteCurve4
+                {
+                    x = energyDistanceCurve,      // c0.x - Energy
+                    y = fullnessDistanceCurve,    // c0.y - Fullness
+                    z = toiletDistanceCurve,      // c0.z - Toilet
+                    w = socialDistanceCurve       // c0.w - Social
+                },
+                c1 = new HermiteCurve4
+                {
+                    x = safetyDistanceCurve,      // c1.x - Safety
+                    y = healthDistanceCurve,      // c1.y - Health
+                    z = default,                  // c1.z - unused
+                    w = default                   // c1.w - unused
+                }
             };
 
             var attenuation = attenuationBuilder
