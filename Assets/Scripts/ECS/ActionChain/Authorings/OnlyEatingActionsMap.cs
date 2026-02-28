@@ -11,6 +11,8 @@ public class OnlyEatingActionsMap : ActionMapBase
         var edibleLookup = system.GetComponentLookup<EdibleComponent>(true);
         var animalStatsLookup = system.GetComponentLookup<AnimalStatsComponent>(true);
         var sleepingPlaceLookup = system.GetComponentLookup<SleepingPlaceComponent>(true);
+        var femaleGenetaliaLookup = system.GetComponentLookup<FemaleGenetaliaComponent>(true);
+        var maleGenetaliaLookup = system.GetComponentLookup<MaleGenetaliaComponent>(true);
 
         // Initialize list of ISubActionState
         var subActions = new Dictionary<SubActionTypes, ISubActionState>
@@ -22,7 +24,9 @@ public class OnlyEatingActionsMap : ActionMapBase
             { SubActionTypes.RotateTowards, new RotateTowards(transformLookup) },
             { SubActionTypes.Eat, new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup) },
             { SubActionTypes.MoveInto, new LayDownState(transformLookup) },
-            { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup) }
+            { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup) },
+            { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(transformLookup, animalStatsLookup, femaleGenetaliaLookup, maleGenetaliaLookup ) },
+            { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, femaleGenetaliaLookup, maleGenetaliaLookup) }
         };
 
         return subActions;
@@ -31,10 +35,11 @@ public class OnlyEatingActionsMap : ActionMapBase
     public override List<ActionsMapItem> GetActionsMapList()
     {
         return new List<ActionsMapItem> {
-            ActionTypes.Idle.   BuildMapItem( SubActionTypes.Idle ),
-            ActionTypes.Eat.    BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.RotateTowards, SubActionTypes.Eat ),
-            ActionTypes.Sleep.  BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.MoveInto, SubActionTypes.Sleep ),
-            ActionTypes.Escape. BuildMapItem( SubActionTypes.RunFrom )
+            ActionTypes.Idle.           BuildMapItem( SubActionTypes.Idle ),
+            ActionTypes.Eat.            BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.RotateTowards, SubActionTypes.Eat ),
+            ActionTypes.Sleep.          BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.MoveInto, SubActionTypes.Sleep ),
+            ActionTypes.Escape.         BuildMapItem( SubActionTypes.RunFrom ),
+            ActionTypes.Communicate.    BuildMapItem( SubActionTypes.MoveToTalk, SubActionTypes.RotateTowards, SubActionTypes.StumbleUpon, SubActionTypes.Communicate, SubActionTypes.RunFrom )
         };
     }
 

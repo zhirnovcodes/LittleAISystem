@@ -8,5 +8,7 @@ public enum ConditionFlags : uint
     IsPlant = 1 << 1,
     IsPredator = 1 << 2,
     IsHerbivore = 1 << 3,
+    IsWithMaleGenitalia = 1 << 4,
+    IsWithFemaleGenitalia = 1 << 5,
 }
 

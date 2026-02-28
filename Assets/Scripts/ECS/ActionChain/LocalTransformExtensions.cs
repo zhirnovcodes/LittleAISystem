@@ -8,10 +8,16 @@ public static class LocalTransformExtensions
         return transform.Position.IsTargetPositionReached(position, distance);
     }
 
-    public static bool IsRotationTowardsTargetReached(this LocalTransform transform, float3 targetPosition, float delta = 0.01f)
+    public static bool IsLookingTowards(this LocalTransform transform, float3 targetPosition, float delta = 0.01f)
     {
         var directionToTarget = targetPosition - transform.Position;
-        return transform.Rotation.IsRotationTowardsTargetReached(directionToTarget, delta);
+        return transform.Rotation.IsLookingTowards(directionToTarget, delta);
+    }
+
+    public static bool IsLookingTowards(this LocalTransform transform, LocalTransform target, float delta = 0.01f)
+    {
+        var directionToTarget = target.Position - transform.Position;
+        return transform.Rotation.IsLookingTowards(directionToTarget, delta);
     }
 
     public static bool IsDistanceGreaterThan(this LocalTransform transform, float3 position, float distance)

@@ -76,9 +76,6 @@ public partial class ActionRunnerSystem : SystemBase
                     runner.IsCancellationRequested = false;
                     SetNextAction(ref runner, ref chain);
 
-                    var idleState = GetState(in runner);
-                    idleState.Enable(entity, runner.Target, buffer);
-
                     timer.TimeElapsed = 0;
                     return;
             }

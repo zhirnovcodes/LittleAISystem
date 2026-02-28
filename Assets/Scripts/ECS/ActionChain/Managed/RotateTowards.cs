@@ -54,7 +54,7 @@ public class RotateTowards : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Check if already facing target
-        if (entityTransform.IsRotationTowardsTargetReached(targetTransform.Position, 0.01f))
+        if (entityTransform.IsLookingTowards(targetTransform.Position, 0.01f))
         {
             return SubActionResult.Success();
         }

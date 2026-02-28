@@ -5,8 +5,8 @@ public class WalkToTalk : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
 
-    private const float MaxDistance = 1.0f;
-    private const float MinDistance = 0.6f;
+    private const float MaxDistance = 0.2f;
+    private const float MinDistance = 0.1f;
     private const float MoveSpeedMax = 1.0f;
     private const float MoveSpeedMin = 0.5f;
     private const float SpeedReduceDistance = 0.5f;
@@ -59,32 +59,12 @@ public class WalkToTalk : ISubActionState
         // Check if we've reached the target distance
         if (entityTransform.IsTargetReached(targetTransform, MaxDistance))
         {
-            // Check if we're too close (less than MinDistance)
-            if (entityTransform.IsDistanceGreaterThan(targetTransform, MinDistance))
-            {
-            // In the sweet spot between MinDistance and MaxDistance
-                return SubActionResult.Success();
-            }
-
-            // Too close - move away and rotate away
-            MoveOut(entity, entityTransform, targetTransform, buffer, timer);
-            return SubActionResult.Running();
+            return SubActionResult.Success();
         }
 
         // Move towards target
         MoveTowards(entity, entityTransform, targetTransform, buffer, timer);
         return SubActionResult.Running();
-    }
-
-    private void MoveOut(Entity entity, LocalTransform entityTransform, LocalTransform targetTransform, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
-    {
-        var transformMoveAway = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * MoveSpeedMin);
-
-        // Rotate away from target
-        var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
-        transformMoveAway = transformMoveAway.RotateTowards(directionAwayFromTarget, RotationSpeed * timer.DeltaTime, 0.01f);
-
-        buffer.SetComponent(entity, transformMoveAway);
     }
 
     private void MoveTowards(Entity entity, LocalTransform entityTransform, LocalTransform targetTransform, EntityCommandBuffer buffer, in SubActionTimeComponent timer)

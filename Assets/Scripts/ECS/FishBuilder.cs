@@ -50,6 +50,22 @@ public struct FishBuilder
         return this;
     }
 
+    public FishBuilder WithFemaleGenitalia()
+    {
+        CommandBuffer.AddComponent(Entity, new FemaleGenetaliaComponent());
+
+        CommandBuffer.AddBuffer<FemaleTubeItem>(Entity);
+
+        return this;
+    }
+
+    public FishBuilder WithMaleGenitalia()
+    {
+        CommandBuffer.AddComponent(Entity, new MaleGenetaliaComponent());
+
+        return this;
+    }
+
     public Entity Build()
     {
         return Entity;
