@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class AnimalStatsAttenuationAuthoring : MonoBehaviour
 {
+    [HermiteCurveNormalized] public HermiteCurve h0;
+
     [Header("Needs Attenuation")]
     [SerializeField] private AnimationCurve Energy = AnimationCurve.Linear(0, 0, 1, 1);
     [SerializeField] private AnimationCurve Fullness = AnimationCurve.Linear(0, 0, 1, 1);

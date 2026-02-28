@@ -34,7 +34,7 @@ public class OnlyEatingActionsMap : ActionMapBase
             ActionTypes.Idle.   BuildMapItem( SubActionTypes.Idle ),
             ActionTypes.Eat.    BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.RotateTowards, SubActionTypes.Eat ),
             ActionTypes.Sleep.  BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.MoveInto, SubActionTypes.Sleep ),
-            ActionTypes.Escape. BuildMapItem( SubActionTypes.RunFrom)
+            ActionTypes.Escape. BuildMapItem( SubActionTypes.RunFrom )
         };
     }
 
