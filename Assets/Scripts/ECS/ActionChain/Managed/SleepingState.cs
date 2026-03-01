@@ -6,15 +6,14 @@ public class SleepingState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    private ComponentLookup<SleepDataComponent> SleepDataLookup;
 
-    private const float FailTime = 30f;
-    private const float MaxDistance = 0.5f;
-
-    public SleepingState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup)
+    public SleepingState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<SleepDataComponent> sleepDataLookup)
     {
         TransformLookup = transformLookup;
         SleepingPlaceLookup = sleepingPlaceLookup;
         AnimalStatsLookup = animalStatsLookup;
+        SleepDataLookup = sleepDataLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -22,6 +21,7 @@ public class SleepingState : ISubActionState
         TransformLookup.Update(system);
         SleepingPlaceLookup.Update(system);
         AnimalStatsLookup.Update(system);
+        SleepDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -48,8 +48,18 @@ public class SleepingState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // Get sleep data from entity
+        if (!SleepDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        var sleepData = SleepDataLookup[entity];
+        float failTime = sleepData.FailTime;
+        float maxDistance = sleepData.MaxDistance;
+
         // if time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(failTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -58,7 +68,7 @@ public class SleepingState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // if distance between transforms > MaxDistance - fail with error code 3
-        if (!entityTransform.IsTargetReached(targetTransform, MaxDistance))
+        if (!entityTransform.IsTargetReached(targetTransform, maxDistance))
         {
             return SubActionResult.Fail(3);
         }

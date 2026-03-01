@@ -7,21 +7,22 @@ public class StumbleUponSubActionState : ISubActionState
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<FemaleGenetaliaComponent> FemaleGenetaliaLookup;
     private ComponentLookup<MaleGenetaliaComponent> MaleGenetaliaLookup;
+    private ComponentLookup<TalkingDataComponent> TalkingDataLookup;
 
-    private const float FailTime = 5f;
-    private const float MaxDistance = 0.2f;
     private const float Delta = 0.1f;
 
     public StumbleUponSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         ComponentLookup<FemaleGenetaliaComponent> femaleGenetaliaLookup,
-        ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup)
+        ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup,
+        ComponentLookup<TalkingDataComponent> talkingDataLookup)
     {
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
         FemaleGenetaliaLookup = femaleGenetaliaLookup;
         MaleGenetaliaLookup = maleGenetaliaLookup;
+        TalkingDataLookup = talkingDataLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -30,6 +31,7 @@ public class StumbleUponSubActionState : ISubActionState
         AnimalStatsLookup.Update(system);
         FemaleGenetaliaLookup.Update(system);
         MaleGenetaliaLookup.Update(system);
+        TalkingDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -69,8 +71,18 @@ public class StumbleUponSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // Get talking data from entity
+        if (!TalkingDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        var talkingData = TalkingDataLookup[entity];
+        float failTime = talkingData.StumbleFailTime;
+        float maxDistance = talkingData.MaxDistance;
+
         // if time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(failTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -79,7 +91,7 @@ public class StumbleUponSubActionState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Check if target is reached
-        if (entityTransform.IsTargetReached(targetTransform, MaxDistance) == false)
+        if (entityTransform.IsTargetReached(targetTransform, maxDistance) == false)
         {
             return SubActionResult.Running();
         }

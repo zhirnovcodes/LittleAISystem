@@ -6,19 +6,21 @@ using Unity.Transforms;
 public class RunFrom : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingDataComponent> MovingDataLookup;
+    private ComponentLookup<SafetyDistanceComponent> SafetyDistanceLookup;
 
-    private const float MoveSpeed = 1.0f;
-    private const float SafeDistance = 5.0f;
-    private const float RotationSpeed = 30f;
-
-    public RunFrom(ComponentLookup<LocalTransform> transformLookup)
+    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingDataComponent> movingDataLookup, ComponentLookup<SafetyDistanceComponent> safetyDistanceLookup)
     {
         TransformLookup = transformLookup;
+        MovingDataLookup = movingDataLookup;
+        SafetyDistanceLookup = safetyDistanceLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MovingDataLookup.Update(system);
+        SafetyDistanceLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -45,21 +47,40 @@ public class RunFrom : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // Get moving data from entity
+        if (!MovingDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        // Get safety distance from entity
+        if (!SafetyDistanceLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(8);
+        }
+
+        var movingData = MovingDataLookup[entity];
+        var safetyData = SafetyDistanceLookup[entity];
+
+        float moveSpeed = movingData.MaxSpeed;
+        float safeDistance = safetyData.SafeDistance;
+        float rotationSpeed = movingData.MaxRotationSpeed;
+
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
 
         // If distance >= SafeDistance - success
-        if (entityTransform.IsDistanceGreaterThan(targetTransform, SafeDistance))
+        if (entityTransform.IsDistanceGreaterThan(targetTransform, safeDistance))
         {
             return SubActionResult.Success();
         }
 
         // Move in direction opposite from target
-        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * MoveSpeed);
+        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * moveSpeed);
 
         // Rotate away from target
         var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
-        newTransform = newTransform.RotateTowards(directionAwayFromTarget, RotationSpeed * timer.DeltaTime, 0.01f);
+        newTransform = newTransform.RotateTowards(directionAwayFromTarget, rotationSpeed * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

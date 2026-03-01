@@ -6,19 +6,21 @@ using Unity.Transforms;
 public class LayDownState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingDataComponent> MovingDataLookup;
+    private ComponentLookup<SleepDataComponent> SleepDataLookup;
 
-    private const float MoveSpeed = 1.0f;
-    private const float FailTime = 15f;
-    private const float Distance = 0.1f;
-
-    public LayDownState(ComponentLookup<LocalTransform> transformLookup)
+    public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingDataComponent> movingDataLookup, ComponentLookup<SleepDataComponent> sleepDataLookup)
     {
         TransformLookup = transformLookup;
+        MovingDataLookup = movingDataLookup;
+        SleepDataLookup = sleepDataLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MovingDataLookup.Update(system);
+        SleepDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -45,8 +47,27 @@ public class LayDownState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // Get moving data from entity
+        if (!MovingDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        // Get sleep data from entity
+        if (!SleepDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(8);
+        }
+
+        var movingData = MovingDataLookup[entity];
+        var sleepData = SleepDataLookup[entity];
+
+        float moveSpeed = movingData.CrawlingSpeedT;
+        float failTime = sleepData.LayDownFailTime;
+        float distance = sleepData.Distance;
+
         // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(failTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -55,13 +76,13 @@ public class LayDownState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // After distance < Distance - returns success
-        if (entityTransform.IsTargetPositionReached(targetTransform.Position, Distance))
+        if (entityTransform.IsTargetPositionReached(targetTransform.Position, distance))
         {
             return SubActionResult.Success();
         }
 
         // Move towards target position (targetScale = 0)
-        var newTransform = entityTransform.MovePositionTowards(targetTransform.Position, 0, timer.DeltaTime, MoveSpeed);
+        var newTransform = entityTransform.MovePositionTowards(targetTransform.Position, 0, timer.DeltaTime, moveSpeed);
 
         buffer.SetComponent(entity, newTransform);
 

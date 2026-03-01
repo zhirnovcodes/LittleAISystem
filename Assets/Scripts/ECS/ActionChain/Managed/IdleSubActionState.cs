@@ -3,14 +3,18 @@ using Unity.Entities;
 
 public class IdleSubActionState : ISubActionState
 {
-    private const float IdleTime = 0.5f;
+    private ComponentLookup<MovingDataComponent> MovingDataLookup;
 
-    public IdleSubActionState()
+    private const float DefaultIdleTime = 2f;
+
+    public IdleSubActionState(ComponentLookup<MovingDataComponent> movingDataLookup)
     {
+        MovingDataLookup = movingDataLookup;
     }
 
     public void Refresh(SystemBase system)
     {
+        MovingDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -23,7 +27,16 @@ public class IdleSubActionState : ISubActionState
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
     {
-        if (timer.IsTimeout(IdleTime))
+        // Get moving data from entity, use default if not found
+        float idleTime = DefaultIdleTime;
+        
+        if (MovingDataLookup.HasComponent(entity))
+        {
+            var movingData = MovingDataLookup[entity];
+            idleTime = movingData.IdleTime;
+        }
+
+        if (timer.IsTimeout(idleTime))
         {
             return SubActionResult.Success();
         }

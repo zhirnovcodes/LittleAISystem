@@ -16,18 +16,23 @@ public partial class TestSubActionsSystem : SystemBase
         var edibleLookup = GetComponentLookup<EdibleComponent>(true);
         var animalStatsLookup = GetComponentLookup<AnimalStatsComponent>(true);
         var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
+        var movingDataLookup = GetComponentLookup<MovingDataComponent>(true);
+        var talkingDataLookup = GetComponentLookup<TalkingDataComponent>(true);
+        var sleepDataLookup = GetComponentLookup<SleepDataComponent>(true);
+        var eatDataLookup = GetComponentLookup<EatDataComponent>(true);
+        var safetyDistanceLookup = GetComponentLookup<SafetyDistanceComponent>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
         {
-            new IdleSubActionState(),
-            new WalkToSubActionState(transformLookup),
-            new WalkToTalk(transformLookup),
-            new RunFrom(transformLookup),
-            new RotateTowards(transformLookup),
-            new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup),
-            new LayDownState(transformLookup),
-            new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup)
+            new IdleSubActionState(movingDataLookup),
+            new WalkToSubActionState(transformLookup, movingDataLookup),
+            new WalkToTalk(transformLookup, talkingDataLookup, movingDataLookup),
+            new RunFrom(transformLookup, movingDataLookup, safetyDistanceLookup),
+            new RotateTowards(transformLookup, movingDataLookup),
+            new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, eatDataLookup),
+            new LayDownState(transformLookup, movingDataLookup, sleepDataLookup),
+            new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup, sleepDataLookup)
         };
     }
 

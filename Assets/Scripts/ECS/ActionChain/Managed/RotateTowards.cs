@@ -6,18 +6,18 @@ using Unity.Transforms;
 public class RotateTowards : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingDataComponent> MovingDataLookup;
 
-    private const float FailTime = 4f;
-    private const float RotationSpeed = 30f; // speed in degrees per second
-
-    public RotateTowards(ComponentLookup<LocalTransform> transformLookup)
+    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
     {
         TransformLookup = transformLookup;
+        MovingDataLookup = movingDataLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MovingDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -44,8 +44,18 @@ public class RotateTowards : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // Get moving data from entity
+        if (!MovingDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        var movingData = MovingDataLookup[entity];
+        float failTime = movingData.RotateFailTime;
+        float rotationSpeed = movingData.MaxRotationSpeed;
+
         // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(failTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -60,7 +70,7 @@ public class RotateTowards : ISubActionState
         }
 
         // Rotate towards target (multiply speed by deltaTime)
-        var newTransform = entityTransform.RotateTowards(targetTransform, RotationSpeed * timer.DeltaTime, 0.01f);
+        var newTransform = entityTransform.RotateTowards(targetTransform, rotationSpeed * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

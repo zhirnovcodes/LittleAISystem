@@ -7,20 +7,20 @@ public class CommunicateSubActionState : ISubActionState
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<FemaleGenetaliaComponent> FemaleGenetaliaLookup;
     private ComponentLookup<MaleGenetaliaComponent> MaleGenetaliaLookup;
-
-    private const float MaxDistance = 0.2f;
-    private const float SocialIncreaseSpeed = 20f;
+    private ComponentLookup<TalkingDataComponent> TalkingDataLookup;
 
     public CommunicateSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         ComponentLookup<FemaleGenetaliaComponent> femaleGenetaliaLookup,
-        ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup)
+        ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup,
+        ComponentLookup<TalkingDataComponent> talkingDataLookup)
     {
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
         FemaleGenetaliaLookup = femaleGenetaliaLookup;
         MaleGenetaliaLookup = maleGenetaliaLookup;
+        TalkingDataLookup = talkingDataLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -29,6 +29,7 @@ public class CommunicateSubActionState : ISubActionState
         AnimalStatsLookup.Update(system);
         FemaleGenetaliaLookup.Update(system);
         MaleGenetaliaLookup.Update(system);
+        TalkingDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -81,17 +82,27 @@ public class CommunicateSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // Get talking data from entity
+        if (!TalkingDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        var talkingData = TalkingDataLookup[entity];
+        float maxDistance = talkingData.MaxDistance;
+        float socialIncreaseSpeed = talkingData.SocialIncrease;
+
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
 
         // Check if target is reached
-        if (entityTransform.IsTargetReached(targetTransform, MaxDistance) == false)
+        if (entityTransform.IsTargetReached(targetTransform, maxDistance) == false)
         {
             return SubActionResult.Fail(2);
         }
 
         // Add stat Social with const float increase speed * delta time
-        var socialGain = SocialIncreaseSpeed * timer.DeltaTime;
+        var socialGain = socialIncreaseSpeed * timer.DeltaTime;
 
         var statsChange = new AnimalStatsBuilder().WithSocial(socialGain).Build();
 

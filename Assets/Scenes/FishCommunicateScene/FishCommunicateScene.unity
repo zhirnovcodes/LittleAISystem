@@ -186,6 +186,11 @@ GameObject:
   - component: {fileID: 450879518}
   - component: {fileID: 450879517}
   - component: {fileID: 450879516}
+  - component: {fileID: 450879527}
+  - component: {fileID: 450879531}
+  - component: {fileID: 450879530}
+  - component: {fileID: 450879529}
+  - component: {fileID: 450879528}
   m_Layer: 0
   m_Name: FishFemale
   m_TagString: Untagged
@@ -590,7 +595,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0209a636d165fa24dae0323c7231ddbe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BaseConditions: 41
+  BaseConditions: 25
 --- !u!114 &450879522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -686,6 +691,87 @@ Transform:
   - {fileID: 642174202}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &450879527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2c9f57ca23493246b6dd83937459a7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxSpeed: 2
+  MaxRotationSpeed: 45
+  RotateFailTime: 3
+  MoveFailTime: 10
+  CrawlingSpeedT: 0.25
+  WalkingSpeedT: 0.5
+  WalkingRotationSpeedT: 0.8
+  IdleTime: 2
+--- !u!114 &450879528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acd20b68ff5e3014a89b47fac2247e45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SafeDistance: 6
+  CheckInterval: 0.3
+--- !u!114 &450879529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07a54916d403e084caa8405ae07c8956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Interval: 0.2
+  FailTime: 10
+  MaxDistance: 0.2
+  BiteSize: 0.25
+--- !u!114 &450879530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aef76b467616bc044be0f42053721d9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FailTime: 20
+  MaxDistance: 0.3
+  LayDownFailTime: 2
+  Distance: 0.1
+--- !u!114 &450879531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3b54ebc15ca534b848315f165dd319, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  StumbleFailTime: 4
+  MaxDistance: 0.2
+  SocialIncrease: 30
 --- !u!1001 &642174201
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -903,6 +989,11 @@ GameObject:
   - component: {fileID: 1815018771}
   - component: {fileID: 1815018770}
   - component: {fileID: 1815018769}
+  - component: {fileID: 1815018780}
+  - component: {fileID: 1815018781}
+  - component: {fileID: 1815018782}
+  - component: {fileID: 1815018783}
+  - component: {fileID: 1815018784}
   m_Layer: 0
   m_Name: FishMale
   m_TagString: Untagged
@@ -935,7 +1026,7 @@ MonoBehaviour:
           y: 0
           z: 0
           w: 0
-    ActorConditions: 32
+    ActorConditions: 16
     ActionType: 6
 --- !u!114 &1815018770
 MonoBehaviour:
@@ -1403,6 +1494,87 @@ Transform:
   - {fileID: 1539400238}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1815018780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2c9f57ca23493246b6dd83937459a7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxSpeed: 2.5
+  MaxRotationSpeed: 30
+  RotateFailTime: 3
+  MoveFailTime: 10
+  CrawlingSpeedT: 0.2
+  WalkingSpeedT: 0.5
+  WalkingRotationSpeedT: 0.8
+  IdleTime: 2
+--- !u!114 &1815018781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d3b54ebc15ca534b848315f165dd319, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  StumbleFailTime: 5
+  MaxDistance: 0.2
+  SocialIncrease: 20
+--- !u!114 &1815018782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aef76b467616bc044be0f42053721d9d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FailTime: 50
+  MaxDistance: 0.2
+  LayDownFailTime: 2
+  Distance: 0.1
+--- !u!114 &1815018783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07a54916d403e084caa8405ae07c8956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Interval: 0.3
+  FailTime: 20
+  MaxDistance: 0.2
+  BiteSize: 0.1
+--- !u!114 &1815018784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acd20b68ff5e3014a89b47fac2247e45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SafeDistance: 5
+  CheckInterval: 0.2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

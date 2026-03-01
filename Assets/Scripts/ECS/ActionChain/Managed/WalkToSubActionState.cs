@@ -6,21 +6,18 @@ using Unity.Transforms;
 public class WalkToSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingDataComponent> MovingDataLookup;
 
-    private const float MoveSpeedMax = 1.0f;
-    private const float MoveSpeedMin = 0.5f;
-    private const float SpeedReduceDistance = 0.5f;
-    private const float FailTime = 15f;
-    private const float RotationSpeed = 30f;
-
-    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup)
+    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
     {
         TransformLookup = transformLookup;
+        MovingDataLookup = movingDataLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MovingDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -47,8 +44,19 @@ public class WalkToSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // Get moving data from entity
+        if (!MovingDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        var movingData = MovingDataLookup[entity];
+        float moveSpeed = movingData.MaxSpeed * movingData.WalkingSpeedT;
+        float failTime = movingData.MoveFailTime;
+        float rotationSpeed = movingData.MaxRotationSpeed * movingData.WalkingRotationSpeedT;
+
         // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(failTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -62,15 +70,11 @@ public class WalkToSubActionState : ISubActionState
             return SubActionResult.Success();
         }
 
-        // Determine move speed based on distance
-        var IsDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance);
-        float moveSpeed = IsDistanceGreaterThan ? MoveSpeedMax : MoveSpeedMin;
-
         // Move towards target
         var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, moveSpeed);
 
         // Rotate towards target
-        newTransform = newTransform.RotateTowards(targetTransform, RotationSpeed * timer.DeltaTime, 0.01f);
+        newTransform = newTransform.RotateTowards(targetTransform, rotationSpeed * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

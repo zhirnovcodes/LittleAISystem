@@ -66,6 +66,73 @@ public struct FishBuilder
         return this;
     }
 
+    public FishBuilder WithMoving(float maxSpeed, float maxRotationSpeed, float rotateFailTime, float moveFailTime, 
+        float crawlingSpeedT, float walkingSpeedT, float walkingRotationSpeedT, float idleTime)
+    {
+        CommandBuffer.AddComponent(Entity, new MovingDataComponent
+        {
+            MaxSpeed = maxSpeed,
+            MaxRotationSpeed = maxRotationSpeed,
+            RotateFailTime = rotateFailTime,
+            MoveFailTime = moveFailTime,
+            CrawlingSpeedT = crawlingSpeedT,
+            WalkingSpeedT = walkingSpeedT,
+            WalkingRotationSpeedT = walkingRotationSpeedT,
+            IdleTime = idleTime
+        });
+
+        return this;
+    }
+
+    public FishBuilder WithTalking(float stumbleFailTime, float maxDistance, float socialIncrease)
+    {
+        CommandBuffer.AddComponent(Entity, new TalkingDataComponent
+        {
+            StumbleFailTime = stumbleFailTime,
+            MaxDistance = maxDistance,
+            SocialIncrease = socialIncrease
+        });
+
+        return this;
+    }
+
+    public FishBuilder WithSleeping(float failTime, float maxDistance, float layDownFailTime, float distance)
+    {
+        CommandBuffer.AddComponent(Entity, new SleepDataComponent
+        {
+            FailTime = failTime,
+            MaxDistance = maxDistance,
+            LayDownFailTime = layDownFailTime,
+            Distance = distance
+        });
+
+        return this;
+    }
+
+    public FishBuilder WithEating(float interval, float failTime, float maxDistance, float biteSize)
+    {
+        CommandBuffer.AddComponent(Entity, new EatDataComponent
+        {
+            Interval = interval,
+            FailTime = failTime,
+            MaxDistance = maxDistance,
+            BiteSize = biteSize
+        });
+
+        return this;
+    }
+
+    public FishBuilder WithSafety(float safeDistance, float checkInterval)
+    {
+        CommandBuffer.AddComponent(Entity, new SafetyDistanceComponent
+        {
+            SafeDistance = safeDistance,
+            CheckInterval = checkInterval
+        });
+
+        return this;
+    }
+
     public Entity Build()
     {
         return Entity;

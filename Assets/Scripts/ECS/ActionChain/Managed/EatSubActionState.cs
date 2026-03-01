@@ -6,17 +6,14 @@ public class EatSubActionState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<EdibleComponent> EdibleLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    private ComponentLookup<EatDataComponent> EatDataLookup;
 
-    private const float Interval = 0.5f; // interval of bites - sec
-    private const float FailTime = 30f;
-    private const float MaxDistance = 0.2f;
-    private const float BiteSize = 0.2f;
-
-    public EatSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<EdibleComponent> edibleLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup)
+    public EatSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<EdibleComponent> edibleLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<EatDataComponent> eatDataLookup)
     {
         TransformLookup = transformLookup;
         EdibleLookup = edibleLookup;
         AnimalStatsLookup = animalStatsLookup;
+        EatDataLookup = eatDataLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -24,6 +21,7 @@ public class EatSubActionState : ISubActionState
         TransformLookup.Update(system);
         EdibleLookup.Update(system);
         AnimalStatsLookup.Update(system);
+        EatDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -50,8 +48,20 @@ public class EatSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // Get eat data from entity
+        if (!EatDataLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(8);
+        }
+
+        var eatData = EatDataLookup[entity];
+        float interval = eatData.Interval;
+        float failTime = eatData.FailTime;
+        float maxDistance = eatData.MaxDistance;
+        float biteSize = eatData.BiteSize;
+
         // if time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(failTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -60,7 +70,7 @@ public class EatSubActionState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // if distance between transforms > MaxDistance - fail with error code 3
-        if (!entityTransform.IsTargetReached(targetTransform, MaxDistance))
+        if (!entityTransform.IsTargetReached(targetTransform, maxDistance))
         {
             return SubActionResult.Fail(3);
         }
@@ -94,9 +104,9 @@ public class EatSubActionState : ISubActionState
         }
 
         // Check if it's time for another bite using IsTimerTick
-        if (timer.IsTimerTick(Interval, true))
+        if (timer.IsTimerTick(interval, true))
         {
-            Bite(entity, target, edibleComponent, edibleBodyTransform, buffer);
+            Bite(entity, target, edibleComponent, edibleBodyTransform, buffer, biteSize);
         }
 
         // Check if Fullness >= 100 - returns Success
@@ -109,11 +119,11 @@ public class EatSubActionState : ISubActionState
         return SubActionResult.Running();
     }
 
-    private void Bite(Entity entity, Entity target, EdibleComponent edibleComponent, LocalTransform edibleBodyTransform, EntityCommandBuffer buffer)
+    private void Bite(Entity entity, Entity target, EdibleComponent edibleComponent, LocalTransform edibleBodyTransform, EntityCommandBuffer buffer, float biteSize)
     {
-        // Calculate actual bite size (might be less than BiteSize if remaining is smaller)
-        var actualBiteSize = BiteSize;
-        var newScale = edibleBodyTransform.Scale - BiteSize;
+        // Calculate actual bite size (might be less than biteSize if remaining is smaller)
+        var actualBiteSize = biteSize;
+        var newScale = edibleBodyTransform.Scale - biteSize;
         
         if (newScale < 0)
         {
