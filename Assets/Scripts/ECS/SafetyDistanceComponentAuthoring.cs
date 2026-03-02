@@ -12,7 +12,7 @@ public class SafetyDistanceComponentAuthoring : MonoBehaviour
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
 
-            AddComponent(entity, new SafetyDistanceComponent
+            AddComponent(entity, new SafetyDataComponent
             {
                 SafeDistance = authoring.SafeDistance,
                 CheckInterval = authoring.CheckInterval

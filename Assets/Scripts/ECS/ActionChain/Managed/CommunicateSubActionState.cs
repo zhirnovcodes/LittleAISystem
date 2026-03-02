@@ -7,6 +7,7 @@ public class CommunicateSubActionState : ISubActionState
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<FemaleGenetaliaComponent> FemaleGenetaliaLookup;
     private ComponentLookup<MaleGenetaliaComponent> MaleGenetaliaLookup;
+    private ComponentLookup<DNAComponent> DNALookup;
     private ComponentLookup<TalkingDataComponent> TalkingDataLookup;
 
     public CommunicateSubActionState(
@@ -14,12 +15,14 @@ public class CommunicateSubActionState : ISubActionState
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         ComponentLookup<FemaleGenetaliaComponent> femaleGenetaliaLookup,
         ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup,
+        ComponentLookup<DNAComponent> dnaLookup,
         ComponentLookup<TalkingDataComponent> talkingDataLookup)
     {
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
         FemaleGenetaliaLookup = femaleGenetaliaLookup;
         MaleGenetaliaLookup = maleGenetaliaLookup;
+        DNALookup = dnaLookup;
         TalkingDataLookup = talkingDataLookup;
     }
 
@@ -29,6 +32,7 @@ public class CommunicateSubActionState : ISubActionState
         AnimalStatsLookup.Update(system);
         FemaleGenetaliaLookup.Update(system);
         MaleGenetaliaLookup.Update(system);
+        DNALookup.Update(system);
         TalkingDataLookup.Update(system);
     }
 
@@ -82,13 +86,21 @@ public class CommunicateSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get talking data from entity
-        if (!TalkingDataLookup.HasComponent(entity))
+        // Get DNA entity first
+        if (!DNALookup.HasComponent(entity))
         {
             return SubActionResult.Fail(7);
         }
 
-        var talkingData = TalkingDataLookup[entity];
+        var dnaEntity = DNALookup[entity].DNA;
+
+        // Get talking data from DNA entity
+        if (!TalkingDataLookup.HasComponent(dnaEntity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        var talkingData = TalkingDataLookup[dnaEntity];
         float maxDistance = talkingData.MaxDistance;
         float socialIncreaseSpeed = talkingData.SocialIncrease;
 

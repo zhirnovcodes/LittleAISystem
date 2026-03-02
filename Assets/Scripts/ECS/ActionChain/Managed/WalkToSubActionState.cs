@@ -6,17 +6,20 @@ using Unity.Transforms;
 public class WalkToSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<DNAComponent> DNALookup;
     private ComponentLookup<MovingDataComponent> MovingDataLookup;
 
-    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
+    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
     {
         TransformLookup = transformLookup;
+        DNALookup = dnaLookup;
         MovingDataLookup = movingDataLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        DNALookup.Update(system);
         MovingDataLookup.Update(system);
     }
 
@@ -44,13 +47,21 @@ public class WalkToSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get moving data from entity
-        if (!MovingDataLookup.HasComponent(entity))
+        // Get DNA entity first
+        if (!DNALookup.HasComponent(entity))
         {
             return SubActionResult.Fail(7);
         }
 
-        var movingData = MovingDataLookup[entity];
+        var dnaEntity = DNALookup[entity].DNA;
+
+        // Get moving data from DNA entity
+        if (!MovingDataLookup.HasComponent(dnaEntity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        var movingData = MovingDataLookup[dnaEntity];
         float moveSpeed = movingData.MaxSpeed * movingData.WalkingSpeedT;
         float failTime = movingData.MoveFailTime;
         float rotationSpeed = movingData.MaxRotationSpeed * movingData.WalkingRotationSpeedT;

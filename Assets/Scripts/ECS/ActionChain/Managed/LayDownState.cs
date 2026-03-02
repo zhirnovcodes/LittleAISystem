@@ -6,12 +6,14 @@ using Unity.Transforms;
 public class LayDownState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<DNAComponent> DNALookup;
     private ComponentLookup<MovingDataComponent> MovingDataLookup;
     private ComponentLookup<SleepDataComponent> SleepDataLookup;
 
-    public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingDataComponent> movingDataLookup, ComponentLookup<SleepDataComponent> sleepDataLookup)
+    public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<MovingDataComponent> movingDataLookup, ComponentLookup<SleepDataComponent> sleepDataLookup)
     {
         TransformLookup = transformLookup;
+        DNALookup = dnaLookup;
         MovingDataLookup = movingDataLookup;
         SleepDataLookup = sleepDataLookup;
     }
@@ -19,6 +21,7 @@ public class LayDownState : ISubActionState
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        DNALookup.Update(system);
         MovingDataLookup.Update(system);
         SleepDataLookup.Update(system);
     }
@@ -47,20 +50,28 @@ public class LayDownState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get moving data from entity
-        if (!MovingDataLookup.HasComponent(entity))
+        // Get DNA entity first
+        if (!DNALookup.HasComponent(entity))
         {
             return SubActionResult.Fail(7);
         }
 
-        // Get sleep data from entity
-        if (!SleepDataLookup.HasComponent(entity))
+        var dnaEntity = DNALookup[entity].DNA;
+
+        // Get moving data from DNA entity
+        if (!MovingDataLookup.HasComponent(dnaEntity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        // Get sleep data from DNA entity
+        if (!SleepDataLookup.HasComponent(dnaEntity))
         {
             return SubActionResult.Fail(8);
         }
 
-        var movingData = MovingDataLookup[entity];
-        var sleepData = SleepDataLookup[entity];
+        var movingData = MovingDataLookup[dnaEntity];
+        var sleepData = SleepDataLookup[dnaEntity];
 
         float moveSpeed = movingData.CrawlingSpeedT;
         float failTime = sleepData.LayDownFailTime;

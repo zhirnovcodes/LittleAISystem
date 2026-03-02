@@ -4,12 +4,14 @@ using Unity.Transforms;
 public class WalkToTalk : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<DNAComponent> DNALookup;
     private ComponentLookup<TalkingDataComponent> TalkingDataLookup;
     private ComponentLookup<MovingDataComponent> MovingDataLookup;
 
-    public WalkToTalk(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<TalkingDataComponent> talkingDataLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
+    public WalkToTalk(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<TalkingDataComponent> talkingDataLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
     {
         TransformLookup = transformLookup;
+        DNALookup = dnaLookup;
         TalkingDataLookup = talkingDataLookup;
         MovingDataLookup = movingDataLookup;
     }
@@ -17,6 +19,7 @@ public class WalkToTalk : ISubActionState
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        DNALookup.Update(system);
         TalkingDataLookup.Update(system);
         MovingDataLookup.Update(system);
     }
@@ -45,20 +48,28 @@ public class WalkToTalk : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get talking data from entity
-        if (!TalkingDataLookup.HasComponent(entity))
+        // Get DNA entity first
+        if (!DNALookup.HasComponent(entity))
         {
             return SubActionResult.Fail(7);
         }
 
-        // Get moving data from entity
-        if (!MovingDataLookup.HasComponent(entity))
+        var dnaEntity = DNALookup[entity].DNA;
+
+        // Get talking data from DNA entity
+        if (!TalkingDataLookup.HasComponent(dnaEntity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        // Get moving data from DNA entity
+        if (!MovingDataLookup.HasComponent(dnaEntity))
         {
             return SubActionResult.Fail(8);
         }
 
-        var talkingData = TalkingDataLookup[entity];
-        var movingData = MovingDataLookup[entity];
+        var talkingData = TalkingDataLookup[dnaEntity];
+        var movingData = MovingDataLookup[dnaEntity];
 
         float maxSpeed = movingData.MaxSpeed;
         float maxRotationSpeed = movingData.MaxRotationSpeed;

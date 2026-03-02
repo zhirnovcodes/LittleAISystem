@@ -124,7 +124,7 @@ public struct FishBuilder
 
     public FishBuilder WithSafety(float safeDistance, float checkInterval)
     {
-        CommandBuffer.AddComponent(Entity, new SafetyDistanceComponent
+        CommandBuffer.AddComponent(Entity, new SafetyDataComponent
         {
             SafeDistance = safeDistance,
             CheckInterval = checkInterval

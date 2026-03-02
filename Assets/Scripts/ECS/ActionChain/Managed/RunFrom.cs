@@ -6,12 +6,14 @@ using Unity.Transforms;
 public class RunFrom : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<DNAComponent> DNALookup;
     private ComponentLookup<MovingDataComponent> MovingDataLookup;
-    private ComponentLookup<SafetyDistanceComponent> SafetyDistanceLookup;
+    private ComponentLookup<SafetyDataComponent> SafetyDistanceLookup;
 
-    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingDataComponent> movingDataLookup, ComponentLookup<SafetyDistanceComponent> safetyDistanceLookup)
+    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<MovingDataComponent> movingDataLookup, ComponentLookup<SafetyDataComponent> safetyDistanceLookup)
     {
         TransformLookup = transformLookup;
+        DNALookup = dnaLookup;
         MovingDataLookup = movingDataLookup;
         SafetyDistanceLookup = safetyDistanceLookup;
     }
@@ -19,6 +21,7 @@ public class RunFrom : ISubActionState
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        DNALookup.Update(system);
         MovingDataLookup.Update(system);
         SafetyDistanceLookup.Update(system);
     }
@@ -47,20 +50,28 @@ public class RunFrom : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get moving data from entity
-        if (!MovingDataLookup.HasComponent(entity))
+        // Get DNA entity first
+        if (!DNALookup.HasComponent(entity))
         {
             return SubActionResult.Fail(7);
         }
 
-        // Get safety distance from entity
-        if (!SafetyDistanceLookup.HasComponent(entity))
+        var dnaEntity = DNALookup[entity].DNA;
+
+        // Get moving data from DNA entity
+        if (!MovingDataLookup.HasComponent(dnaEntity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        // Get safety distance from DNA entity
+        if (!SafetyDistanceLookup.HasComponent(dnaEntity))
         {
             return SubActionResult.Fail(8);
         }
 
-        var movingData = MovingDataLookup[entity];
-        var safetyData = SafetyDistanceLookup[entity];
+        var movingData = MovingDataLookup[dnaEntity];
+        var safetyData = SafetyDistanceLookup[dnaEntity];
 
         float moveSpeed = movingData.MaxSpeed;
         float safeDistance = safetyData.SafeDistance;

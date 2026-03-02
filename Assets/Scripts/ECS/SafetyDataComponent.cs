@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
-public struct SafetyDistanceComponent : IComponentData
+public struct SafetyDataComponent : IComponentData
 {
     public float SafeDistance;
     public float CheckInterval;
@@ -11,9 +11,9 @@ public struct SafetyDistanceComponent : IComponentData
         return new float4(SafeDistance, CheckInterval, 0f, 0f);
     }
 
-    public static SafetyDistanceComponent FromFloat4(float4 data)
+    public static SafetyDataComponent FromFloat4(float4 data)
     {
-        return new SafetyDistanceComponent
+        return new SafetyDataComponent
         {
             SafeDistance = data.x,
             CheckInterval = data.y

@@ -6,13 +6,15 @@ public class EatSubActionState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<EdibleComponent> EdibleLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    private ComponentLookup<DNAComponent> DNALookup;
     private ComponentLookup<EatDataComponent> EatDataLookup;
 
-    public EatSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<EdibleComponent> edibleLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<EatDataComponent> eatDataLookup)
+    public EatSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<EdibleComponent> edibleLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<EatDataComponent> eatDataLookup)
     {
         TransformLookup = transformLookup;
         EdibleLookup = edibleLookup;
         AnimalStatsLookup = animalStatsLookup;
+        DNALookup = dnaLookup;
         EatDataLookup = eatDataLookup;
     }
 
@@ -21,6 +23,7 @@ public class EatSubActionState : ISubActionState
         TransformLookup.Update(system);
         EdibleLookup.Update(system);
         AnimalStatsLookup.Update(system);
+        DNALookup.Update(system);
         EatDataLookup.Update(system);
     }
 
@@ -48,13 +51,21 @@ public class EatSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get eat data from entity
-        if (!EatDataLookup.HasComponent(entity))
+        // Get DNA entity first
+        if (!DNALookup.HasComponent(entity))
         {
             return SubActionResult.Fail(8);
         }
 
-        var eatData = EatDataLookup[entity];
+        var dnaEntity = DNALookup[entity].DNA;
+
+        // Get eat data from DNA entity
+        if (!EatDataLookup.HasComponent(dnaEntity))
+        {
+            return SubActionResult.Fail(8);
+        }
+
+        var eatData = EatDataLookup[dnaEntity];
         float interval = eatData.Interval;
         float failTime = eatData.FailTime;
         float maxDistance = eatData.MaxDistance;

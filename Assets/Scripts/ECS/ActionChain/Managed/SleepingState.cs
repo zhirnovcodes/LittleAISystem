@@ -6,13 +6,15 @@ public class SleepingState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    private ComponentLookup<DNAComponent> DNALookup;
     private ComponentLookup<SleepDataComponent> SleepDataLookup;
 
-    public SleepingState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<SleepDataComponent> sleepDataLookup)
+    public SleepingState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<SleepDataComponent> sleepDataLookup)
     {
         TransformLookup = transformLookup;
         SleepingPlaceLookup = sleepingPlaceLookup;
         AnimalStatsLookup = animalStatsLookup;
+        DNALookup = dnaLookup;
         SleepDataLookup = sleepDataLookup;
     }
 
@@ -21,6 +23,7 @@ public class SleepingState : ISubActionState
         TransformLookup.Update(system);
         SleepingPlaceLookup.Update(system);
         AnimalStatsLookup.Update(system);
+        DNALookup.Update(system);
         SleepDataLookup.Update(system);
     }
 
@@ -48,13 +51,21 @@ public class SleepingState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get sleep data from entity
-        if (!SleepDataLookup.HasComponent(entity))
+        // Get DNA entity first
+        if (!DNALookup.HasComponent(entity))
         {
             return SubActionResult.Fail(7);
         }
 
-        var sleepData = SleepDataLookup[entity];
+        var dnaEntity = DNALookup[entity].DNA;
+
+        // Get sleep data from DNA entity
+        if (!SleepDataLookup.HasComponent(dnaEntity))
+        {
+            return SubActionResult.Fail(7);
+        }
+
+        var sleepData = SleepDataLookup[dnaEntity];
         float failTime = sleepData.FailTime;
         float maxDistance = sleepData.MaxDistance;
 

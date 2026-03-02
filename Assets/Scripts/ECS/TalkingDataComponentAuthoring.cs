@@ -6,6 +6,7 @@ public class TalkingDataComponentAuthoring : MonoBehaviour
     public float StumbleFailTime;
     public float MaxDistance;
     public float SocialIncrease;
+    public bool HasMaleGenitalia;
 
     class Baker : Baker<TalkingDataComponentAuthoring>
     {
@@ -17,7 +18,8 @@ public class TalkingDataComponentAuthoring : MonoBehaviour
             {
                 StumbleFailTime = authoring.StumbleFailTime,
                 MaxDistance = authoring.MaxDistance,
-                SocialIncrease = authoring.SocialIncrease
+                SocialIncrease = authoring.SocialIncrease,
+                HasMaleGenitalia = authoring.HasMaleGenitalia
             });
         }
     }
