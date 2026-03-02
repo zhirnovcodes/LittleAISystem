@@ -12,5 +12,14 @@ public struct MovingSpeedComponent : IComponentData
     public float GetWalkingRotationSpeed() => MaxRotationSpeed * 0.5f;
     public float GetRunningRotationSpeed() => MaxRotationSpeed;
     public float GetCrawlingRotationSpeed() => MaxRotationSpeed * 0.25f;
+
+    public static implicit operator MovingSpeedComponent(GenomeData genomeData)
+    {
+        return new MovingSpeedComponent
+        {
+            MaxSpeed = genomeData.Data.c0.x,
+            MaxRotationSpeed = genomeData.Data.c0.y
+        };
+    }
 }
 
