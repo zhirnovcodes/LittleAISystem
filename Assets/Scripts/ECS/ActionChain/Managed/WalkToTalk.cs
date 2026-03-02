@@ -4,23 +4,21 @@ using Unity.Transforms;
 public class WalkToTalk : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
     private const float MaxDistance = 0.2f;
-    private const float MinDistance = 0.1f;
-    private const float MoveSpeedMax = 1.0f;
-    private const float MoveSpeedMin = 0.5f;
-    private const float SpeedReduceDistance = 0.5f;
-    private const float FailTime = 15f;
-    private const float RotationSpeed = 30f;
+    private const float FailTime = 30f;
 
-    public WalkToTalk(ComponentLookup<LocalTransform> transformLookup)
+    public WalkToTalk(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -62,22 +60,25 @@ public class WalkToTalk : ISubActionState
             return SubActionResult.Success();
         }
 
+        // if entity does not have MovingSpeedComponent - return fail with code 3
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
+
         // Move towards target
-        MoveTowards(entity, entityTransform, targetTransform, buffer, timer);
+        var movingSpeed = MovingSpeedLookup[entity];
+        MoveTowards(entity, entityTransform, targetTransform, buffer, timer, movingSpeed);
         return SubActionResult.Running();
     }
 
-    private void MoveTowards(Entity entity, LocalTransform entityTransform, LocalTransform targetTransform, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    private void MoveTowards(Entity entity, LocalTransform entityTransform, LocalTransform targetTransform, EntityCommandBuffer buffer, in SubActionTimeComponent timer, MovingSpeedComponent movingSpeed)
     {
-        // Determine move speed based on distance
-        var isDistanceGreaterThan = entityTransform.IsDistanceGreaterThan(targetTransform, SpeedReduceDistance + MaxDistance);
-        float moveSpeed = isDistanceGreaterThan ? MoveSpeedMax : MoveSpeedMin;
+        // Move towards target using walking speed
+        var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, movingSpeed.GetWalkingSpeed());
 
-        // Move towards target
-        var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, moveSpeed);
-
-        // Rotate towards target
-        newTransform = newTransform.RotateTowards(targetTransform, RotationSpeed * timer.DeltaTime, 0.01f);
+        // Rotate towards target using walking rotation speed
+        newTransform = newTransform.RotateTowards(targetTransform, movingSpeed.GetWalkingRotationSpeed() * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
     }

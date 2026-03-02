@@ -6,19 +6,21 @@ using Unity.Transforms;
 public class LayDownState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    private const float MoveSpeed = 1.0f;
-    private const float FailTime = 15f;
-    private const float Distance = 0.1f;
+    private const float FailTime = 5f;
+    private const float Distance = 0.01f;
 
-    public LayDownState(ComponentLookup<LocalTransform> transformLookup)
+    public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -60,8 +62,15 @@ public class LayDownState : ISubActionState
             return SubActionResult.Success();
         }
 
-        // Move towards target position (targetScale = 0)
-        var newTransform = entityTransform.MovePositionTowards(targetTransform.Position, 0, timer.DeltaTime, MoveSpeed);
+        // if entity does not have MovingSpeedComponent - return fail with code 3
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
+
+        // Move towards target position using crawling speed (targetScale = 0)
+        var movingSpeed = MovingSpeedLookup[entity];
+        var newTransform = entityTransform.MovePositionTowards(targetTransform.Position, 0, timer.DeltaTime, movingSpeed.GetCrawlingSpeed());
 
         buffer.SetComponent(entity, newTransform);
 

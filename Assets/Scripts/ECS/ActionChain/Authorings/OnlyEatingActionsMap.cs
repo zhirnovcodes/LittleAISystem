@@ -10,6 +10,8 @@ public class OnlyEatingActionsMap : ActionMapBase
         var transformLookup = system.GetComponentLookup<LocalTransform>(true);
         var edibleLookup = system.GetComponentLookup<EdibleComponent>(true);
         var animalStatsLookup = system.GetComponentLookup<AnimalStatsComponent>(true);
+        var statsIncreaseLookup = system.GetComponentLookup<StatsIncreaseComponent>(true);
+        var movingSpeedLookup = system.GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = system.GetComponentLookup<SleepingPlaceComponent>(true);
         var femaleGenetaliaLookup = system.GetComponentLookup<FemaleGenetaliaComponent>(true);
         var maleGenetaliaLookup = system.GetComponentLookup<MaleGenetaliaComponent>(true);
@@ -18,15 +20,15 @@ public class OnlyEatingActionsMap : ActionMapBase
         var subActions = new Dictionary<SubActionTypes, ISubActionState>
         {
             { SubActionTypes.Idle, new IdleSubActionState() },
-            { SubActionTypes.MoveTo, new WalkToSubActionState(transformLookup) },
-            { SubActionTypes.MoveToTalk, new WalkToTalk(transformLookup) },
-            { SubActionTypes.RunFrom, new RunFrom(transformLookup) },
-            { SubActionTypes.RotateTowards, new RotateTowards(transformLookup) },
-            { SubActionTypes.Eat, new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup) },
-            { SubActionTypes.MoveInto, new LayDownState(transformLookup) },
+            { SubActionTypes.MoveTo, new WalkToSubActionState(transformLookup, movingSpeedLookup) },
+            { SubActionTypes.MoveToTalk, new WalkToTalk(transformLookup, movingSpeedLookup) },
+            { SubActionTypes.RunFrom, new RunFrom(transformLookup, movingSpeedLookup) },
+            { SubActionTypes.RotateTowards, new RotateTowards(transformLookup, movingSpeedLookup) },
+            { SubActionTypes.Eat, new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, statsIncreaseLookup) },
+            { SubActionTypes.MoveInto, new LayDownState(transformLookup, movingSpeedLookup) },
             { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup) },
-            { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(transformLookup, animalStatsLookup, femaleGenetaliaLookup, maleGenetaliaLookup ) },
-            { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, femaleGenetaliaLookup, maleGenetaliaLookup) }
+            { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(transformLookup, animalStatsLookup, femaleGenetaliaLookup, maleGenetaliaLookup) },
+            { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, femaleGenetaliaLookup, maleGenetaliaLookup, statsIncreaseLookup) }
         };
 
         return subActions;

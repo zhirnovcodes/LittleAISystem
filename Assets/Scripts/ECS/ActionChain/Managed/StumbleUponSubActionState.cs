@@ -9,8 +9,8 @@ public class StumbleUponSubActionState : ISubActionState
     private ComponentLookup<MaleGenetaliaComponent> MaleGenetaliaLookup;
 
     private const float FailTime = 5f;
-    private const float MaxDistance = 0.2f;
-    private const float Delta = 0.1f;
+    private const float MaxDistance = 0.3f;
+    private const float Delta = 1f;
 
     public StumbleUponSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
@@ -34,7 +34,17 @@ public class StumbleUponSubActionState : ISubActionState
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to enable
+        if (FemaleGenetaliaLookup.TryGetComponent(entity, out var femaleGenitalia))
+        {
+            femaleGenitalia.IsActive = true;
+            buffer.SetComponent(entity, femaleGenitalia);
+        }
+
+        if (MaleGenetaliaLookup.TryGetComponent(entity, out var maleGenitalia))
+        {
+            maleGenitalia.IsActive = true;
+            buffer.SetComponent(entity, maleGenitalia);
+        }
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -74,11 +84,11 @@ public class StumbleUponSubActionState : ISubActionState
         {
             return SubActionResult.Fail(2);
         }
+        /*
 
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
-
-        // Check if target is reached
+        // Check if target is not reached
         if (entityTransform.IsTargetReached(targetTransform, MaxDistance) == false)
         {
             return SubActionResult.Running();
@@ -88,7 +98,7 @@ public class StumbleUponSubActionState : ISubActionState
         if (entityTransform.IsLookingTowards(targetTransform, Delta) == false)
         {
             return SubActionResult.Running();
-        }
+        }*/
 
         // Check if entity has male or female genitalia and set IsActive to true
         bool hasMaleGenitalia = false;

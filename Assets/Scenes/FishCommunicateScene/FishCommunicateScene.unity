@@ -186,6 +186,8 @@ GameObject:
   - component: {fileID: 450879518}
   - component: {fileID: 450879517}
   - component: {fileID: 450879516}
+  - component: {fileID: 450879527}
+  - component: {fileID: 450879528}
   m_Layer: 0
   m_Name: FishFemale
   m_TagString: Untagged
@@ -686,6 +688,44 @@ Transform:
   - {fileID: 642174202}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &450879527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d58251e577a956a46935590cdcb58846, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  StatIncreasePerSecond:
+    Stats:
+      c0:
+        x: 15
+        y: 15
+        z: 15
+        w: 15
+      c1:
+        x: 15
+        y: 15
+        z: 0
+        w: 0
+--- !u!114 &450879528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe7e815a2c098ee419f7e5693fd6dead, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxSpeed: 4
+  MaxRotationSpeed: 70
 --- !u!1001 &642174201
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -903,6 +943,8 @@ GameObject:
   - component: {fileID: 1815018771}
   - component: {fileID: 1815018770}
   - component: {fileID: 1815018769}
+  - component: {fileID: 1815018780}
+  - component: {fileID: 1815018781}
   m_Layer: 0
   m_Name: FishMale
   m_TagString: Untagged
@@ -1403,6 +1445,44 @@ Transform:
   - {fileID: 1539400238}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1815018780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d58251e577a956a46935590cdcb58846, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  StatIncreasePerSecond:
+    Stats:
+      c0:
+        x: 10
+        y: 10
+        z: 10
+        w: 10
+      c1:
+        x: 10
+        y: 10
+        z: 0
+        w: 0
+--- !u!114 &1815018781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe7e815a2c098ee419f7e5693fd6dead, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxSpeed: 5
+  MaxRotationSpeed: 60
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

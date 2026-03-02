@@ -6,19 +6,20 @@ using Unity.Transforms;
 public class RunFrom : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    private const float MoveSpeed = 1.0f;
-    private const float SafeDistance = 5.0f;
-    private const float RotationSpeed = 30f;
+    private const float SafeDistance = 10f;
 
-    public RunFrom(ComponentLookup<LocalTransform> transformLookup)
+    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -54,12 +55,19 @@ public class RunFrom : ISubActionState
             return SubActionResult.Success();
         }
 
-        // Move in direction opposite from target
-        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * MoveSpeed);
+        // if entity does not have MovingSpeedComponent - return fail with code 2
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(2);
+        }
 
-        // Rotate away from target
+        // Move in direction opposite from target using running speed
+        var movingSpeed = MovingSpeedLookup[entity];
+        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * movingSpeed.GetRunningSpeed());
+
+        // Rotate away from target using running rotation speed
         var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
-        newTransform = newTransform.RotateTowards(directionAwayFromTarget, RotationSpeed * timer.DeltaTime, 0.01f);
+        newTransform = newTransform.RotateTowards(directionAwayFromTarget, movingSpeed.GetRunningRotationSpeed() * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

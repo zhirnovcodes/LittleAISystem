@@ -6,17 +6,17 @@ public class EatSubActionState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<EdibleComponent> EdibleLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
 
-    private const float Interval = 0.5f; // interval of bites - sec
-    private const float FailTime = 30f;
+    private const float FailTime = 20f;
     private const float MaxDistance = 0.2f;
-    private const float BiteSize = 0.2f;
 
-    public EatSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<EdibleComponent> edibleLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup)
+    public EatSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<EdibleComponent> edibleLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup)
     {
         TransformLookup = transformLookup;
         EdibleLookup = edibleLookup;
         AnimalStatsLookup = animalStatsLookup;
+        StatsIncreaseLookup = statsIncreaseLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -24,6 +24,7 @@ public class EatSubActionState : ISubActionState
         TransformLookup.Update(system);
         EdibleLookup.Update(system);
         AnimalStatsLookup.Update(system);
+        StatsIncreaseLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -93,10 +94,10 @@ public class EatSubActionState : ISubActionState
             return SubActionResult.Fail(7);
         }
 
-        // Check if it's time for another bite using IsTimerTick
-        if (timer.IsTimerTick(Interval, true))
+        // if animal does not have StatsIncreaseComponent - return fail with code 8
+        if (!StatsIncreaseLookup.HasComponent(entity))
         {
-            Bite(entity, target, edibleComponent, edibleBodyTransform, buffer);
+            return SubActionResult.Fail(8);
         }
 
         // Check if Fullness >= 100 - returns Success
@@ -106,14 +107,23 @@ public class EatSubActionState : ISubActionState
             return SubActionResult.Success();
         }
 
+        // Process eating continuously based on EatingSpeed
+        var statsIncrease = StatsIncreaseLookup[entity];
+        Eat(entity, target, edibleComponent, edibleBodyTransform, buffer, statsIncrease.AnimalStats.Fullness, timer.DeltaTime);
+
         return SubActionResult.Running();
     }
 
-    private void Bite(Entity entity, Entity target, EdibleComponent edibleComponent, LocalTransform edibleBodyTransform, EntityCommandBuffer buffer)
+    private void Eat(Entity entity, Entity target, EdibleComponent edibleComponent, LocalTransform edibleBodyTransform, EntityCommandBuffer buffer, float eatingSpeed, float deltaTime)
     {
-        // Calculate actual bite size (might be less than BiteSize if remaining is smaller)
-        var actualBiteSize = BiteSize;
-        var newScale = edibleBodyTransform.Scale - BiteSize;
+        // Calculate bite size based on EatingSpeed
+        // bite size = StatsIncreaseComponent.Fullness / 100
+        // This is how much target is reduced per second (* deltaTime)
+        float biteSize = (eatingSpeed / 100f) * deltaTime;
+
+        // Calculate actual bite size (might be less if remaining is smaller)
+        var actualBiteSize = biteSize;
+        var newScale = edibleBodyTransform.Scale - biteSize;
         
         if (newScale < 0)
         {
@@ -136,11 +146,10 @@ public class EatSubActionState : ISubActionState
             StatsChange = statsChange
         });
 
-        // if after bite scale is <= 0 - destroys target
+        // if after eating scale is <= 0 - destroys target
         if (newScale <= 0)
         {
             buffer.DestroyEntity(target);
-            // Could return success here, but let's continue to check nutrition
         }
     }
 }

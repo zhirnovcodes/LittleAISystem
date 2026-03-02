@@ -6,18 +6,20 @@ using Unity.Transforms;
 public class RotateTowards : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    private const float FailTime = 4f;
-    private const float RotationSpeed = 30f; // speed in degrees per second
+    private const float FailTime = 10f;
 
-    public RotateTowards(ComponentLookup<LocalTransform> transformLookup)
+    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -59,8 +61,15 @@ public class RotateTowards : ISubActionState
             return SubActionResult.Success();
         }
 
-        // Rotate towards target (multiply speed by deltaTime)
-        var newTransform = entityTransform.RotateTowards(targetTransform, RotationSpeed * timer.DeltaTime, 0.01f);
+        // if entity does not have MovingSpeedComponent - return fail with code 3
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
+
+        // Rotate towards target using walking rotation speed
+        var movingSpeed = MovingSpeedLookup[entity];
+        var newTransform = entityTransform.RotateTowards(targetTransform, movingSpeed.GetWalkingRotationSpeed() * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

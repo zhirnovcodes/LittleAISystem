@@ -7,8 +7,8 @@ public class SleepingState : ISubActionState
     private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
 
-    private const float FailTime = 30f;
-    private const float MaxDistance = 0.5f;
+    private const float FailTime = 100f;
+    private const float MaxDistance = 0.01f;
 
     public SleepingState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup)
     {
