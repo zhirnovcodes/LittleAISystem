@@ -23,10 +23,23 @@ public struct AnimalGenomeBuilder
         commandBuffer.AddBuffer<DNAChainItem>(entity);
     }
     
-    public AnimalGenomeBuilder WithBaseConditionFlags()
+    public AnimalGenomeBuilder WithBaseConditionFlags(ConditionFlags flags = ConditionFlags.None)
     {
         // Add base condition flags component
-        CommandBuffer.AddComponent<ConditionFlagsComponent>(Entity);
+        CommandBuffer.AddComponent(Entity, new ConditionFlagsComponent
+        {
+            Conditions = flags
+        });
+        return this;
+    }
+    
+    public AnimalGenomeBuilder WithDNA(Unity.Collections.NativeList<DNAChainData> dnaList)
+    {
+        // Add each DNA chain data to the entity's buffer
+        for (int i = 0; i < dnaList.Length; i++)
+        {
+            WithGenome(dnaList[i].GenomeType, dnaList[i].GenomeData);
+        }
         return this;
     }
     
@@ -68,8 +81,8 @@ public struct AnimalGenomeBuilder
             case GenomeType.Advertiser:
                 WithAdvertiser(data);
                 break;
-            case GenomeType.Genitalia:
-                WithGenitalia(data);
+            case GenomeType.Reproduction:
+                WithReproduction(data);
                 break;
             case GenomeType.StatAttenuation:
                 WithStatAttenuation(data);
@@ -140,14 +153,20 @@ public struct AnimalGenomeBuilder
         CommandBuffer.AppendToBuffer(Entity, (StatAdvertiserItem)data);
     }
     
-    private void WithGenitalia(GenomeData data)
+    private void WithReproduction(GenomeData data)
     {
-        GenetaliaComponent component = (GenetaliaComponent)data;
-        CommandBuffer.AddComponent(Entity, component);
+        // Add GenetaliaComponent
+        GenetaliaComponent genetaliaComponent = (GenetaliaComponent)data;
         
-        if (!component.IsMale)
+        // Add ReproductionComponent (with GestationTime from data)
+        ReproductionComponent reproductionComponent = (ReproductionComponent)data;
+
+        CommandBuffer.AddComponent(Entity, genetaliaComponent);
+        CommandBuffer.AddComponent(Entity, reproductionComponent);
+        CommandBuffer.SetComponentEnabled<ReproductionComponent>(Entity, false);
+        
+        if (!reproductionComponent.IsMale)
         {
-            CommandBuffer.AddBuffer<FemaleTubeItem>(Entity);
             CommandBuffer.AddBuffer<DNAStorageItem>(Entity);
         }
     }

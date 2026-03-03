@@ -25,7 +25,7 @@ public partial struct GenomeBuilderTestSystem : ISystem
         TestStatsGenome(ref state);
         TestActionChainGenome(ref state);
         TestAdvertiserGenome(ref state);
-        TestGenitaliaGenome(ref state);
+        TestReproductionGenome(ref state);
         TestStatAttenuationGenome(ref state);
 
         Debug.Log("=== All GenomeBuilder Tests Complete ===");
@@ -413,69 +413,85 @@ public partial struct GenomeBuilderTestSystem : ISystem
         Debug.Log("✓ Advertiser GenomeType test passed");
     }
 
-    private void TestGenitaliaGenome(ref SystemState state)
+    private void TestReproductionGenome(ref SystemState state)
     {
-        Debug.Log("\n--- Testing Genitalia GenomeType ---");
+        Debug.Log("\n--- Testing Reproduction GenomeType ---");
 
         // Test Male
-        var testDataMale = new GenetaliaGenomeData
+        var testDataMale = new ReproductionGenomeData
         {
-            IsMale = true
+            IsMale = true,
+            GestationTime = 15f
         };
 
         DNAChainData dnaDataMale = testDataMale.GetDNAData();
-        AssertEqual(dnaDataMale.GenomeData.Index, 0, "Genitalia Male Index");
-        AssertEqual((int)dnaDataMale.GenomeType, (int)GenomeType.Genitalia, "Genitalia Male GenomeType");
-        AssertApprox(dnaDataMale.GenomeData.Data.c0.x, 1f, "Genitalia Male IsMale value");
+        AssertEqual(dnaDataMale.GenomeData.Index, 0, "Reproduction Male Index");
+        AssertEqual((int)dnaDataMale.GenomeType, (int)GenomeType.Reproduction, "Reproduction Male GenomeType");
+        AssertApprox(dnaDataMale.GenomeData.Data.c0.x, 1f, "Reproduction Male IsMale value");
+        AssertApprox(dnaDataMale.GenomeData.Data.c0.y, 15f, "Reproduction Male GestationTime value");
 
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntityMale = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntityMale);
-        builder.WithGenome(GenomeType.Genitalia, dnaDataMale.GenomeData);
+        builder.WithGenome(GenomeType.Reproduction, dnaDataMale.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
         commandBuffer.Dispose();
 
         Assert(state.EntityManager.HasComponent<GenetaliaComponent>(testEntityMale), 
-            "Genitalia Male: Should have GenetaliaComponent");
-        Assert(!state.EntityManager.HasBuffer<FemaleTubeItem>(testEntityMale), 
-            "Genitalia Male: Should NOT have FemaleTubeItem buffer");
+            "Reproduction Male: Should have GenetaliaComponent");
+        Assert(state.EntityManager.HasComponent<ReproductionComponent>(testEntityMale), 
+            "Reproduction Male: Should have ReproductionComponent");
+        Assert(!state.EntityManager.HasBuffer<DNAStorageItem>(testEntityMale), 
+            "Reproduction Male: Should NOT have DNAStorageItem buffer");
         
-        var componentMale = state.EntityManager.GetComponentData<GenetaliaComponent>(testEntityMale);
-        Assert(componentMale.IsMale, "Genitalia Component should be male");
+        var genetaliaMale = state.EntityManager.GetComponentData<GenetaliaComponent>(testEntityMale);
+        Assert(genetaliaMale.IsMale, "Genitalia Component should be male");
+        
+        var componentMale = state.EntityManager.GetComponentData<ReproductionComponent>(testEntityMale);
+        Assert(componentMale.IsMale, "Reproduction Component should be male");
+        AssertApprox(componentMale.GestationTime, 15f, "Reproduction Male GestationTime");
 
         // Test Female
-        var testDataFemale = new GenetaliaGenomeData
+        var testDataFemale = new ReproductionGenomeData
         {
-            IsMale = false
+            IsMale = false,
+            GestationTime = 20f
         };
 
         DNAChainData dnaDataFemale = testDataFemale.GetDNAData();
-        AssertApprox(dnaDataFemale.GenomeData.Data.c0.x, 0f, "Genitalia Female IsMale value");
+        AssertApprox(dnaDataFemale.GenomeData.Data.c0.x, 0f, "Reproduction Female IsMale value");
+        AssertApprox(dnaDataFemale.GenomeData.Data.c0.y, 20f, "Reproduction Female GestationTime value");
 
         EntityCommandBuffer commandBuffer2 = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntityFemale = state.EntityManager.CreateEntity();
         
         var builder2 = new AnimalGenomeBuilder(commandBuffer2, testEntityFemale);
-        builder2.WithGenome(GenomeType.Genitalia, dnaDataFemale.GenomeData);
+        builder2.WithGenome(GenomeType.Reproduction, dnaDataFemale.GenomeData);
         builder2.Build();
         
         commandBuffer2.Playback(state.EntityManager);
         commandBuffer2.Dispose();
 
         Assert(state.EntityManager.HasComponent<GenetaliaComponent>(testEntityFemale), 
-            "Genitalia Female: Should have GenetaliaComponent");
-        Assert(state.EntityManager.HasBuffer<FemaleTubeItem>(testEntityFemale), 
-            "Genitalia Female: Should have FemaleTubeItem buffer");
+            "Reproduction Female: Should have GenetaliaComponent");
+        Assert(state.EntityManager.HasComponent<ReproductionComponent>(testEntityFemale), 
+            "Reproduction Female: Should have ReproductionComponent");
+        Assert(state.EntityManager.HasBuffer<DNAStorageItem>(testEntityFemale), 
+            "Reproduction Female: Should have DNAStorageItem buffer");
         
-        var componentFemale = state.EntityManager.GetComponentData<GenetaliaComponent>(testEntityFemale);
-        Assert(!componentFemale.IsMale, "Genitalia Component should be female");
+        var genetaliaFemale = state.EntityManager.GetComponentData<GenetaliaComponent>(testEntityFemale);
+        Assert(!genetaliaFemale.IsMale, "Genitalia Component should be female");
+        
+        var componentFemale = state.EntityManager.GetComponentData<ReproductionComponent>(testEntityFemale);
+        Assert(!componentFemale.IsMale, "Reproduction Component should be female");
+        AssertApprox(componentFemale.GestationTime, 20f, "Reproduction Female GestationTime");
 
         state.EntityManager.DestroyEntity(testEntityMale);
         state.EntityManager.DestroyEntity(testEntityFemale);
-        Debug.Log("✓ Genitalia GenomeType test passed");
+        Debug.Log("✓ Reproduction GenomeType test passed");
     }
 
     private void TestStatAttenuationGenome(ref SystemState state)

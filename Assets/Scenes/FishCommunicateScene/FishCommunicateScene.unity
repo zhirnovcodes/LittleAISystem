@@ -185,9 +185,9 @@ GameObject:
   - component: {fileID: 450879519}
   - component: {fileID: 450879518}
   - component: {fileID: 450879517}
-  - component: {fileID: 450879516}
   - component: {fileID: 450879527}
   - component: {fileID: 450879528}
+  - component: {fileID: 450879529}
   m_Layer: 0
   m_Name: FishFemale
   m_TagString: Untagged
@@ -195,18 +195,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &450879516
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 450879515}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a66d2f3ea90efbd4483731bebc4fc936, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &450879517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -246,6 +234,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 264d5b249de44074896bb25ba89cd2fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Seed: 1
 --- !u!114 &450879519
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -592,7 +581,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0209a636d165fa24dae0323c7231ddbe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BaseConditions: 41
+  BaseConditions: 25
 --- !u!114 &450879522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -726,6 +715,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxSpeed: 4
   MaxRotationSpeed: 70
+--- !u!114 &450879529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23136ab4e6c065b458bbe61a89b4a423, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsMale: 0
+  GestationTime: 10
 --- !u!1001 &642174201
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -941,10 +944,10 @@ GameObject:
   - component: {fileID: 1815018773}
   - component: {fileID: 1815018772}
   - component: {fileID: 1815018771}
-  - component: {fileID: 1815018770}
   - component: {fileID: 1815018769}
   - component: {fileID: 1815018780}
   - component: {fileID: 1815018781}
+  - component: {fileID: 1815018782}
   m_Layer: 0
   m_Name: FishMale
   m_TagString: Untagged
@@ -979,18 +982,6 @@ MonoBehaviour:
           w: 0
     ActorConditions: 32
     ActionType: 6
---- !u!114 &1815018770
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1815018768}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f256bbfd8b7659545b22753a5edd0943, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1815018771
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1003,6 +994,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 264d5b249de44074896bb25ba89cd2fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Seed: 1
 --- !u!114 &1815018772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1483,6 +1475,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxSpeed: 5
   MaxRotationSpeed: 60
+--- !u!114 &1815018782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23136ab4e6c065b458bbe61a89b4a423, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsMale: 1
+  GestationTime: 10
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

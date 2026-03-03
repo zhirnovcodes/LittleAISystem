@@ -8,6 +8,9 @@ public class CommunicateSubActionState : ISubActionState
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
     private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
+    private ComponentLookup<ReproductionComponent> ReproductionLookup;
+    private BufferLookup<DNAChainItem> DNAChainLookup;
+    private BufferLookup<DNAStorageItem> DNAStorageLookup;
 
     private const float MaxDistance = 0.3f;
 
@@ -15,12 +18,18 @@ public class CommunicateSubActionState : ISubActionState
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         ComponentLookup<GenetaliaComponent> genetaliaLookup,
-        ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup)
+        ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup,
+        BufferLookup<DNAChainItem> dnaChainLookup,
+        BufferLookup<DNAStorageItem> dnaStorageLookup,
+        ComponentLookup<ReproductionComponent> reproductionLookup)
     {
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
         StatsIncreaseLookup = statsIncreaseLookup;
         GenetaliaLookup = genetaliaLookup;
+        DNAChainLookup = dnaChainLookup;
+        DNAStorageLookup = dnaStorageLookup;
+        ReproductionLookup = reproductionLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -29,6 +38,9 @@ public class CommunicateSubActionState : ISubActionState
         AnimalStatsLookup.Update(system);
         StatsIncreaseLookup.Update(system);
         GenetaliaLookup.Update(system);
+        DNAChainLookup.Update(system);
+        DNAStorageLookup.Update(system);
+        ReproductionLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -108,10 +120,10 @@ public class CommunicateSubActionState : ISubActionState
             
             if (animalStats.Stats.Social >= 100f)
             {
-                // If male, add DNA to target
+                // If male, add DNA to target (which will also enable reproduction on target)
                 if (genitalia.IsMale)
                 {
-                    AddDNAToTarget(entity, target, buffer);
+                    AddDNAToTarget(entity, target, buffer, ref random);
                 }
                 
                 return SubActionResult.Success();
@@ -121,9 +133,57 @@ public class CommunicateSubActionState : ISubActionState
         return SubActionResult.Running();
     }
 
-    private void AddDNAToTarget(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void AddDNAToTarget(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // TODO: Implement DNA addition logic
+        // Check if entity has DNA chain buffer
+        if (!DNAChainLookup.HasBuffer(entity))
+        {
+            return;
+        }
+        
+        // Check if target has DNA storage buffer (only females have this)
+        if (!DNAStorageLookup.HasBuffer(target))
+        {
+            return;
+        }
+        
+        // Get mother's DNA chain
+        if (!DNAChainLookup.HasBuffer(target))
+        {
+            return;
+        }
+        
+        // Get father's DNA chain
+        var fatherDNA = DNAChainLookup[entity];
+        
+        var motherDNA = DNAChainLookup[target];
+        
+        // Check if DNA chains are compatible
+        if (!DNAExtensions.IsCompatible(fatherDNA, motherDNA))
+        {
+            return;
+        }
+        
+        // Append father's DNA to target's DNA storage
+        for (int i = 0; i < fatherDNA.Length; i++)
+        {
+            buffer.AppendToBuffer(target, new DNAStorageItem
+            {
+                Father = entity,
+                Data = fatherDNA[i].Data
+            });
+        }
+        
+        // Set Random seed on ReproductionComponent from the ref Random parameter
+        if (ReproductionLookup.HasComponent(target))
+        {
+            var reproduction = ReproductionLookup[target];
+            reproduction.Random = Random.CreateFromIndex(random.NextUInt());
+            buffer.SetComponent(target, reproduction);
+        }
+        
+        // Enable ReproductionComponent on target (female) to start gestation
+        buffer.SetComponentEnabled<ReproductionComponent>(target, true);
     }
 }
 

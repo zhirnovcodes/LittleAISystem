@@ -8,7 +8,7 @@ public enum GenomeType
     Stats,
     ActionChain,
     Advertiser,
-    Genitalia,
+    Reproduction,
     StatAttenuation
 }
 

@@ -9,11 +9,15 @@ public class OnlyEatingActionsMap : ActionMapBase
     {
         var transformLookup = system.GetComponentLookup<LocalTransform>(true);
         var edibleLookup = system.GetComponentLookup<EdibleComponent>(true);
+        var genetaliaLookup = system.GetComponentLookup<GenetaliaComponent>(true);
+
         var animalStatsLookup = system.GetComponentLookup<AnimalStatsComponent>(true);
         var statsIncreaseLookup = system.GetComponentLookup<StatsIncreaseComponent>(true);
         var movingSpeedLookup = system.GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = system.GetComponentLookup<SleepingPlaceComponent>(true);
-        var genetaliaLookup = system.GetComponentLookup<GenetaliaComponent>(true);
+        var reproductionLookup = system.GetComponentLookup<ReproductionComponent>(false);
+        var dnaChainLookup = system.GetBufferLookup<DNAChainItem>(true);
+        var dnaStorageLookup = system.GetBufferLookup<DNAStorageItem>(false);
 
         // Initialize list of ISubActionState
         var subActions = new Dictionary<SubActionTypes, ISubActionState>
@@ -27,7 +31,7 @@ public class OnlyEatingActionsMap : ActionMapBase
             { SubActionTypes.MoveInto, new LayDownState(transformLookup, movingSpeedLookup) },
             { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup) },
             { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(transformLookup, animalStatsLookup, genetaliaLookup) },
-            { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, genetaliaLookup, statsIncreaseLookup) }
+            { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, genetaliaLookup, statsIncreaseLookup, dnaChainLookup, dnaStorageLookup, reproductionLookup) }
         };
 
         return subActions;

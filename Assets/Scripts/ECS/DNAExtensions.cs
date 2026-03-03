@@ -134,14 +134,15 @@ public static class DNAExtensions
                 continue;
             }
             
-            // Create offspring gene by lerping the data
+            // Create offspring gene by lerping the data with random interpolation factors
+            var randomFactors = Float4x4Extensions.CreateRandom(ref random);
             DNAChainData offspringGene = new DNAChainData
             {
                 GenomeType = fatherGene.GenomeType,
                 GenomeData = new GenomeData
                 {
                     Index = fatherGene.GenomeData.Index,
-                    Data = math.lerp(fatherGene.GenomeData.Data, motherGene.GenomeData.Data, random.NextFloat())
+                    Data = Float4x4Extensions.Lerp(fatherGene.GenomeData.Data, motherGene.GenomeData.Data, randomFactors)
                 }
             };
             

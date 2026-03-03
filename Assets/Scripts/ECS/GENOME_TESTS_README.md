@@ -109,18 +109,21 @@ The test suite verifies that:
   - ✓ Buffer item contains correct ActionType (extracted from Index)
   - ✓ Multiple advertisers can be added to the same entity (buffer appending works)
 
-### 9. Genitalia GenomeType
-- **Convertible**: `GenetaliaGenomeData`
+### 9. Reproduction GenomeType
+- **Convertible**: `ReproductionGenomeData`
 - **Components Created**: 
-  - `GenetaliaComponent`
-  - `FemaleTubeItem` buffer (only for female entities)
+  - `GenetaliaComponent` (for interaction behavior)
+  - `ReproductionComponent` (IEnableableComponent, for gestation system)
+  - `DNAStorageItem` buffer (only for female entities)
 - **Tests**:
   - ✓ GenomeData conversion for male (IsMale = true)
   - ✓ GenomeData conversion for female (IsMale = false)
-  - ✓ GenetaliaComponent is added to entity
-  - ✓ Male entities do NOT have FemaleTubeItem buffer
-  - ✓ Female entities DO have FemaleTubeItem buffer
-  - ✓ Component IsMale flag is correct
+  - ✓ GestationTime is properly stored and retrieved
+  - ✓ Both GenetaliaComponent and ReproductionComponent are added to entity
+  - ✓ Male entities do NOT have DNAStorageItem buffer
+  - ✓ Female entities DO have DNAStorageItem buffer
+  - ✓ Component IsMale flags are correct
+  - ✓ Component GestationTime is correct
 
 ### 10. StatAttenuation GenomeType
 - **Convertible**: `StatAttenuationGenomeData`
@@ -221,7 +224,7 @@ The test system provides several assertion helpers:
 - **StatAttenuation**: Creates component on first call, then updates it on subsequent calls
 
 ### Conditional Component Creation
-- **Genitalia**: `FemaleTubeItem` buffer is only created for female entities (IsMale = false)
+- **Reproduction**: `DNAStorageItem` buffer is only created for female entities (IsMale = false)
 
 ### Bit Packing
 - **Advertiser**: Uses bit packing to store both `ActorConditions` and `ActionType` in a single Index field

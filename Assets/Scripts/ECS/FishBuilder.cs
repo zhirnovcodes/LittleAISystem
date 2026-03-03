@@ -66,26 +66,42 @@ public struct FishBuilder
         return this;
     }
 
-    public FishBuilder WithFemaleGenitalia()
+    public FishBuilder WithFemaleReproduction(float gestationTime = 10f)
     {
         CommandBuffer.AddComponent(Entity, new GenetaliaComponent
         {
             IsMale = false,
             IsEnabled = false
         });
+        
+        CommandBuffer.AddComponent(Entity, new ReproductionComponent
+        {
+            IsMale = false,
+            GestationTime = gestationTime,
+            TimeElapsed = 0f
+        });
+        CommandBuffer.SetComponentEnabled<ReproductionComponent>(Entity, false);
 
-        CommandBuffer.AddBuffer<FemaleTubeItem>(Entity);
+        CommandBuffer.AddBuffer<DNAStorageItem>(Entity);
 
         return this;
     }
 
-    public FishBuilder WithMaleGenitalia()
+    public FishBuilder WithMaleReproduction()
     {
         CommandBuffer.AddComponent(Entity, new GenetaliaComponent
         {
             IsMale = true,
             IsEnabled = false
         });
+        
+        CommandBuffer.AddComponent(Entity, new ReproductionComponent
+        {
+            IsMale = true,
+            GestationTime = 0f,
+            TimeElapsed = 0f
+        });
+        CommandBuffer.SetComponentEnabled<ReproductionComponent>(Entity, false);
 
         return this;
     }
