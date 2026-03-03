@@ -155,7 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e3328e0b06231a47a4d541baba0d40c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  RunTests: 0
+  RunTests: 1
 --- !u!114 &1396481045
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,7 +181,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54131d269ff02824da9671251c0d1fde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  RunTests: 1
+  RunTests: 0
 --- !u!114 &1396481047
 MonoBehaviour:
   m_ObjectHideFlags: 0
