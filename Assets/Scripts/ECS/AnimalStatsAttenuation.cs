@@ -1,91 +1,50 @@
-using Unity.Mathematics;
-
 [System.Serializable]
 public struct AnimalStatsAttenuation
 {
-    public HermiteCurve4x2 NeedsAttenuation;
-    public HermiteCurve4x2 DistanceAttenuation;
+    public HermiteCurve Needs;
+    public HermiteCurve Distance;
 
-    // Matrix layout (matching AnimalStats):
-    // c0.x - Energy
-    // c0.y - Fullness
-    // c0.z - Toilet
-    // c0.w - Social
-    // c1.x - Safety
-    // c1.y - Health
-
-    // Getters for NeedsAttenuation
-    public HermiteCurve EnergyNeedsAttenuation
+    public static implicit operator AnimalStatsAttenuation(GenomeData genomeData)
     {
-        get => NeedsAttenuation.c0.x;
-        set => NeedsAttenuation.c0.x = value;
+        return new AnimalStatsAttenuation
+        {
+            Needs = new HermiteCurve
+            {
+                points = genomeData.Data.c0,
+                tangents = new Unity.Mathematics.float2(genomeData.Data.c1.x, genomeData.Data.c1.y)
+            },
+            Distance = new HermiteCurve
+            {
+                points = genomeData.Data.c2,
+                tangents = new Unity.Mathematics.float2(genomeData.Data.c3.x, genomeData.Data.c3.y)
+            }
+        };
     }
 
-    public HermiteCurve FullnessNeedsAttenuation
+    /// <summary>
+    /// Calculates the attenuated stat change after applying distance and needs attenuation
+    /// </summary>
+    /// <param name="currentValue">Current stat value (0-100)</param>
+    /// <param name="valueChange">Stat change value</param>
+    /// <param name="distance">Distance to target</param>
+    /// <returns>Attenuated stat change</returns>
+    public float GetStatAttenuated(float currentValue, float valueChange, float distance)
     {
-        get => NeedsAttenuation.c0.y;
-        set => NeedsAttenuation.c0.y = value;
-    }
+        // 1 - Apply distance attenuation to the value change
+        float distanceAttenuation = Distance.GetY(distance);
+        float attenuatedChange = valueChange * distanceAttenuation;
 
-    public HermiteCurve ToiletNeedsAttenuation
-    {
-        get => NeedsAttenuation.c0.z;
-        set => NeedsAttenuation.c0.z = value;
-    }
+        // 2 - Calculate needs attenuation of current state (normalized to 0-1)
+        float currentNormalized = Unity.Mathematics.math.clamp(currentValue, 0f, 100f) / 100f;
+        float needsAttenuation0 = Needs.GetY(currentNormalized);
 
-    public HermiteCurve SocialNeedsAttenuation
-    {
-        get => NeedsAttenuation.c0.w;
-        set => NeedsAttenuation.c0.w = value;
-    }
+        // 3 - Calculate needs attenuation of resulted state (current + attenuated change, normalized to 0-1)
+        float resultedValue = Unity.Mathematics.math.clamp(currentValue + attenuatedChange, 0f, 100f);
+        float resultedNormalized = resultedValue / 100f;
+        float needsAttenuation1 = Needs.GetY(resultedNormalized);
 
-    public HermiteCurve SafetyNeedsAttenuation
-    {
-        get => NeedsAttenuation.c1.x;
-        set => NeedsAttenuation.c1.x = value;
-    }
-
-    public HermiteCurve HealthNeedsAttenuation
-    {
-        get => NeedsAttenuation.c1.y;
-        set => NeedsAttenuation.c1.y = value;
-    }
-
-    // Getters for DistanceAttenuation
-    public HermiteCurve EnergyDistanceAttenuation
-    {
-        get => DistanceAttenuation.c0.x;
-        set => DistanceAttenuation.c0.x = value;
-    }
-
-    public HermiteCurve FullnessDistanceAttenuation
-    {
-        get => DistanceAttenuation.c0.y;
-        set => DistanceAttenuation.c0.y = value;
-    }
-
-    public HermiteCurve ToiletDistanceAttenuation
-    {
-        get => DistanceAttenuation.c0.z;
-        set => DistanceAttenuation.c0.z = value;
-    }
-
-    public HermiteCurve SocialDistanceAttenuation
-    {
-        get => DistanceAttenuation.c0.w;
-        set => DistanceAttenuation.c0.w = value;
-    }
-
-    public HermiteCurve SafetyDistanceAttenuation
-    {
-        get => DistanceAttenuation.c1.x;
-        set => DistanceAttenuation.c1.x = value;
-    }
-
-    public HermiteCurve HealthDistanceAttenuation
-    {
-        get => DistanceAttenuation.c1.y;
-        set => DistanceAttenuation.c1.y = value;
+        // 4 - Return the attenuated difference (scaled back to 0-100 range)
+        return (needsAttenuation0 - needsAttenuation1) * 100f;
     }
 }
 

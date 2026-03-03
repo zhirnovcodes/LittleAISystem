@@ -2,22 +2,46 @@ using Unity.Mathematics;
 
 public struct AnimalStatsAttenuationBuilder
 {
-    private AnimalStatsAttenuation Attenuation;
+    private AnimalStatsAttenuation4x4 Attenuation;
 
-    // Bulk setters
-    public AnimalStatsAttenuationBuilder WithNeedsAttenuations(HermiteCurve4x2 curves)
+    // Individual stat setters
+    public AnimalStatsAttenuationBuilder WithEnergy(HermiteCurve needs, HermiteCurve distance)
     {
-        Attenuation.NeedsAttenuation = curves;
+        Attenuation.Energy = new AnimalStatsAttenuation { Needs = needs, Distance = distance };
         return this;
     }
 
-    public AnimalStatsAttenuationBuilder WithDistanceAttenuations(HermiteCurve4x2 curves)
+    public AnimalStatsAttenuationBuilder WithFullness(HermiteCurve needs, HermiteCurve distance)
     {
-        Attenuation.DistanceAttenuation = curves;
+        Attenuation.Fullness = new AnimalStatsAttenuation { Needs = needs, Distance = distance };
         return this;
     }
 
-    public AnimalStatsAttenuation Build()
+    public AnimalStatsAttenuationBuilder WithToilet(HermiteCurve needs, HermiteCurve distance)
+    {
+        Attenuation.Toilet = new AnimalStatsAttenuation { Needs = needs, Distance = distance };
+        return this;
+    }
+
+    public AnimalStatsAttenuationBuilder WithSocial(HermiteCurve needs, HermiteCurve distance)
+    {
+        Attenuation.Social = new AnimalStatsAttenuation { Needs = needs, Distance = distance };
+        return this;
+    }
+
+    public AnimalStatsAttenuationBuilder WithSafety(HermiteCurve needs, HermiteCurve distance)
+    {
+        Attenuation.Safety = new AnimalStatsAttenuation { Needs = needs, Distance = distance };
+        return this;
+    }
+
+    public AnimalStatsAttenuationBuilder WithHealth(HermiteCurve needs, HermiteCurve distance)
+    {
+        Attenuation.Health = new AnimalStatsAttenuation { Needs = needs, Distance = distance };
+        return this;
+    }
+
+    public AnimalStatsAttenuation4x4 Build()
     {
         return Attenuation;
     }
