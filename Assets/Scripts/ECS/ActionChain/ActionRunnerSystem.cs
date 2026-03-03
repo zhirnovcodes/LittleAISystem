@@ -42,6 +42,7 @@ public partial class ActionRunnerSystem : SystemBase
         Entities.ForEach((Entity entity, 
             ref ActionRunnerComponent runner, 
             ref SubActionTimeComponent timer,
+            ref ActionRandomComponent randomComponent,
             ref DynamicBuffer<ActionChainItem> chain) =>
         {
             // if entity doesnt exist
@@ -53,7 +54,7 @@ public partial class ActionRunnerSystem : SystemBase
             timer.TimeElapsed += deltaTime;
 
             var status = runner.IsCancellationRequested ? SubActionStatus.Cancel : 
-                subActionState.Update(entity, runner.Target, buffer, timer).Status;
+                subActionState.Update(entity, runner.Target, buffer, timer, ref randomComponent.Random).Status;
 
             switch (status)
             {

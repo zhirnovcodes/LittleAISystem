@@ -58,28 +58,29 @@ public partial struct GenomeBuilderTestSystem : ISystem
             }
         };
 
-        // Test IGenomeDataConvertible.GetGenomeData()
-        GenomeData genomeData = testData.GetGenomeData();
-        Debug.Log($"GenomeData Index: {genomeData.Index} (expected: 0)");
-        Debug.Log($"GenomeData.Data.c0: {genomeData.Data.c0} (expected: (10, 20, 30, 40))");
-        Debug.Log($"GenomeData.Data.c1: {genomeData.Data.c1} (expected: (50, 60, 0, 0))");
+        // Test IGenomeDataConvertible.GetDNAData()
+        DNAChainData dnaData = testData.GetDNAData();
+        Debug.Log($"GenomeData Index: {dnaData.GenomeData.Index} (expected: 0)");
+        Debug.Log($"GenomeData.Data.c0: {dnaData.GenomeData.Data.c0} (expected: (10, 20, 30, 40))");
+        Debug.Log($"GenomeData.Data.c1: {dnaData.GenomeData.Data.c1} (expected: (50, 60, 0, 0))");
         
-        AssertEqual(genomeData.Index, 0, "StatsIncrease Index");
-        AssertApprox(genomeData.Data.c0, new float4(10f, 20f, 30f, 40f), "StatsIncrease Data c0");
-        AssertApprox(genomeData.Data.c1, new float4(50f, 60f, 0f, 0f), "StatsIncrease Data c1");
+        AssertEqual(dnaData.GenomeData.Index, 0, "StatsIncrease Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.StatsIncrease, "StatsIncrease GenomeType");
+        AssertApprox(dnaData.GenomeData.Data.c0, new float4(10f, 20f, 30f, 40f), "StatsIncrease Data c0");
+        AssertApprox(dnaData.GenomeData.Data.c1, new float4(50f, 60f, 0f, 0f), "StatsIncrease Data c1");
 
-        GenomeData genomeData2 = testData2.GetGenomeData();
-        AssertEqual(genomeData2.Index, 0, "StatsIncrease 2 Index");
-        AssertApprox(genomeData2.Data.c0, new float4(5f, 15f, 25f, 35f), "StatsIncrease 2 Data c0");
-        AssertApprox(genomeData2.Data.c1, new float4(45f, 55f, 0f, 0f), "StatsIncrease 2 Data c1");
+        DNAChainData dnaData2 = testData2.GetDNAData();
+        AssertEqual(dnaData2.GenomeData.Index, 0, "StatsIncrease 2 Index");
+        AssertApprox(dnaData2.GenomeData.Data.c0, new float4(5f, 15f, 25f, 35f), "StatsIncrease 2 Data c0");
+        AssertApprox(dnaData2.GenomeData.Data.c1, new float4(45f, 55f, 0f, 0f), "StatsIncrease 2 Data c1");
 
         // Test Builder with multiple calls (second call overwrites first)
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.StatsIncrease, testData);
-        builder.WithGenome(GenomeType.StatsIncrease, testData2);
+        builder.WithGenome(GenomeType.StatsIncrease, dnaData.GenomeData);
+        builder.WithGenome(GenomeType.StatsIncrease, dnaData2.GenomeData);
         Entity result = builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -110,16 +111,17 @@ public partial struct GenomeBuilderTestSystem : ISystem
             MaxRotationSpeed = 3.14f
         };
 
-        GenomeData genomeData = testData.GetGenomeData();
-        AssertEqual(genomeData.Index, 0, "Speed Index");
-        AssertApprox(genomeData.Data.c0.x, 5.5f, "Speed MaxSpeed");
-        AssertApprox(genomeData.Data.c0.y, 3.14f, "Speed MaxRotationSpeed");
+        DNAChainData dnaData = testData.GetDNAData();
+        AssertEqual(dnaData.GenomeData.Index, 0, "Speed Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.Speed, "Speed GenomeType");
+        AssertApprox(dnaData.GenomeData.Data.c0.x, 5.5f, "Speed MaxSpeed");
+        AssertApprox(dnaData.GenomeData.Data.c0.y, 3.14f, "Speed MaxRotationSpeed");
 
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.Speed, testData);
+        builder.WithGenome(GenomeType.Speed, dnaData.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -146,16 +148,17 @@ public partial struct GenomeBuilderTestSystem : ISystem
             MaxSize = 2.0f
         };
 
-        GenomeData genomeData = testData.GetGenomeData();
-        AssertEqual(genomeData.Index, 0, "Aging Index");
-        AssertApprox(genomeData.Data.c0.x, 0.5f, "Aging MinSize");
-        AssertApprox(genomeData.Data.c0.y, 2.0f, "Aging MaxSize");
+        DNAChainData dnaData = testData.GetDNAData();
+        AssertEqual(dnaData.GenomeData.Index, 0, "Aging Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.Aging, "Aging GenomeType");
+        AssertApprox(dnaData.GenomeData.Data.c0.x, 0.5f, "Aging MinSize");
+        AssertApprox(dnaData.GenomeData.Data.c0.y, 2.0f, "Aging MaxSize");
 
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.Aging, testData);
+        builder.WithGenome(GenomeType.Aging, dnaData.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -182,16 +185,17 @@ public partial struct GenomeBuilderTestSystem : ISystem
             Interval = 0.5f
         };
 
-        GenomeData genomeData = testData.GetGenomeData();
-        AssertEqual(genomeData.Index, 0, "Vision Index");
-        AssertApprox(genomeData.Data.c0.x, 10.0f, "Vision MaxDistance");
-        AssertApprox(genomeData.Data.c0.y, 0.5f, "Vision Interval");
+        DNAChainData dnaData = testData.GetDNAData();
+        AssertEqual(dnaData.GenomeData.Index, 0, "Vision Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.Vision, "Vision GenomeType");
+        AssertApprox(dnaData.GenomeData.Data.c0.x, 10.0f, "Vision MaxDistance");
+        AssertApprox(dnaData.GenomeData.Data.c0.y, 0.5f, "Vision Interval");
 
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.Vision, testData);
+        builder.WithGenome(GenomeType.Vision, dnaData.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -221,16 +225,17 @@ public partial struct GenomeBuilderTestSystem : ISystem
             AddThreshold = 25.0f
         };
 
-        GenomeData genomeData = testData.GetGenomeData();
-        AssertEqual(genomeData.Index, 0, "NeedsBased Index");
-        AssertApprox(genomeData.Data.c0.x, 75.0f, "NeedsBased CancelThreshold");
-        AssertApprox(genomeData.Data.c0.y, 25.0f, "NeedsBased AddThreshold");
+        DNAChainData dnaData = testData.GetDNAData();
+        AssertEqual(dnaData.GenomeData.Index, 0, "NeedsBased Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.NeedsBased, "NeedsBased GenomeType");
+        AssertApprox(dnaData.GenomeData.Data.c0.x, 75.0f, "NeedsBased CancelThreshold");
+        AssertApprox(dnaData.GenomeData.Data.c0.y, 25.0f, "NeedsBased AddThreshold");
 
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.NeedsBased, testData);
+        builder.WithGenome(GenomeType.NeedsBased, dnaData.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -266,16 +271,17 @@ public partial struct GenomeBuilderTestSystem : ISystem
             }
         };
 
-        GenomeData genomeData = testData.GetGenomeData();
-        AssertEqual(genomeData.Index, 0, "Stats Index");
-        AssertApprox(genomeData.Data.c0, new float4(100f, 90f, 80f, 70f), "Stats Data c0");
-        AssertApprox(genomeData.Data.c1, new float4(60f, 50f, 0f, 0f), "Stats Data c1");
+        DNAChainData dnaData = testData.GetDNAData();
+        AssertEqual(dnaData.GenomeData.Index, 0, "Stats Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.Stats, "Stats GenomeType");
+        AssertApprox(dnaData.GenomeData.Data.c0, new float4(100f, 90f, 80f, 70f), "Stats Data c0");
+        AssertApprox(dnaData.GenomeData.Data.c1, new float4(60f, 50f, 0f, 0f), "Stats Data c1");
 
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.Stats, testData);
+        builder.WithGenome(GenomeType.Stats, dnaData.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -300,14 +306,16 @@ public partial struct GenomeBuilderTestSystem : ISystem
 
         var testData = new ActionChainGenomeData();
 
-        GenomeData genomeData = testData.GetGenomeData();
-        AssertEqual(genomeData.Index, 0, "ActionChain Index");
+        DNAChainData dnaData = testData.GetDNAData();
+        AssertEqual(dnaData.GenomeData.Index, 0, "ActionChain Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.ActionChain, "ActionChain GenomeType");
 
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
-        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.ActionChain, testData);
+        uint testSeed = 42;
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity, testSeed);
+        builder.WithGenome(GenomeType.ActionChain, dnaData.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -319,6 +327,12 @@ public partial struct GenomeBuilderTestSystem : ISystem
             "ActionChain: Should have ActionChainItem buffer");
         Assert(state.EntityManager.HasComponent<SubActionTimeComponent>(testEntity), 
             "ActionChain: Should have SubActionTimeComponent");
+        Assert(state.EntityManager.HasComponent<ActionRandomComponent>(testEntity), 
+            "ActionChain: Should have ActionRandomComponent");
+
+        // Verify ActionRandomComponent is initialized with correct seed
+        var randomComponent = state.EntityManager.GetComponentData<ActionRandomComponent>(testEntity);
+        Assert(randomComponent.Random.state != 0, "ActionRandomComponent should have initialized Random");
 
         state.EntityManager.DestroyEntity(testEntity);
         Debug.Log("✓ ActionChain GenomeType test passed");
@@ -349,26 +363,27 @@ public partial struct GenomeBuilderTestSystem : ISystem
             ActionType = ActionTypes.Sleep
         };
 
-        // Test GenomeData conversion for first advertiser
-        GenomeData genomeData = testData.GetGenomeData();
+        // Test DNAChainData conversion for first advertiser
+        DNAChainData dnaData = testData.GetDNAData();
         int expectedIndex = ((int)(ConditionFlags.IsAnimal | ConditionFlags.IsPredator) << 8) | (int)ActionTypes.Eat;
-        AssertEqual(genomeData.Index, expectedIndex, "Advertiser Index");
-        AssertApprox(genomeData.Data.c0, new float4(15f, 25f, 35f, 45f), "Advertiser Data c0");
-        AssertApprox(genomeData.Data.c1, new float4(55f, 65f, 0f, 0f), "Advertiser Data c1");
+        AssertEqual(dnaData.GenomeData.Index, expectedIndex, "Advertiser Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.Advertiser, "Advertiser GenomeType");
+        AssertApprox(dnaData.GenomeData.Data.c0, new float4(15f, 25f, 35f, 45f), "Advertiser Data c0");
+        AssertApprox(dnaData.GenomeData.Data.c1, new float4(55f, 65f, 0f, 0f), "Advertiser Data c1");
 
-        // Test GenomeData conversion for second advertiser
-        GenomeData genomeData2 = testData2.GetGenomeData();
+        // Test DNAChainData conversion for second advertiser
+        DNAChainData dnaData2 = testData2.GetDNAData();
         int expectedIndex2 = ((int)ConditionFlags.None << 8) | (int)ActionTypes.Sleep;
-        AssertEqual(genomeData2.Index, expectedIndex2, "Advertiser 2 Index");
-        AssertApprox(genomeData2.Data.c0, new float4(1f, 2f, 3f, 4f), "Advertiser 2 Data c0");
+        AssertEqual(dnaData2.GenomeData.Index, expectedIndex2, "Advertiser 2 Index");
+        AssertApprox(dnaData2.GenomeData.Data.c0, new float4(1f, 2f, 3f, 4f), "Advertiser 2 Data c0");
 
         // Add both advertisers using a single builder instance
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.Advertiser, testData);
-        builder.WithGenome(GenomeType.Advertiser, testData2);
+        builder.WithGenome(GenomeType.Advertiser, dnaData.GenomeData);
+        builder.WithGenome(GenomeType.Advertiser, dnaData2.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -408,15 +423,16 @@ public partial struct GenomeBuilderTestSystem : ISystem
             IsMale = true
         };
 
-        GenomeData genomeDataMale = testDataMale.GetGenomeData();
-        AssertEqual(genomeDataMale.Index, 0, "Genitalia Male Index");
-        AssertApprox(genomeDataMale.Data.c0.x, 1f, "Genitalia Male IsMale value");
+        DNAChainData dnaDataMale = testDataMale.GetDNAData();
+        AssertEqual(dnaDataMale.GenomeData.Index, 0, "Genitalia Male Index");
+        AssertEqual((int)dnaDataMale.GenomeType, (int)GenomeType.Genitalia, "Genitalia Male GenomeType");
+        AssertApprox(dnaDataMale.GenomeData.Data.c0.x, 1f, "Genitalia Male IsMale value");
 
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntityMale = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntityMale);
-        builder.WithGenome(GenomeType.Genitalia, testDataMale);
+        builder.WithGenome(GenomeType.Genitalia, dnaDataMale.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);
@@ -436,14 +452,14 @@ public partial struct GenomeBuilderTestSystem : ISystem
             IsMale = false
         };
 
-        GenomeData genomeDataFemale = testDataFemale.GetGenomeData();
-        AssertApprox(genomeDataFemale.Data.c0.x, 0f, "Genitalia Female IsMale value");
+        DNAChainData dnaDataFemale = testDataFemale.GetDNAData();
+        AssertApprox(dnaDataFemale.GenomeData.Data.c0.x, 0f, "Genitalia Female IsMale value");
 
         EntityCommandBuffer commandBuffer2 = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntityFemale = state.EntityManager.CreateEntity();
         
         var builder2 = new AnimalGenomeBuilder(commandBuffer2, testEntityFemale);
-        builder2.WithGenome(GenomeType.Genitalia, testDataFemale);
+        builder2.WithGenome(GenomeType.Genitalia, dnaDataFemale.GenomeData);
         builder2.Build();
         
         commandBuffer2.Playback(state.EntityManager);
@@ -503,27 +519,28 @@ public partial struct GenomeBuilderTestSystem : ISystem
             }
         };
 
-        // Test GenomeData conversion for first attenuation
-        GenomeData genomeData = testData.GetGenomeData();
-        AssertEqual(genomeData.Index, (int)StatType.Energy, "StatAttenuation Index");
-        AssertApprox(genomeData.Data.c0, new float4(0f, 1f, 100f, 0f), "StatAttenuation Needs points");
-        AssertApprox(genomeData.Data.c1, new float4(-0.01f, -0.01f, 0f, 0f), "StatAttenuation Needs tangents");
-        AssertApprox(genomeData.Data.c2, new float4(0f, 1f, 50f, 0.5f), "StatAttenuation Distance points");
-        AssertApprox(genomeData.Data.c3, new float4(-0.02f, -0.02f, 0f, 0f), "StatAttenuation Distance tangents");
+        // Test DNAChainData conversion for first attenuation
+        DNAChainData dnaData = testData.GetDNAData();
+        AssertEqual(dnaData.GenomeData.Index, (int)StatType.Energy, "StatAttenuation Index");
+        AssertEqual((int)dnaData.GenomeType, (int)GenomeType.StatAttenuation, "StatAttenuation GenomeType");
+        AssertApprox(dnaData.GenomeData.Data.c0, new float4(0f, 1f, 100f, 0f), "StatAttenuation Needs points");
+        AssertApprox(dnaData.GenomeData.Data.c1, new float4(-0.01f, -0.01f, 0f, 0f), "StatAttenuation Needs tangents");
+        AssertApprox(dnaData.GenomeData.Data.c2, new float4(0f, 1f, 50f, 0.5f), "StatAttenuation Distance points");
+        AssertApprox(dnaData.GenomeData.Data.c3, new float4(-0.02f, -0.02f, 0f, 0f), "StatAttenuation Distance tangents");
 
-        // Test GenomeData conversion for second attenuation
-        GenomeData genomeData2 = testData2.GetGenomeData();
-        AssertEqual(genomeData2.Index, (int)StatType.Health, "StatAttenuation 2 Index");
-        AssertApprox(genomeData2.Data.c0, new float4(10f, 20f, 30f, 40f), "StatAttenuation 2 Needs points");
-        AssertApprox(genomeData2.Data.c2, new float4(5f, 15f, 25f, 35f), "StatAttenuation 2 Distance points");
+        // Test DNAChainData conversion for second attenuation
+        DNAChainData dnaData2 = testData2.GetDNAData();
+        AssertEqual(dnaData2.GenomeData.Index, (int)StatType.Health, "StatAttenuation 2 Index");
+        AssertApprox(dnaData2.GenomeData.Data.c0, new float4(10f, 20f, 30f, 40f), "StatAttenuation 2 Needs points");
+        AssertApprox(dnaData2.GenomeData.Data.c2, new float4(5f, 15f, 25f, 35f), "StatAttenuation 2 Distance points");
 
         // Add both stat attenuations using a single builder instance
         EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
         Entity testEntity = state.EntityManager.CreateEntity();
         
         var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
-        builder.WithGenome(GenomeType.StatAttenuation, testData);
-        builder.WithGenome(GenomeType.StatAttenuation, testData2);
+        builder.WithGenome(GenomeType.StatAttenuation, dnaData.GenomeData);
+        builder.WithGenome(GenomeType.StatAttenuation, dnaData2.GenomeData);
         builder.Build();
         
         commandBuffer.Playback(state.EntityManager);

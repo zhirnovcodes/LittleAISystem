@@ -1,5 +1,6 @@
 using LittleAI.Enums;
 using Unity.Entities;
+using Unity.Mathematics;
 
 public class IdleSubActionState : ISubActionState
 {
@@ -21,7 +22,7 @@ public class IdleSubActionState : ISubActionState
     {
     }
 
-    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
         if (timer.IsTimeout(IdleTime))
         {

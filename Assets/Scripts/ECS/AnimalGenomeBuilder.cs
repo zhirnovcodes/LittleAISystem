@@ -8,14 +8,19 @@ public struct AnimalGenomeBuilder
     private bool IsAdvertiserBufferCreated;
     private bool IsStatAttenuationCreated;
     private AnimalStatsAttenuation4x4 StatAttenuation;
+    private uint RandomSeed;
     
-    public AnimalGenomeBuilder(EntityCommandBuffer commandBuffer, Entity entity)
+    public AnimalGenomeBuilder(EntityCommandBuffer commandBuffer, Entity entity, uint randomSeed = 1)
     {
         CommandBuffer = commandBuffer;
         Entity = entity;
         IsAdvertiserBufferCreated = false;
         IsStatAttenuationCreated = false;
         StatAttenuation = default;
+        RandomSeed = randomSeed;
+        
+        // Add DNAGenomeItem buffer
+        commandBuffer.AddBuffer<DNAChainItem>(entity);
     }
     
     public AnimalGenomeBuilder WithBaseConditionFlags()
@@ -25,9 +30,17 @@ public struct AnimalGenomeBuilder
         return this;
     }
     
-    public AnimalGenomeBuilder WithGenome(GenomeType type, IGenomeDataConvertible genomeDataConvertible)
+    public AnimalGenomeBuilder WithGenome(GenomeType type, GenomeData data)
     {
-        GenomeData data = genomeDataConvertible.GetGenomeData();
+        // Add to DNA genome buffer
+        CommandBuffer.AppendToBuffer(Entity, new DNAChainItem
+        {
+            Data = new DNAChainData
+            {
+                GenomeType = type,
+                GenomeData = data
+            }
+        });
         
         switch (type)
         {
@@ -110,6 +123,10 @@ public struct AnimalGenomeBuilder
         CommandBuffer.AddComponent<ActionRunnerComponent>(Entity);
         CommandBuffer.AddBuffer<ActionChainItem>(Entity);
         CommandBuffer.AddComponent<SubActionTimeComponent>(Entity);
+        CommandBuffer.AddComponent(Entity, new ActionRandomComponent
+        {
+            Random = Unity.Mathematics.Random.CreateFromIndex(RandomSeed)
+        });
     }
     
     private void WithAdvertiser(GenomeData data)
@@ -131,6 +148,7 @@ public struct AnimalGenomeBuilder
         if (!component.IsMale)
         {
             CommandBuffer.AddBuffer<FemaleTubeItem>(Entity);
+            CommandBuffer.AddBuffer<DNAStorageItem>(Entity);
         }
     }
     

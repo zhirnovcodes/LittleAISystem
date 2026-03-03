@@ -6,12 +6,16 @@ public class StatsIncreaseGenomeData : IGenomeDataConvertible
 {
     public AnimalStats AnimalStats;
     
-    public GenomeData GetGenomeData()
+    public DNAChainData GetDNAData()
     {
-        return new GenomeData
+        return new DNAChainData
         {
-            Index = 0,
-            Data = AnimalStats.Stats.ToFloat4x4()
+            GenomeType = GenomeType.StatsIncrease,
+            GenomeData = new GenomeData
+            {
+                Index = 0,
+                Data = AnimalStats.Stats.ToFloat4x4()
+            }
         };
     }
 }

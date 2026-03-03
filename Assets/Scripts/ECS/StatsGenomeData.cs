@@ -6,12 +6,16 @@ public class StatsGenomeData : IGenomeDataConvertible
 {
     public AnimalStats Stats;
     
-    public GenomeData GetGenomeData()
+    public DNAChainData GetDNAData()
     {
-        return new GenomeData
+        return new DNAChainData
         {
-            Index = 0,
-            Data = Stats.Stats.ToFloat4x4()
+            GenomeType = GenomeType.Stats,
+            GenomeData = new GenomeData
+            {
+                Index = 0,
+                Data = Stats.Stats.ToFloat4x4()
+            }
         };
     }
 }

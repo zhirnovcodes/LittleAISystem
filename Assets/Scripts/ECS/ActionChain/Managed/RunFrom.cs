@@ -32,7 +32,7 @@ public class RunFrom : ISubActionState
         // Nothing to disable for run from
     }
 
-    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
         // Check if entity does not exist in transform lookup, fail state. code = 0
         if (!TransformLookup.HasComponent(entity))

@@ -9,15 +9,19 @@ public class AdvertiserGenomeData : IGenomeDataConvertible
     public ConditionFlags ActorConditions;
     public ActionTypes ActionType;
     
-    public GenomeData GetGenomeData()
+    public DNAChainData GetDNAData()
     {
-        return new GenomeData
+        return new DNAChainData
         {
-            // Combine ActorConditions and ActionType into Index
-            // ActionType in lower byte, ActorConditions in upper bits (shift left by 8)
-            // This matches StatAdvertiserItem conversion: actionType = id & 0xFF, actorConditions = id >> 8
-            Index = ((int)ActorConditions << 8) | (int)ActionType,
-            Data = AdvertisedValue.Stats.ToFloat4x4()
+            GenomeType = GenomeType.Advertiser,
+            GenomeData = new GenomeData
+            {
+                // Combine ActorConditions and ActionType into Index
+                // ActionType in lower byte, ActorConditions in upper bits (shift left by 8)
+                // This matches StatAdvertiserItem conversion: actionType = id & 0xFF, actorConditions = id >> 8
+                Index = ((int)ActorConditions << 8) | (int)ActionType,
+                Data = AdvertisedValue.Stats.ToFloat4x4()
+            }
         };
     }
 }

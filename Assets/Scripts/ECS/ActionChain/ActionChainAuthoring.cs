@@ -1,9 +1,11 @@
 using LittleAI.Enums;
 using Unity.Entities;
-using UnityEngine;
+using Unity.Mathematics;
 
-public class ActionChainAuthoring : MonoBehaviour
+public class ActionChainAuthoring : UnityEngine.MonoBehaviour
 {
+    public uint Seed = 1;
+    
     class Baker : Baker<ActionChainAuthoring>
     {
         public override void Bake(ActionChainAuthoring authoring)
@@ -24,6 +26,12 @@ public class ActionChainAuthoring : MonoBehaviour
 
             // Add SubActionTimeComponent
             AddComponent(entity, new SubActionTimeComponent());
+            
+            // Add ActionRandomComponent
+            AddComponent(entity, new ActionRandomComponent
+            {
+                Random = Random.CreateFromIndex(authoring.Seed)
+            });
         }
     }
 }

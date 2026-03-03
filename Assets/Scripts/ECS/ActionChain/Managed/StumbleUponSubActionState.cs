@@ -1,5 +1,6 @@
 using Unity.Entities;
 using Unity.Transforms;
+using Unity.Mathematics;
 
 public class StumbleUponSubActionState : ISubActionState
 {
@@ -49,7 +50,7 @@ public class StumbleUponSubActionState : ISubActionState
         }
     }
 
-    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
         // if actor entity does not exist in transform lookup, fail state. code = 0
         if (!TransformLookup.HasComponent(entity))

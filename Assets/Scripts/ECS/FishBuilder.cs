@@ -1,15 +1,31 @@
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 
 public struct FishBuilder
 {
     private Entity Entity;
     private EntityCommandBuffer CommandBuffer;
+    private uint RandomSeed;
 
-    public FishBuilder(Entity entity, EntityCommandBuffer commandBuffer)
+    public FishBuilder(Entity entity, EntityCommandBuffer commandBuffer, uint randomSeed = 1)
     {
         Entity = entity;
         CommandBuffer = commandBuffer;
+        RandomSeed = randomSeed;
+    }
+    
+    public FishBuilder WithActionChain()
+    {
+        CommandBuffer.AddComponent<ActionRunnerComponent>(Entity);
+        CommandBuffer.AddBuffer<ActionChainItem>(Entity);
+        CommandBuffer.AddComponent<SubActionTimeComponent>(Entity);
+        CommandBuffer.AddComponent(Entity, new ActionRandomComponent
+        {
+            Random = Random.CreateFromIndex(RandomSeed)
+        });
+        
+        return this;
     }
 
     public FishBuilder WithVision(float maxDistance, float interval)

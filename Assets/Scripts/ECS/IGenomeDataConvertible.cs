@@ -1,5 +1,5 @@
 public interface IGenomeDataConvertible
 {
-    GenomeData GetGenomeData();
+    DNAChainData GetDNAData();
 }
 

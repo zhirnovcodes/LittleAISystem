@@ -4,12 +4,16 @@ using Unity.Mathematics;
 [Serializable]
 public class ActionChainGenomeData : IGenomeDataConvertible
 {
-    public GenomeData GetGenomeData()
+    public DNAChainData GetDNAData()
     {
-        return new GenomeData
+        return new DNAChainData
         {
-            Index = 0,
-            Data = float4x4.zero
+            GenomeType = GenomeType.ActionChain,
+            GenomeData = new GenomeData
+            {
+                Index = 0,
+                Data = float4x4.zero
+            }
         };
     }
 }

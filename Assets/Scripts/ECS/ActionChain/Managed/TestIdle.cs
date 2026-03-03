@@ -23,7 +23,7 @@ public class TestIdle : ISubActionState
         // Nothing to disable for idle
     }
 
-    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
         if (timer.TimeElapsed >= 2.0f)
         {

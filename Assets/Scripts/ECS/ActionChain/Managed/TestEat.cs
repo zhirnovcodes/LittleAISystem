@@ -30,7 +30,7 @@ public class TestEat : ISubActionState
         // Nothing to disable for eat
     }
 
-    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer)
+    public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
         // Check if both entities have required components
         if (!TransformLookup.HasComponent(entity) || !TransformLookup.HasComponent(target))

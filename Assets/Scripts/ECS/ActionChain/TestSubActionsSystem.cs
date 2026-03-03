@@ -55,7 +55,9 @@ public partial class TestSubActionsSystem : SystemBase
         var buffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
 
         // Query for all entities with TestSubActionComponent and SubActionTimeComponent
-        foreach (var (testComponent, timer, entity) in SystemAPI.Query<RefRW<TestSubActionComponent>, RefRW<SubActionTimeComponent>>().WithEntityAccess())
+        foreach (var (testComponent, timer, random, entity) in SystemAPI.Query<RefRW<TestSubActionComponent>, 
+            RefRW<SubActionTimeComponent>,
+            RefRW<ActionRandomComponent>>().WithEntityAccess())
         {
             var currentIndex = testComponent.ValueRO.CurrentSubActionIndex;
 
@@ -83,7 +85,7 @@ public partial class TestSubActionsSystem : SystemBase
             timer.ValueRW.TimeElapsed += deltaTime;
             timer.ValueRW.DeltaTime = deltaTime;
             
-            var result = subAction.Update(entity, testComponent.ValueRO.Target, buffer, timer.ValueRO);
+            var result = subAction.Update(entity, testComponent.ValueRO.Target, buffer, timer.ValueRO, ref random.ValueRW.Random);
 
             // Handle Success or Fail status
             if (result.Status == SubActionStatus.Success)

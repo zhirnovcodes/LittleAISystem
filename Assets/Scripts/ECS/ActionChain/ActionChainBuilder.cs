@@ -1,12 +1,13 @@
 ﻿using LittleAI.Enums;
 using Unity.Entities;
+using Unity.Mathematics;
 
 public struct ActionChainBuilder
 {
     private Entity Entity;
     private EntityCommandBuffer CommandBuffer;
 
-    public ActionChainBuilder(Entity entity, EntityCommandBuffer commandBuffer)
+    public ActionChainBuilder(Entity entity, EntityCommandBuffer commandBuffer, uint randomSeed = 1)
     {
         Entity = entity;
         CommandBuffer = commandBuffer;
@@ -27,6 +28,12 @@ public struct ActionChainBuilder
         {
             DeltaTime = 0f,
             TimeElapsed = 0f
+        });
+        
+        // Add ActionRandomComponent
+        CommandBuffer.AddComponent(entity, new ActionRandomComponent
+        {
+            Random = Random.CreateFromIndex(randomSeed)
         });
     }
 
