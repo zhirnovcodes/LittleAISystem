@@ -8,10 +8,7 @@ public struct AnimalStatsComponent : IComponentData
     {
         return new AnimalStatsComponent
         {
-            Stats = new AnimalStats
-            {
-                Stats = genomeData.Data
-            }
+            Stats = genomeData.Data
         };
     }
 }

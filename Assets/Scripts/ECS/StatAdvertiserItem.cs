@@ -20,10 +20,7 @@ public struct StatAdvertiserItem : IBufferElementData
         
         return new StatAdvertiserItem
         {
-            AdvertisedValue = new AnimalStats
-            {
-                Stats = genomeData.Data
-            },
+            AdvertisedValue = genomeData.Data,
             ActorConditions = actorConditions,
             ActionType = actionType
         };
