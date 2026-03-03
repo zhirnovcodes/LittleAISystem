@@ -5,8 +5,7 @@ public class StumbleUponSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
-    private ComponentLookup<FemaleGenetaliaComponent> FemaleGenetaliaLookup;
-    private ComponentLookup<MaleGenetaliaComponent> MaleGenetaliaLookup;
+    private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
 
     private const float FailTime = 5f;
     private const float MaxDistance = 0.3f;
@@ -15,53 +14,38 @@ public class StumbleUponSubActionState : ISubActionState
     public StumbleUponSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
-        ComponentLookup<FemaleGenetaliaComponent> femaleGenetaliaLookup,
-        ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup)
+        ComponentLookup<GenetaliaComponent> genetaliaLookup)
     {
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
-        FemaleGenetaliaLookup = femaleGenetaliaLookup;
-        MaleGenetaliaLookup = maleGenetaliaLookup;
+        GenetaliaLookup = genetaliaLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         AnimalStatsLookup.Update(system);
-        FemaleGenetaliaLookup.Update(system);
-        MaleGenetaliaLookup.Update(system);
+        GenetaliaLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        if (FemaleGenetaliaLookup.TryGetComponent(entity, out var femaleGenitalia))
+        if (GenetaliaLookup.HasComponent(entity))
         {
-            femaleGenitalia.IsActive = true;
-            buffer.SetComponent(entity, femaleGenitalia);
-        }
-
-        if (MaleGenetaliaLookup.TryGetComponent(entity, out var maleGenitalia))
-        {
-            maleGenitalia.IsActive = true;
-            buffer.SetComponent(entity, maleGenitalia);
+            var genitalia = GenetaliaLookup[entity];
+            genitalia.IsEnabled = true;
+            buffer.SetComponent(entity, genitalia);
         }
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Set genitalia IsActive to false
-        if (FemaleGenetaliaLookup.HasComponent(entity))
+        // Disable genitalia component
+        if (GenetaliaLookup.HasComponent(entity))
         {
-            var femaleGenitalia = FemaleGenetaliaLookup[entity];
-            femaleGenitalia.IsActive = false;
-            buffer.SetComponent(entity, femaleGenitalia);
-        }
-
-        if (MaleGenetaliaLookup.HasComponent(entity))
-        {
-            var maleGenitalia = MaleGenetaliaLookup[entity];
-            maleGenitalia.IsActive = false;
-            buffer.SetComponent(entity, maleGenitalia);
+            var genitalia = GenetaliaLookup[entity];
+            genitalia.IsEnabled = false;
+            buffer.SetComponent(entity, genitalia);
         }
     }
 
@@ -100,31 +84,13 @@ public class StumbleUponSubActionState : ISubActionState
             return SubActionResult.Running();
         }*/
 
-        // Check if entity has male or female genitalia and set IsActive to true
-        bool hasMaleGenitalia = false;
-        bool hasFemaleGenitalia = false;
-
-        if (FemaleGenetaliaLookup.HasComponent(entity))
-        {
-            var femaleGenitalia = FemaleGenetaliaLookup[entity];
-            femaleGenitalia.IsActive = true;
-            buffer.SetComponent(entity, femaleGenitalia);
-            hasFemaleGenitalia = true;
-        }
-        
-        if (MaleGenetaliaLookup.HasComponent(entity))
-        {
-            var maleGenitalia = MaleGenetaliaLookup[entity];
-            maleGenitalia.IsActive = true;
-            buffer.SetComponent(entity, maleGenitalia);
-            hasMaleGenitalia = true;
-        }
-
-        // If entity doesn't have genitalia, just return running
-        if (hasFemaleGenitalia == false && hasMaleGenitalia == false)
+        // Check if entity has genitalia and enable it
+        if (!GenetaliaLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(3);
         }
+
+        var genitalia = GenetaliaLookup[entity];
 
         // If Social >= 100, fail (already satisfied)
         if (AnimalStatsLookup.HasComponent(entity))
@@ -136,32 +102,24 @@ public class StumbleUponSubActionState : ISubActionState
             }
         }
 
-        if (FemaleGenetaliaLookup.HasComponent(target))
+        // Check if target has genitalia and is opposite sex
+        if (!GenetaliaLookup.HasComponent(target))
         {
-            if (hasMaleGenitalia)
-            {
-                var targetFemaleGenitalia = FemaleGenetaliaLookup[target];
-                if (targetFemaleGenitalia.IsActive)
-                {
-                    return SubActionResult.Success();
-                }
-
-                return SubActionResult.Running();
-            }
+            return SubActionResult.Fail(5);
         }
+
+        var targetGenitalia = GenetaliaLookup[target];
         
-        if (MaleGenetaliaLookup.HasComponent(target))
+        // Check if opposite sex (male with female or female with male)
+        if (genitalia.IsMale != targetGenitalia.IsMale)
         {
-            if (hasFemaleGenitalia)
+            // Check if target's genitalia is enabled
+            if (targetGenitalia.IsEnabled)
             {
-                var targetMaleGenitalia = MaleGenetaliaLookup[target];
-                if (targetMaleGenitalia.IsActive)
-                {
-                    return SubActionResult.Success();
-                }
-                
-                return SubActionResult.Running();
+                return SubActionResult.Success();
             }
+            
+            return SubActionResult.Running();
         }
 
         return SubActionResult.Fail(6);

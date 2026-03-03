@@ -52,7 +52,11 @@ public struct FishBuilder
 
     public FishBuilder WithFemaleGenitalia()
     {
-        CommandBuffer.AddComponent(Entity, new FemaleGenetaliaComponent());
+        CommandBuffer.AddComponent(Entity, new GenetaliaComponent
+        {
+            IsMale = false,
+            IsEnabled = false
+        });
 
         CommandBuffer.AddBuffer<FemaleTubeItem>(Entity);
 
@@ -61,7 +65,11 @@ public struct FishBuilder
 
     public FishBuilder WithMaleGenitalia()
     {
-        CommandBuffer.AddComponent(Entity, new MaleGenetaliaComponent());
+        CommandBuffer.AddComponent(Entity, new GenetaliaComponent
+        {
+            IsMale = true,
+            IsEnabled = false
+        });
 
         return this;
     }

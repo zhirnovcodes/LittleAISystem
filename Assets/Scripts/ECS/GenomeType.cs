@@ -7,6 +7,8 @@ public enum GenomeType
     NeedsBased,
     Stats,
     ActionChain,
-    Advertiser
+    Advertiser,
+    Genitalia,
+    StatAttenuation
 }
 

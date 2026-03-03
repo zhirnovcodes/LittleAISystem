@@ -6,23 +6,20 @@ public class CommunicateSubActionState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
-    private ComponentLookup<FemaleGenetaliaComponent> FemaleGenetaliaLookup;
-    private ComponentLookup<MaleGenetaliaComponent> MaleGenetaliaLookup;
+    private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
 
     private const float MaxDistance = 0.3f;
 
     public CommunicateSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
-        ComponentLookup<FemaleGenetaliaComponent> femaleGenetaliaLookup,
-        ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup,
+        ComponentLookup<GenetaliaComponent> genetaliaLookup,
         ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup)
     {
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
         StatsIncreaseLookup = statsIncreaseLookup;
-        FemaleGenetaliaLookup = femaleGenetaliaLookup;
-        MaleGenetaliaLookup = maleGenetaliaLookup;
+        GenetaliaLookup = genetaliaLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -30,43 +27,28 @@ public class CommunicateSubActionState : ISubActionState
         TransformLookup.Update(system);
         AnimalStatsLookup.Update(system);
         StatsIncreaseLookup.Update(system);
-        FemaleGenetaliaLookup.Update(system);
-        MaleGenetaliaLookup.Update(system);
+        GenetaliaLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Set genitalia IsActive to true
-        if (FemaleGenetaliaLookup.HasComponent(entity))
+        // Enable genitalia component
+        if (GenetaliaLookup.HasComponent(entity))
         {
-            var femaleGenitalia = FemaleGenetaliaLookup[entity];
-            femaleGenitalia.IsActive = true;
-            buffer.SetComponent(entity, femaleGenitalia);
-        }
-
-        if (MaleGenetaliaLookup.HasComponent(entity))
-        {
-            var maleGenitalia = MaleGenetaliaLookup[entity];
-            maleGenitalia.IsActive = true;
-            buffer.SetComponent(entity, maleGenitalia);
+            var genitalia = GenetaliaLookup[entity];
+            genitalia.IsEnabled = true;
+            buffer.SetComponent(entity, genitalia);
         }
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Set genitalia IsActive to false
-        if (FemaleGenetaliaLookup.HasComponent(entity))
+        // Disable genitalia component
+        if (GenetaliaLookup.HasComponent(entity))
         {
-            var femaleGenitalia = FemaleGenetaliaLookup[entity];
-            femaleGenitalia.IsActive = false;
-            buffer.SetComponent(entity, femaleGenitalia);
-        }
-
-        if (MaleGenetaliaLookup.HasComponent(entity))
-        {
-            var maleGenitalia = MaleGenetaliaLookup[entity];
-            maleGenitalia.IsActive = false;
-            buffer.SetComponent(entity, maleGenitalia);
+            var genitalia = GenetaliaLookup[entity];
+            genitalia.IsEnabled = false;
+            buffer.SetComponent(entity, genitalia);
         }
     }
 
@@ -118,21 +100,19 @@ public class CommunicateSubActionState : ISubActionState
 
         var animalStats = AnimalStatsLookup[entity];
 
-        // If have male genitalia and Social >= 100
-        if (MaleGenetaliaLookup.HasComponent(entity))
+        // Check if entity has genitalia and Social >= 100
+        if (GenetaliaLookup.HasComponent(entity))
         {
+            var genitalia = GenetaliaLookup[entity];
+            
             if (animalStats.Stats.Social >= 100f)
             {
-                AddDNAToTarget(entity, target, buffer);
-                return SubActionResult.Success();
-            }
-        }
-
-        // If female genitalia and Social >= 100
-        if (FemaleGenetaliaLookup.HasComponent(entity))
-        {
-            if (animalStats.Stats.Social >= 100f)
-            {
+                // If male, add DNA to target
+                if (genitalia.IsMale)
+                {
+                    AddDNAToTarget(entity, target, buffer);
+                }
+                
                 return SubActionResult.Success();
             }
         }
