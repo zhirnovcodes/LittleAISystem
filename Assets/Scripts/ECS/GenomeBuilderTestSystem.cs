@@ -1,0 +1,601 @@
+using LittleAI.Enums;
+using Unity.Entities;
+using Unity.Mathematics;
+using UnityEngine;
+
+[UpdateInGroup(typeof(InitializationSystemGroup))]
+public partial struct GenomeBuilderTestSystem : ISystem
+{
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<RunGenomeBuilderTestComponent>();
+    }
+
+    public void OnUpdate(ref SystemState state)
+    {
+        state.Enabled = false;
+
+        Debug.Log("=== Starting GenomeBuilder Tests ===");
+
+        TestStatsIncreaseGenome(ref state);
+        TestSpeedGenome(ref state);
+        TestAgingGenome(ref state);
+        TestVisionGenome(ref state);
+        TestNeedsBasedGenome(ref state);
+        TestStatsGenome(ref state);
+        TestActionChainGenome(ref state);
+        TestAdvertiserGenome(ref state);
+        TestGenitaliaGenome(ref state);
+        TestStatAttenuationGenome(ref state);
+
+        Debug.Log("=== All GenomeBuilder Tests Complete ===");
+    }
+
+    private void TestStatsIncreaseGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing StatsIncrease GenomeType ---");
+
+        // Create test data
+        var testData = new StatsIncreaseGenomeData
+        {
+            AnimalStats = new AnimalStats
+            {
+                Stats = new float4x2(
+                    new float4(10f, 20f, 30f, 40f), // Energy, Fullness, Toilet, Social
+                    new float4(50f, 60f, 0f, 0f)    // Safety, Health
+                )
+            }
+        };
+
+        var testData2 = new StatsIncreaseGenomeData
+        {
+            AnimalStats = new AnimalStats
+            {
+                Stats = new float4x2(
+                    new float4(5f, 15f, 25f, 35f),
+                    new float4(45f, 55f, 0f, 0f)
+                )
+            }
+        };
+
+        // Test IGenomeDataConvertible.GetGenomeData()
+        GenomeData genomeData = testData.GetGenomeData();
+        Debug.Log($"GenomeData Index: {genomeData.Index} (expected: 0)");
+        Debug.Log($"GenomeData.Data.c0: {genomeData.Data.c0} (expected: (10, 20, 30, 40))");
+        Debug.Log($"GenomeData.Data.c1: {genomeData.Data.c1} (expected: (50, 60, 0, 0))");
+        
+        AssertEqual(genomeData.Index, 0, "StatsIncrease Index");
+        AssertApprox(genomeData.Data.c0, new float4(10f, 20f, 30f, 40f), "StatsIncrease Data c0");
+        AssertApprox(genomeData.Data.c1, new float4(50f, 60f, 0f, 0f), "StatsIncrease Data c1");
+
+        GenomeData genomeData2 = testData2.GetGenomeData();
+        AssertEqual(genomeData2.Index, 0, "StatsIncrease 2 Index");
+        AssertApprox(genomeData2.Data.c0, new float4(5f, 15f, 25f, 35f), "StatsIncrease 2 Data c0");
+        AssertApprox(genomeData2.Data.c1, new float4(45f, 55f, 0f, 0f), "StatsIncrease 2 Data c1");
+
+        // Test Builder with multiple calls (second call overwrites first)
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.StatsIncrease, testData);
+        builder.WithGenome(GenomeType.StatsIncrease, testData2);
+        Entity result = builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        // Verify component was added
+        Assert(state.EntityManager.HasComponent<StatsIncreaseComponent>(testEntity), 
+            "StatsIncrease: Should have StatsIncreaseComponent");
+        
+        // Verify component data (should have second data due to overwrite)
+        var component = state.EntityManager.GetComponentData<StatsIncreaseComponent>(testEntity);
+        AssertApprox(component.AnimalStats.Stats.c0, new float4(5f, 15f, 25f, 35f), "StatsIncrease Component c0 (from testData2)");
+        AssertApprox(component.AnimalStats.Stats.c1, new float4(45f, 55f, 0f, 0f), "StatsIncrease Component c1 (from testData2)");
+
+        // Cleanup
+        state.EntityManager.DestroyEntity(testEntity);
+        
+        Debug.Log("✓ StatsIncrease GenomeType test passed");
+    }
+
+    private void TestSpeedGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing Speed GenomeType ---");
+
+        var testData = new SpeedGenomeData
+        {
+            MaxSpeed = 5.5f,
+            MaxRotationSpeed = 3.14f
+        };
+
+        GenomeData genomeData = testData.GetGenomeData();
+        AssertEqual(genomeData.Index, 0, "Speed Index");
+        AssertApprox(genomeData.Data.c0.x, 5.5f, "Speed MaxSpeed");
+        AssertApprox(genomeData.Data.c0.y, 3.14f, "Speed MaxRotationSpeed");
+
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.Speed, testData);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        Assert(state.EntityManager.HasComponent<MovingSpeedComponent>(testEntity), 
+            "Speed: Should have MovingSpeedComponent");
+        
+        var component = state.EntityManager.GetComponentData<MovingSpeedComponent>(testEntity);
+        AssertApprox(component.MaxSpeed, 5.5f, "Speed Component MaxSpeed");
+        AssertApprox(component.MaxRotationSpeed, 3.14f, "Speed Component MaxRotationSpeed");
+
+        state.EntityManager.DestroyEntity(testEntity);
+        Debug.Log("✓ Speed GenomeType test passed");
+    }
+
+    private void TestAgingGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing Aging GenomeType ---");
+
+        var testData = new AgingGenomeData
+        {
+            MinSize = 0.5f,
+            MaxSize = 2.0f
+        };
+
+        GenomeData genomeData = testData.GetGenomeData();
+        AssertEqual(genomeData.Index, 0, "Aging Index");
+        AssertApprox(genomeData.Data.c0.x, 0.5f, "Aging MinSize");
+        AssertApprox(genomeData.Data.c0.y, 2.0f, "Aging MaxSize");
+
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.Aging, testData);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        Assert(state.EntityManager.HasComponent<AgingComponent>(testEntity), 
+            "Aging: Should have AgingComponent");
+        
+        var component = state.EntityManager.GetComponentData<AgingComponent>(testEntity);
+        AssertApprox(component.MinSize, 0.5f, "Aging Component MinSize");
+        AssertApprox(component.MaxSize, 2.0f, "Aging Component MaxSize");
+
+        state.EntityManager.DestroyEntity(testEntity);
+        Debug.Log("✓ Aging GenomeType test passed");
+    }
+
+    private void TestVisionGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing Vision GenomeType ---");
+
+        var testData = new VisionGenomeData
+        {
+            MaxDistance = 10.0f,
+            Interval = 0.5f
+        };
+
+        GenomeData genomeData = testData.GetGenomeData();
+        AssertEqual(genomeData.Index, 0, "Vision Index");
+        AssertApprox(genomeData.Data.c0.x, 10.0f, "Vision MaxDistance");
+        AssertApprox(genomeData.Data.c0.y, 0.5f, "Vision Interval");
+
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.Vision, testData);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        Assert(state.EntityManager.HasComponent<VisionComponent>(testEntity), 
+            "Vision: Should have VisionComponent");
+        Assert(state.EntityManager.HasBuffer<VisibleItem>(testEntity), 
+            "Vision: Should have VisibleItem buffer");
+        
+        var component = state.EntityManager.GetComponentData<VisionComponent>(testEntity);
+        AssertApprox(component.MaxDistance, 10.0f, "Vision Component MaxDistance");
+        AssertApprox(component.Interval, 0.5f, "Vision Component Interval");
+        AssertApprox(component.TimeElapsed, 0f, "Vision Component TimeElapsed");
+
+        state.EntityManager.DestroyEntity(testEntity);
+        Debug.Log("✓ Vision GenomeType test passed");
+    }
+
+    private void TestNeedsBasedGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing NeedsBased GenomeType ---");
+
+        var testData = new NeedsBasedGenomeData
+        {
+            CancelThreshold = 75.0f,
+            AddThreshold = 25.0f
+        };
+
+        GenomeData genomeData = testData.GetGenomeData();
+        AssertEqual(genomeData.Index, 0, "NeedsBased Index");
+        AssertApprox(genomeData.Data.c0.x, 75.0f, "NeedsBased CancelThreshold");
+        AssertApprox(genomeData.Data.c0.y, 25.0f, "NeedsBased AddThreshold");
+
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.NeedsBased, testData);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        Assert(state.EntityManager.HasComponent<NeedsActionChainComponent>(testEntity), 
+            "NeedsBased: Should have NeedsActionChainComponent");
+        Assert(state.EntityManager.HasBuffer<NeedBasedInputItem>(testEntity), 
+            "NeedsBased: Should have NeedBasedInputItem buffer");
+        Assert(state.EntityManager.HasComponent<NeedBasedOutputComponent>(testEntity), 
+            "NeedsBased: Should have NeedBasedOutputComponent");
+        
+        var component = state.EntityManager.GetComponentData<NeedsActionChainComponent>(testEntity);
+        AssertApprox(component.CancelThreshold, 75.0f, "NeedsBased Component CancelThreshold");
+        AssertApprox(component.AddThreshold, 25.0f, "NeedsBased Component AddThreshold");
+
+        state.EntityManager.DestroyEntity(testEntity);
+        Debug.Log("✓ NeedsBased GenomeType test passed");
+    }
+
+    private void TestStatsGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing Stats GenomeType ---");
+
+        var testData = new StatsGenomeData
+        {
+            Stats = new AnimalStats
+            {
+                Stats = new float4x2(
+                    new float4(100f, 90f, 80f, 70f),
+                    new float4(60f, 50f, 0f, 0f)
+                )
+            }
+        };
+
+        GenomeData genomeData = testData.GetGenomeData();
+        AssertEqual(genomeData.Index, 0, "Stats Index");
+        AssertApprox(genomeData.Data.c0, new float4(100f, 90f, 80f, 70f), "Stats Data c0");
+        AssertApprox(genomeData.Data.c1, new float4(60f, 50f, 0f, 0f), "Stats Data c1");
+
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.Stats, testData);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        Assert(state.EntityManager.HasComponent<AnimalStatsComponent>(testEntity), 
+            "Stats: Should have AnimalStatsComponent");
+        Assert(state.EntityManager.HasBuffer<StatsChangeItem>(testEntity), 
+            "Stats: Should have StatsChangeItem buffer");
+        
+        var component = state.EntityManager.GetComponentData<AnimalStatsComponent>(testEntity);
+        AssertApprox(component.Stats.Stats.c0, new float4(100f, 90f, 80f, 70f), "Stats Component c0");
+        AssertApprox(component.Stats.Stats.c1, new float4(60f, 50f, 0f, 0f), "Stats Component c1");
+
+        state.EntityManager.DestroyEntity(testEntity);
+        Debug.Log("✓ Stats GenomeType test passed");
+    }
+
+    private void TestActionChainGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing ActionChain GenomeType ---");
+
+        var testData = new ActionChainGenomeData();
+
+        GenomeData genomeData = testData.GetGenomeData();
+        AssertEqual(genomeData.Index, 0, "ActionChain Index");
+
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.ActionChain, testData);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        Assert(state.EntityManager.HasComponent<ActionRunnerComponent>(testEntity), 
+            "ActionChain: Should have ActionRunnerComponent");
+        Assert(state.EntityManager.HasBuffer<ActionChainItem>(testEntity), 
+            "ActionChain: Should have ActionChainItem buffer");
+        Assert(state.EntityManager.HasComponent<SubActionTimeComponent>(testEntity), 
+            "ActionChain: Should have SubActionTimeComponent");
+
+        state.EntityManager.DestroyEntity(testEntity);
+        Debug.Log("✓ ActionChain GenomeType test passed");
+    }
+
+    private void TestAdvertiserGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing Advertiser GenomeType ---");
+
+        var testData = new AdvertiserGenomeData
+        {
+            AdvertisedValue = new AnimalStats
+            {
+                Stats = new float4x2(
+                    new float4(15f, 25f, 35f, 45f),
+                    new float4(55f, 65f, 0f, 0f)
+                )
+            },
+            ActorConditions = ConditionFlags.IsAnimal | ConditionFlags.IsPredator,
+            ActionType = ActionTypes.Eat
+        };
+        
+        // Test multiple advertisers
+        var testData2 = new AdvertiserGenomeData
+        {
+            AdvertisedValue = new AnimalStats { Stats = new float4x2(new float4(1f, 2f, 3f, 4f), float4.zero) },
+            ActorConditions = ConditionFlags.None,
+            ActionType = ActionTypes.Sleep
+        };
+
+        // Test GenomeData conversion for first advertiser
+        GenomeData genomeData = testData.GetGenomeData();
+        int expectedIndex = ((int)(ConditionFlags.IsAnimal | ConditionFlags.IsPredator) << 8) | (int)ActionTypes.Eat;
+        AssertEqual(genomeData.Index, expectedIndex, "Advertiser Index");
+        AssertApprox(genomeData.Data.c0, new float4(15f, 25f, 35f, 45f), "Advertiser Data c0");
+        AssertApprox(genomeData.Data.c1, new float4(55f, 65f, 0f, 0f), "Advertiser Data c1");
+
+        // Test GenomeData conversion for second advertiser
+        GenomeData genomeData2 = testData2.GetGenomeData();
+        int expectedIndex2 = ((int)ConditionFlags.None << 8) | (int)ActionTypes.Sleep;
+        AssertEqual(genomeData2.Index, expectedIndex2, "Advertiser 2 Index");
+        AssertApprox(genomeData2.Data.c0, new float4(1f, 2f, 3f, 4f), "Advertiser 2 Data c0");
+
+        // Add both advertisers using a single builder instance
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.Advertiser, testData);
+        builder.WithGenome(GenomeType.Advertiser, testData2);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        // Verify buffer was created
+        Assert(state.EntityManager.HasBuffer<StatAdvertiserItem>(testEntity), 
+            "Advertiser: Should have StatAdvertiserItem buffer");
+        
+        var buffer = state.EntityManager.GetBuffer<StatAdvertiserItem>(testEntity);
+        AssertEqual(buffer.Length, 2, "Advertiser: Buffer should have 2 items");
+        
+        // Verify first advertiser item
+        var item = buffer[0];
+        AssertApprox(item.AdvertisedValue.Stats.c0, new float4(15f, 25f, 35f, 45f), "Advertiser Item 1 c0");
+        AssertApprox(item.AdvertisedValue.Stats.c1, new float4(55f, 65f, 0f, 0f), "Advertiser Item 1 c1");
+        AssertEqual((int)item.ActorConditions, (int)(ConditionFlags.IsAnimal | ConditionFlags.IsPredator), "Advertiser Item 1 ActorConditions");
+        AssertEqual((int)item.ActionType, (int)ActionTypes.Eat, "Advertiser Item 1 ActionType");
+
+        // Verify second advertiser item
+        var item2 = buffer[1];
+        AssertApprox(item2.AdvertisedValue.Stats.c0, new float4(1f, 2f, 3f, 4f), "Advertiser Item 2 c0");
+        AssertEqual((int)item2.ActorConditions, (int)ConditionFlags.None, "Advertiser Item 2 ActorConditions");
+        AssertEqual((int)item2.ActionType, (int)ActionTypes.Sleep, "Advertiser Item 2 ActionType");
+
+        state.EntityManager.DestroyEntity(testEntity);
+        Debug.Log("✓ Advertiser GenomeType test passed");
+    }
+
+    private void TestGenitaliaGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing Genitalia GenomeType ---");
+
+        // Test Male
+        var testDataMale = new GenetaliaGenomeData
+        {
+            IsMale = true
+        };
+
+        GenomeData genomeDataMale = testDataMale.GetGenomeData();
+        AssertEqual(genomeDataMale.Index, 0, "Genitalia Male Index");
+        AssertApprox(genomeDataMale.Data.c0.x, 1f, "Genitalia Male IsMale value");
+
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntityMale = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntityMale);
+        builder.WithGenome(GenomeType.Genitalia, testDataMale);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        Assert(state.EntityManager.HasComponent<GenetaliaComponent>(testEntityMale), 
+            "Genitalia Male: Should have GenetaliaComponent");
+        Assert(!state.EntityManager.HasBuffer<FemaleTubeItem>(testEntityMale), 
+            "Genitalia Male: Should NOT have FemaleTubeItem buffer");
+        
+        var componentMale = state.EntityManager.GetComponentData<GenetaliaComponent>(testEntityMale);
+        Assert(componentMale.IsMale, "Genitalia Component should be male");
+
+        // Test Female
+        var testDataFemale = new GenetaliaGenomeData
+        {
+            IsMale = false
+        };
+
+        GenomeData genomeDataFemale = testDataFemale.GetGenomeData();
+        AssertApprox(genomeDataFemale.Data.c0.x, 0f, "Genitalia Female IsMale value");
+
+        EntityCommandBuffer commandBuffer2 = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntityFemale = state.EntityManager.CreateEntity();
+        
+        var builder2 = new AnimalGenomeBuilder(commandBuffer2, testEntityFemale);
+        builder2.WithGenome(GenomeType.Genitalia, testDataFemale);
+        builder2.Build();
+        
+        commandBuffer2.Playback(state.EntityManager);
+        commandBuffer2.Dispose();
+
+        Assert(state.EntityManager.HasComponent<GenetaliaComponent>(testEntityFemale), 
+            "Genitalia Female: Should have GenetaliaComponent");
+        Assert(state.EntityManager.HasBuffer<FemaleTubeItem>(testEntityFemale), 
+            "Genitalia Female: Should have FemaleTubeItem buffer");
+        
+        var componentFemale = state.EntityManager.GetComponentData<GenetaliaComponent>(testEntityFemale);
+        Assert(!componentFemale.IsMale, "Genitalia Component should be female");
+
+        state.EntityManager.DestroyEntity(testEntityMale);
+        state.EntityManager.DestroyEntity(testEntityFemale);
+        Debug.Log("✓ Genitalia GenomeType test passed");
+    }
+
+    private void TestStatAttenuationGenome(ref SystemState state)
+    {
+        Debug.Log("\n--- Testing StatAttenuation GenomeType ---");
+
+        var testData = new StatAttenuationGenomeData
+        {
+            StatType = StatType.Energy,
+            Attenuation = new AnimalStatsAttenuation
+            {
+                Needs = new HermiteCurve
+                {
+                    points = new float4(0f, 1f, 100f, 0f),
+                    tangents = new float2(-0.01f, -0.01f)
+                },
+                Distance = new HermiteCurve
+                {
+                    points = new float4(0f, 1f, 50f, 0.5f),
+                    tangents = new float2(-0.02f, -0.02f)
+                }
+            }
+        };
+
+        // Test multiple stat attenuations
+        var testData2 = new StatAttenuationGenomeData
+        {
+            StatType = StatType.Health,
+            Attenuation = new AnimalStatsAttenuation
+            {
+                Needs = new HermiteCurve
+                {
+                    points = new float4(10f, 20f, 30f, 40f),
+                    tangents = new float2(0.5f, 0.5f)
+                },
+                Distance = new HermiteCurve
+                {
+                    points = new float4(5f, 15f, 25f, 35f),
+                    tangents = new float2(1f, 1f)
+                }
+            }
+        };
+
+        // Test GenomeData conversion for first attenuation
+        GenomeData genomeData = testData.GetGenomeData();
+        AssertEqual(genomeData.Index, (int)StatType.Energy, "StatAttenuation Index");
+        AssertApprox(genomeData.Data.c0, new float4(0f, 1f, 100f, 0f), "StatAttenuation Needs points");
+        AssertApprox(genomeData.Data.c1, new float4(-0.01f, -0.01f, 0f, 0f), "StatAttenuation Needs tangents");
+        AssertApprox(genomeData.Data.c2, new float4(0f, 1f, 50f, 0.5f), "StatAttenuation Distance points");
+        AssertApprox(genomeData.Data.c3, new float4(-0.02f, -0.02f, 0f, 0f), "StatAttenuation Distance tangents");
+
+        // Test GenomeData conversion for second attenuation
+        GenomeData genomeData2 = testData2.GetGenomeData();
+        AssertEqual(genomeData2.Index, (int)StatType.Health, "StatAttenuation 2 Index");
+        AssertApprox(genomeData2.Data.c0, new float4(10f, 20f, 30f, 40f), "StatAttenuation 2 Needs points");
+        AssertApprox(genomeData2.Data.c2, new float4(5f, 15f, 25f, 35f), "StatAttenuation 2 Distance points");
+
+        // Add both stat attenuations using a single builder instance
+        EntityCommandBuffer commandBuffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        Entity testEntity = state.EntityManager.CreateEntity();
+        
+        var builder = new AnimalGenomeBuilder(commandBuffer, testEntity);
+        builder.WithGenome(GenomeType.StatAttenuation, testData);
+        builder.WithGenome(GenomeType.StatAttenuation, testData2);
+        builder.Build();
+        
+        commandBuffer.Playback(state.EntityManager);
+        commandBuffer.Dispose();
+
+        // Verify component was created
+        Assert(state.EntityManager.HasComponent<AnimalStatsAttenuationComponent>(testEntity), 
+            "StatAttenuation: Should have AnimalStatsAttenuationComponent");
+        
+        // Verify both stat attenuations were set correctly
+        var component = state.EntityManager.GetComponentData<AnimalStatsAttenuationComponent>(testEntity);
+        
+        var energyAttenuation = component.Attenuation.Energy;
+        AssertApprox(energyAttenuation.Needs.points, new float4(0f, 1f, 100f, 0f), "StatAttenuation Component Energy Needs points");
+        AssertApprox(energyAttenuation.Distance.points, new float4(0f, 1f, 50f, 0.5f), "StatAttenuation Component Energy Distance points");
+
+        var healthAttenuation = component.Attenuation.Health;
+        AssertApprox(healthAttenuation.Needs.points, new float4(10f, 20f, 30f, 40f), "StatAttenuation Component Health Needs points");
+        AssertApprox(healthAttenuation.Distance.points, new float4(5f, 15f, 25f, 35f), "StatAttenuation Component Health Distance points");
+
+        state.EntityManager.DestroyEntity(testEntity);
+        Debug.Log("✓ StatAttenuation GenomeType test passed");
+    }
+
+    // Helper assertion methods
+    private void Assert(bool condition, string message)
+    {
+        if (!condition)
+        {
+            Debug.LogError($"FAILED: {message}");
+        }
+        else
+        {
+            Debug.Log($"PASSED: {message}");
+        }
+    }
+
+    private void AssertEqual(int actual, int expected, string testName)
+    {
+        if (actual != expected)
+        {
+            Debug.LogError($"FAILED: {testName} - Expected: {expected}, Got: {actual}");
+        }
+        else
+        {
+            Debug.Log($"PASSED: {testName}");
+        }
+    }
+
+    private void AssertApprox(float actual, float expected, string testName, float tolerance = 0.001f)
+    {
+        if (math.abs(actual - expected) > tolerance)
+        {
+            Debug.LogError($"FAILED: {testName} - Expected: {expected}, Got: {actual}");
+        }
+        else
+        {
+            Debug.Log($"PASSED: {testName}");
+        }
+    }
+
+    private void AssertApprox(float4 actual, float4 expected, string testName, float tolerance = 0.001f)
+    {
+        bool passed = math.all(math.abs(actual - expected) < tolerance);
+        if (!passed)
+        {
+            Debug.LogError($"FAILED: {testName} - Expected: {expected}, Got: {actual}");
+        }
+        else
+        {
+            Debug.Log($"PASSED: {testName}");
+        }
+    }
+}
+
