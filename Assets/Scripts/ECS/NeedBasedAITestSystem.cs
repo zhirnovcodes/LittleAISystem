@@ -37,8 +37,19 @@ public partial struct NeedBasedAITestSystem : ISystem
     {
         Debug.Log("\n--- Test Case 1: Attenuation off, biggest weight wins ---");
         
-        var distanceAttenuation = CreateAnimalStatsAttenuation4x4(HermiteCurveType.Linear1);
-        var statsAttenuation = CreateAnimalStatsAttenuation4x4(HermiteCurveType.Linear01); // Identity function for no attenuation
+        var distCurve = CreateHermiteCurve(HermiteCurveType.Linear1);
+        var statsCurve = CreateHermiteCurve(HermiteCurveType.Linear10);
+        
+        var attenuation = new AnimalStatsAttenuation4x4
+        {
+            Energy = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Fullness = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Toilet = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Social = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Safety = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Health = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve }
+        };
+        
         var currentStats = CreateAnimalStats(0f);
 
         var adv0 = new TestAdvertiser
@@ -60,8 +71,7 @@ public partial struct NeedBasedAITestSystem : ISystem
         };
 
         int resultIndex = RunTestCase(
-            distanceAttenuation,
-            statsAttenuation,
+            attenuation,
             currentStats,
             adv0,
             adv1,
@@ -76,8 +86,19 @@ public partial struct NeedBasedAITestSystem : ISystem
     {
         Debug.Log("\n--- Test Case 2: All advertisers advertise 0, should return idle ---");
         
-        var distanceAttenuation = CreateAnimalStatsAttenuation4x4(HermiteCurveType.Linear1);
-        var statsAttenuation = CreateAnimalStatsAttenuation4x4(HermiteCurveType.Linear01); // Identity function
+        var distCurve = CreateHermiteCurve(HermiteCurveType.Linear1);
+        var statsCurve = CreateHermiteCurve(HermiteCurveType.Linear10);
+        
+        var attenuation = new AnimalStatsAttenuation4x4
+        {
+            Energy = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Fullness = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Toilet = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Social = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Safety = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Health = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve }
+        };
+        
         var currentStats = CreateAnimalStats(0f);
 
         var adv0 = new TestAdvertiser
@@ -99,8 +120,7 @@ public partial struct NeedBasedAITestSystem : ISystem
         };
 
         int resultIndex = RunTestCase(
-            distanceAttenuation,
-            statsAttenuation,
+            attenuation,
             currentStats,
             adv0,
             adv1,
@@ -122,17 +142,18 @@ public partial struct NeedBasedAITestSystem : ISystem
             tangents = new float2(-1f / 3f, -1f / 3f)
         };
         
-        var distanceAttenuation = new AnimalStatsAttenuation4x4
+        var statsCurve = CreateHermiteCurve(HermiteCurveType.Linear10);
+        
+        var attenuation = new AnimalStatsAttenuation4x4
         {
-            Energy = new AnimalStatsAttenuation { Distance = distCurve },
-            Fullness = new AnimalStatsAttenuation { Distance = distCurve },
-            Toilet = new AnimalStatsAttenuation { Distance = distCurve },
-            Social = new AnimalStatsAttenuation { Distance = distCurve },
-            Safety = new AnimalStatsAttenuation { Distance = distCurve },
-            Health = new AnimalStatsAttenuation { Distance = distCurve }
+            Energy = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Fullness = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Toilet = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Social = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Safety = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Health = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve }
         };
         
-        var statsAttenuation = CreateAnimalStatsAttenuation4x4(HermiteCurveType.Linear01); // Identity function
         var currentStats = CreateAnimalStats(0f);
 
         var adv0 = new TestAdvertiser
@@ -154,8 +175,7 @@ public partial struct NeedBasedAITestSystem : ISystem
         };
 
         int resultIndex = RunTestCase(
-            distanceAttenuation,
-            statsAttenuation,
+            attenuation,
             currentStats,
             adv0,
             adv1,
@@ -177,17 +197,18 @@ public partial struct NeedBasedAITestSystem : ISystem
             //tangents = new float2(1f / 3f, 1f / 3f)
         };
         
-        var distanceAttenuation = new AnimalStatsAttenuation4x4
+        var statsCurve = CreateHermiteCurve(HermiteCurveType.Linear10);
+        
+        var attenuation = new AnimalStatsAttenuation4x4
         {
-            Energy = new AnimalStatsAttenuation { Distance = distCurve },
-            Fullness = new AnimalStatsAttenuation { Distance = distCurve },
-            Toilet = new AnimalStatsAttenuation { Distance = distCurve },
-            Social = new AnimalStatsAttenuation { Distance = distCurve },
-            Safety = new AnimalStatsAttenuation { Distance = distCurve },
-            Health = new AnimalStatsAttenuation { Distance = distCurve }
+            Energy = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Fullness = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Toilet = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Social = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Safety = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve },
+            Health = new AnimalStatsAttenuation { Needs = statsCurve, Distance = distCurve }
         };
         
-        var statsAttenuation = CreateAnimalStatsAttenuation4x4(HermiteCurveType.Linear01); // Identity function
         var currentStats = CreateAnimalStats(0f);
 
         var adv0 = new TestAdvertiser
@@ -209,8 +230,7 @@ public partial struct NeedBasedAITestSystem : ISystem
         };
 
         int resultIndex = RunTestCase(
-            distanceAttenuation,
-            statsAttenuation,
+            attenuation,
             currentStats,
             adv0,
             adv1,
@@ -226,17 +246,20 @@ public partial struct NeedBasedAITestSystem : ISystem
         Debug.Log("\n--- Test Case 5: Best need according to attenuated value wins ---");
         
         // Create mixed attenuation curves
-        var statsAttenuation = new AnimalStatsAttenuation4x4
+        var distCurve = CreateHermiteCurve(HermiteCurveType.Linear1);
+        var statsCurveLinear = CreateHermiteCurve(HermiteCurveType.Linear10);
+        var statsCurveSquare = CreateHermiteCurve(HermiteCurveType.Square10);
+        
+        var attenuation = new AnimalStatsAttenuation4x4
         {
-            Energy = new AnimalStatsAttenuation { Needs = CreateHermiteCurve(HermiteCurveType.Linear01) },
-            Fullness = new AnimalStatsAttenuation { Needs = CreateHermiteCurve(HermiteCurveType.Linear01) },
-            Toilet = new AnimalStatsAttenuation { Needs = CreateHermiteCurve(HermiteCurveType.Linear01) },
-            Social = new AnimalStatsAttenuation { Needs = CreateHermiteCurve(HermiteCurveType.Linear01) },
-            Safety = new AnimalStatsAttenuation { Needs = CreateHermiteCurve(HermiteCurveType.Linear01) },
-            Health = new AnimalStatsAttenuation { Needs = CreateHermiteCurve(HermiteCurveType.Square01) } // Convex
+            Energy = new AnimalStatsAttenuation { Needs = statsCurveLinear, Distance = distCurve },
+            Fullness = new AnimalStatsAttenuation { Needs = statsCurveLinear, Distance = distCurve },
+            Toilet = new AnimalStatsAttenuation { Needs = statsCurveLinear, Distance = distCurve },
+            Social = new AnimalStatsAttenuation { Needs = statsCurveLinear, Distance = distCurve },
+            Safety = new AnimalStatsAttenuation { Needs = statsCurveLinear, Distance = distCurve },
+            Health = new AnimalStatsAttenuation { Needs = statsCurveSquare, Distance = distCurve } // Convex
         };
-
-        var distanceAttenuation = CreateAnimalStatsAttenuation4x4(HermiteCurveType.Linear1);
+        
         var currentStats = CreateAnimalStats(50f);
 
         var adv0 = new TestAdvertiser
@@ -253,13 +276,12 @@ public partial struct NeedBasedAITestSystem : ISystem
 
         var adv2 = new TestAdvertiser
         {
-            AdvertisedValue = CreateAnimalStatsCustom(25f, 0f, 0f, 0f, 0f, 0f), // hunger = 25
+            AdvertisedValue = CreateAnimalStatsCustom(25f, 0f, 0f, 0f, 0f, 0f), // energy = 25
             Distance = 0f
         };
 
         int resultIndex = RunTestCase(
-            distanceAttenuation,
-            statsAttenuation,
+            attenuation,
             currentStats,
             adv0,
             adv1,
@@ -279,7 +301,7 @@ public partial struct NeedBasedAITestSystem : ISystem
         AnimalStats StatsAdvertised = CreateAnimalStats(100f);
         
         // NeedsAttenuation = Linear01 for all (identity function)
-        AnimalStatsAttenuation4x4 attenuation = CreateAnimalStatsAttenuation4x4(HermiteCurveType.Linear01);
+        var needsCurve = CreateHermiteCurve(HermiteCurveType.Linear10);
         
         // DistanceAttenuation = linear with x from 0 to 100, y from 1 to 0
         var distCurve = new HermiteCurve
@@ -288,19 +310,22 @@ public partial struct NeedBasedAITestSystem : ISystem
             tangents = new float2(-1f / 100f, -1f / 100f)
         };
         
-        attenuation.Energy = new AnimalStatsAttenuation { Needs = attenuation.Energy.Needs, Distance = distCurve };
-        attenuation.Fullness = new AnimalStatsAttenuation { Needs = attenuation.Fullness.Needs, Distance = distCurve };
-        attenuation.Toilet = new AnimalStatsAttenuation { Needs = attenuation.Toilet.Needs, Distance = distCurve };
-        attenuation.Social = new AnimalStatsAttenuation { Needs = attenuation.Social.Needs, Distance = distCurve };
-        attenuation.Safety = new AnimalStatsAttenuation { Needs = attenuation.Safety.Needs, Distance = distCurve };
-        attenuation.Health = new AnimalStatsAttenuation { Needs = attenuation.Health.Needs, Distance = distCurve };
+        AnimalStatsAttenuation4x4 attenuation = new AnimalStatsAttenuation4x4
+        {
+            Energy = new AnimalStatsAttenuation { Needs = needsCurve, Distance = distCurve },
+            Fullness = new AnimalStatsAttenuation { Needs = needsCurve, Distance = distCurve },
+            Toilet = new AnimalStatsAttenuation { Needs = needsCurve, Distance = distCurve },
+            Social = new AnimalStatsAttenuation { Needs = needsCurve, Distance = distCurve },
+            Safety = new AnimalStatsAttenuation { Needs = needsCurve, Distance = distCurve },
+            Health = new AnimalStatsAttenuation { Needs = needsCurve, Distance = distCurve }
+        };
         
         // Create local transform at 0,0,0
         var selfTransform = new LocalTransform
         {
             Position = float3.zero,
             Rotation = quaternion.identity,
-            Scale = 1f
+            Scale = 0f
         };
         
         // Test at distance = 0
@@ -309,12 +334,12 @@ public partial struct NeedBasedAITestSystem : ISystem
             Target = Entity.Null,
             StatsAdvertised = StatsAdvertised,
             Position = new float3(0f, 0, 0),
-            Scale = 1f
+            Scale = 0f
         };
         float weight0 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
             selfTransform, item0, ActorStats, attenuation);
         Debug.Log($"  Distance 0: Weight = {weight0} (expected 800)");
-        AssertEquals((int)weight0, 800, "TestCase6-Distance0");
+        AssertEquals((int)weight0, 600, "TestCase6-Distance0");
         
         // Test at distance = 50
         var item50 = new NeedBasedInputItem
@@ -322,12 +347,12 @@ public partial struct NeedBasedAITestSystem : ISystem
             Target = Entity.Null,
             StatsAdvertised = StatsAdvertised,
             Position = new float3(50f, 0, 0),
-            Scale = 1f
+            Scale = 0f
         };
         float weight50 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
             selfTransform, item50, ActorStats, attenuation);
         Debug.Log($"  Distance 50: Weight = {weight50} (expected 400)");
-        AssertEquals((int)weight50, 400, "TestCase6-Distance50");
+        AssertEquals((int)weight50, 300, "TestCase6-Distance50");
         
         // Test at distance = 100
         var item100 = new NeedBasedInputItem
@@ -335,7 +360,7 @@ public partial struct NeedBasedAITestSystem : ISystem
             Target = Entity.Null,
             StatsAdvertised = StatsAdvertised,
             Position = new float3(100f, 0, 0),
-            Scale = 1f
+            Scale = 0f
         };
         float weight100 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
             selfTransform, item100, ActorStats, attenuation);
@@ -346,27 +371,12 @@ public partial struct NeedBasedAITestSystem : ISystem
     }
 
     private int RunTestCase(
-        AnimalStatsAttenuation4x4 DistanceAttenuation,
-        AnimalStatsAttenuation4x4 StatsAttenuation,
+        AnimalStatsAttenuation4x4 Attenuation,
         AnimalStats CurrentStats,
         TestAdvertiser Advertiser0,
         TestAdvertiser Advertiser1,
         TestAdvertiser Advertiser2)
     {
-        // Merge distance and stats attenuation
-        var attenuation = new AnimalStatsAttenuation4x4
-        {
-            Energy = new AnimalStatsAttenuation { Needs = StatsAttenuation.Energy.Needs, Distance = DistanceAttenuation.Energy.Distance },
-            Fullness = new AnimalStatsAttenuation { Needs = StatsAttenuation.Fullness.Needs, Distance = DistanceAttenuation.Fullness.Distance },
-            Toilet = new AnimalStatsAttenuation { Needs = StatsAttenuation.Toilet.Needs, Distance = DistanceAttenuation.Toilet.Distance },
-            Social = new AnimalStatsAttenuation { Needs = StatsAttenuation.Social.Needs, Distance = DistanceAttenuation.Social.Distance },
-            Safety = new AnimalStatsAttenuation { Needs = StatsAttenuation.Safety.Needs, Distance = DistanceAttenuation.Safety.Distance },
-            Health = new AnimalStatsAttenuation { Needs = StatsAttenuation.Health.Needs, Distance = DistanceAttenuation.Health.Distance }
-        };
-
-        var statsComponent = new AnimalStatsComponent { Stats = CurrentStats };
-        var attenuationComponent = new AnimalStatsAttenuationComponent { Attenuation = attenuation };
-
         // Create local transform at 0,0,0
         var selfTransform = new LocalTransform
         {
@@ -402,11 +412,11 @@ public partial struct NeedBasedAITestSystem : ISystem
 
         // Call CalculateWeight directly from the Job
         float weight0 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
-            selfTransform, item0, statsComponent.Stats, attenuationComponent.Attenuation);
+            selfTransform, item0, CurrentStats, Attenuation);
         float weight1 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
-            selfTransform, item1, statsComponent.Stats, attenuationComponent.Attenuation);
+            selfTransform, item1, CurrentStats, Attenuation);
         float weight2 = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
-            selfTransform, item2, statsComponent.Stats, attenuationComponent.Attenuation);
+            selfTransform, item2, CurrentStats, Attenuation);
 
         Debug.Log($"  Weight0: {weight0}, Weight1: {weight1}, Weight2: {weight2}");
 
@@ -437,9 +447,7 @@ public partial struct NeedBasedAITestSystem : ISystem
     {
         Linear0,
         Linear1,
-        Linear01,
         Linear10,
-        Square01,
         Square10
     }
 
@@ -463,14 +471,6 @@ public partial struct NeedBasedAITestSystem : ISystem
                     tangents = new float2(0f, 0f)
                 };
 
-            case HermiteCurveType.Linear01:
-                // Linear function growing from 0 to 1 with x from 0 to 1
-                return new HermiteCurve
-                {
-                    points = new float4(0f, 0f, 1f, 1f),
-                    tangents = new float2(1f, 1f)
-                };
-
             case HermiteCurveType.Linear10:
                 // Linear function declining from 1 to 0 with x from 0 to 1
                 return new HermiteCurve
@@ -479,20 +479,12 @@ public partial struct NeedBasedAITestSystem : ISystem
                     tangents = new float2(-1f, -1f)
                 };
 
-            case HermiteCurveType.Square01:
-                // Square function rising from 0 to 1 (convex)
-                return new HermiteCurve
-                {
-                    points = new float4(0f, 0f, 1f, 1f),
-                    tangents = new float2(0f, 2f)
-                };
-
             case HermiteCurveType.Square10:
-                // Square function falling from 1 to 0 (concave)
+                // Square function falling from 1 to 0 (convex)
                 return new HermiteCurve
                 {
                     points = new float4(0f, 1f, 1f, 0f),
-                    tangents = new float2(-2f, 0f)
+                    tangents = new float2(2f, 0f)
                 };
 
             default:
@@ -502,21 +494,6 @@ public partial struct NeedBasedAITestSystem : ISystem
                     tangents = new float2(0f, 0f)
                 };
         }
-    }
-
-    private AnimalStatsAttenuation4x4 CreateAnimalStatsAttenuation4x4(HermiteCurveType type)
-    {
-        var curve = CreateHermiteCurve(type);
-        
-        return new AnimalStatsAttenuation4x4
-        {
-            Energy = new AnimalStatsAttenuation { Needs = curve, Distance = curve },
-            Fullness = new AnimalStatsAttenuation { Needs = curve, Distance = curve },
-            Toilet = new AnimalStatsAttenuation { Needs = curve, Distance = curve },
-            Social = new AnimalStatsAttenuation { Needs = curve, Distance = curve },
-            Safety = new AnimalStatsAttenuation { Needs = curve, Distance = curve },
-            Health = new AnimalStatsAttenuation { Needs = curve, Distance = curve }
-        };
     }
 
     private float4x2 CreateFloat4x2(float value)

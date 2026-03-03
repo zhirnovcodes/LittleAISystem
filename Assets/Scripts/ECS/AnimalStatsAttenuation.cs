@@ -1,3 +1,5 @@
+using Unity.Mathematics;
+
 [System.Serializable]
 public struct AnimalStatsAttenuation
 {
@@ -35,11 +37,11 @@ public struct AnimalStatsAttenuation
         float attenuatedChange = valueChange * distanceAttenuation;
 
         // 2 - Calculate needs attenuation of current state (normalized to 0-1)
-        float currentNormalized = Unity.Mathematics.math.clamp(currentValue, 0f, 100f) / 100f;
+        float currentNormalized = math.clamp(currentValue, 0f, 100f) / 100f;
         float needsAttenuation0 = Needs.GetY(currentNormalized);
 
         // 3 - Calculate needs attenuation of resulted state (current + attenuated change, normalized to 0-1)
-        float resultedValue = Unity.Mathematics.math.clamp(currentValue + attenuatedChange, 0f, 100f);
+        float resultedValue = math.clamp(currentValue + attenuatedChange, 0f, 100f);
         float resultedNormalized = resultedValue / 100f;
         float needsAttenuation1 = Needs.GetY(resultedNormalized);
 
