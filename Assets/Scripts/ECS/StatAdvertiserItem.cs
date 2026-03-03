@@ -1,6 +1,5 @@
 using LittleAI.Enums;
 using Unity.Entities;
-using Unity.Mathematics;
 
 public struct StatAdvertiserItem : IBufferElementData
 {
@@ -8,32 +7,23 @@ public struct StatAdvertiserItem : IBufferElementData
     public ConditionFlags ActorConditions;
     public ActionTypes ActionType;
 
-    public void SetFloat4x4(float4x4 data)
+    public static implicit operator StatAdvertiserItem(GenomeData genomeData)
     {
-        int id = (int)data.c2.x;
-        FromID(id, out ActionTypes actionType, out ConditionFlags actorConditions);
-
-        AdvertisedValue = new AnimalStats
+        // Id contains bit-shifted and combined ActorConditions and ActionType
+        int id = genomeData.Index;
+        
+        // Extract ActionType from lower byte
+        ActionTypes actionType = (ActionTypes)(id & 0xFF);
+        
+        // Extract ActorConditions from upper bits (shift right by 8 bits)
+        ConditionFlags actorConditions = (ConditionFlags)((uint)id >> 8);
+        
+        return new StatAdvertiserItem
         {
-            Stats = new float4x2(data.c0, data.c1)
+            AdvertisedValue = genomeData.Data,
+            ActorConditions = actorConditions,
+            ActionType = actionType
         };
-        ActionType = actionType;
-        ActorConditions = actorConditions;
-    }
-
-    public static int GetID(ActionTypes actionType, ConditionFlags actorConditions)
-    {
-        // Combine ActionType and ActorConditions using bit shift
-        // ActionType in lower bits, ActorConditions in upper bits
-        return ((int)actorConditions << 16) | (int)actionType;
-    }
-
-    public static void FromID(int id, out ActionTypes actionType, out ConditionFlags actorConditions)
-    {
-        // Extract ActionType from lower 16 bits
-        actionType = (ActionTypes)(id & 0xFFFF);
-        // Extract ActorConditions from upper 16 bits
-        actorConditions = (ConditionFlags)(id >> 16);
     }
 }
 

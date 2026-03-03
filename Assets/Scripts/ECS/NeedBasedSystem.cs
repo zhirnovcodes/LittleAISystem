@@ -98,7 +98,7 @@ public partial struct NeedBasedSystem : ISystem
             {
                 var item = needBasedInputs[i];
 
-                float weight = CalculateWeight(selfTransform, item, statsComponent, attenuationComponent);
+                float weight = CalculateWeight(selfTransform, item, statsComponent.Stats, attenuationComponent.Attenuation);
 
                 // Check if this is the best option (advertiser with max weight wins)
                 if (weight > maxWeight)
@@ -126,52 +126,17 @@ public partial struct NeedBasedSystem : ISystem
         public static float CalculateWeight(
             in LocalTransform selfTransform,
             in NeedBasedInputItem item,
-            in AnimalStatsComponent statsComponent,
-            in AnimalStatsAttenuationComponent attenuationComponent)
+            in AnimalStats actorStats,
+            in AnimalStatsAttenuation4x4 attenuation)
         {
             // 1 - Calculate distance with scales (if distance = scale1/2 + scale2/2, distance = 0)
             float distance = selfTransform.CalculateDistance(item.Position, item.Scale);
 
-            // 2 - Use the new CalculateWeight method
-            return CalculateWeight(
-                distance,
-                statsComponent.Stats,
-                item.StatsAdvertised,
-                attenuationComponent.Attenuation.NeedsAttenuation,
-                attenuationComponent.Attenuation.DistanceAttenuation
-            );
-        }
+            // 2 - Calculate attenuated stats change using the extension method
+            AnimalStats attenuatedChange = attenuation.GetStatsAttenuated(actorStats, item.StatsAdvertised, distance);
 
-        public static float CalculateWeight(
-                float distance, 
-                AnimalStats ActorStats,
-                AnimalStats StatsAdvertised,
-                HermiteCurve4x2 NeedsAttenuation,
-                HermiteCurve4x2 DistanceAttenuation
-            )
-        {
-            // 1 - Create a float4x2 with the distance for all stats
-            float4x2 distanceInputs =  float4x2Extensions.One * distance;
-
-            // 2 - Get distance attenuation for all stats
-            float4x2 distanceAttenuationNormalized = DistanceAttenuation.GetYs(distanceInputs);
-
-            // 3 - Multiply advertised stats with distance attenuation to get statsAttenuated
-            float4x2 statsAttenuated = StatsAdvertised.Stats * distanceAttenuationNormalized;
-
-            // 4 - Calculate attenuated value of current stats (stats0 = NeedsAttenuation.GetYs(ActorStats.Stats / 100))
-            float4x2 currentStatsNormalized = ActorStats.Stats / 100.0f;
-            float4x2 stats0 = NeedsAttenuation.GetYs(currentStatsNormalized);
-
-            // 5 - Calculate attenuated value of resulted stats (stats1 = NeedsAttenuation.GetYs((ActorStats.Stats + statsAttenuated) / 100))
-            float4x2 resultedStatsNormalized = float4x2Extensions.Clamp(ActorStats.Stats + statsAttenuated, 0, 100) / 100.0f;
-            float4x2 stats1 = NeedsAttenuation.GetYs(resultedStatsNormalized);
-
-            // 6 - Calculate stats difference attenuated (statsDifferenceAttenuated = (stats1 - stats0) * 100)
-            float4x2 statsDifferenceAttenuated = (stats0 - stats1) * 100f;
-
-            // 7 - Calculate weight (sum of all stats difference values)
-            return statsDifferenceAttenuated.GetWeight();
+            // 3 - Calculate weight (sum of all attenuated stats change values)
+            return attenuatedChange.GetWeight();
         }
     }
 }

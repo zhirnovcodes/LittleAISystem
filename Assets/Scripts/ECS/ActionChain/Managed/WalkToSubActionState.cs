@@ -6,21 +6,20 @@ using Unity.Transforms;
 public class WalkToSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
-    private ComponentLookup<DNAComponent> DNALookup;
-    private ComponentLookup<MovingDataComponent> MovingDataLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
+    private const float FailTime = 30f;
+
+    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
-        DNALookup = dnaLookup;
-        MovingDataLookup = movingDataLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
-        DNALookup.Update(system);
-        MovingDataLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -47,27 +46,8 @@ public class WalkToSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get DNA entity first
-        if (!DNALookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var dnaEntity = DNALookup[entity].DNA;
-
-        // Get moving data from DNA entity
-        if (!MovingDataLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var movingData = MovingDataLookup[dnaEntity];
-        float moveSpeed = movingData.MaxSpeed * movingData.WalkingSpeedT;
-        float failTime = movingData.MoveFailTime;
-        float rotationSpeed = movingData.MaxRotationSpeed * movingData.WalkingRotationSpeedT;
-
         // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(failTime))
+        if (timer.IsTimeout(FailTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -81,11 +61,18 @@ public class WalkToSubActionState : ISubActionState
             return SubActionResult.Success();
         }
 
-        // Move towards target
-        var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, moveSpeed);
+        // if entity does not have MovingSpeedComponent - return fail with code 3
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
 
-        // Rotate towards target
-        newTransform = newTransform.RotateTowards(targetTransform, rotationSpeed * timer.DeltaTime, 0.01f);
+        // Move towards target using walking speed
+        var movingSpeed = MovingSpeedLookup[entity];
+        var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, movingSpeed.GetWalkingSpeed());
+
+        // Rotate towards target using walking rotation speed
+        newTransform = newTransform.RotateTowards(targetTransform, movingSpeed.GetWalkingRotationSpeed() * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

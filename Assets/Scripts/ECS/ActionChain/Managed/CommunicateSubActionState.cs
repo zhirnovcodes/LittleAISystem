@@ -5,35 +5,33 @@ public class CommunicateSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
     private ComponentLookup<FemaleGenetaliaComponent> FemaleGenetaliaLookup;
     private ComponentLookup<MaleGenetaliaComponent> MaleGenetaliaLookup;
-    private ComponentLookup<DNAComponent> DNALookup;
-    private ComponentLookup<TalkingDataComponent> TalkingDataLookup;
+
+    private const float MaxDistance = 0.3f;
 
     public CommunicateSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         ComponentLookup<FemaleGenetaliaComponent> femaleGenetaliaLookup,
         ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup,
-        ComponentLookup<DNAComponent> dnaLookup,
-        ComponentLookup<TalkingDataComponent> talkingDataLookup)
+        ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup)
     {
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
+        StatsIncreaseLookup = statsIncreaseLookup;
         FemaleGenetaliaLookup = femaleGenetaliaLookup;
         MaleGenetaliaLookup = maleGenetaliaLookup;
-        DNALookup = dnaLookup;
-        TalkingDataLookup = talkingDataLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         AnimalStatsLookup.Update(system);
+        StatsIncreaseLookup.Update(system);
         FemaleGenetaliaLookup.Update(system);
         MaleGenetaliaLookup.Update(system);
-        DNALookup.Update(system);
-        TalkingDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -86,35 +84,24 @@ public class CommunicateSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get DNA entity first
-        if (!DNALookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var dnaEntity = DNALookup[entity].DNA;
-
-        // Get talking data from DNA entity
-        if (!TalkingDataLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var talkingData = TalkingDataLookup[dnaEntity];
-        float maxDistance = talkingData.MaxDistance;
-        float socialIncreaseSpeed = talkingData.SocialIncrease;
-
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
 
         // Check if target is reached
-        if (entityTransform.IsTargetReached(targetTransform, maxDistance) == false)
+        if (entityTransform.IsTargetReached(targetTransform, MaxDistance) == false)
         {
             return SubActionResult.Fail(2);
         }
 
-        // Add stat Social with const float increase speed * delta time
-        var socialGain = socialIncreaseSpeed * timer.DeltaTime;
+        // if entity does not have StatsIncreaseComponent - return fail with code 3
+        if (!StatsIncreaseLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
+
+        // Add stat Social with increase speed from component * delta time
+        var statsIncrease = StatsIncreaseLookup[entity];
+        var socialGain = statsIncrease.AnimalStats.Social * timer.DeltaTime;
 
         var statsChange = new AnimalStatsBuilder().WithSocial(socialGain).Build();
 

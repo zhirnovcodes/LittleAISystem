@@ -1,5 +1,4 @@
 using Unity.Entities;
-using Unity.Mathematics;
 
 public struct VisionComponent : IComponentData
 {
@@ -7,10 +6,14 @@ public struct VisionComponent : IComponentData
     public float Interval;
     public float TimeElapsed;
 
-    public void SetFloat4(float4 data)
+    public static implicit operator VisionComponent(GenomeData genomeData)
     {
-        MaxDistance = data.x;
-        Interval = data.y;
+        return new VisionComponent
+        {
+            MaxDistance = genomeData.Data.c0.x,
+            Interval = genomeData.Data.c0.y,
+            TimeElapsed = 0f
+        };
     }
 }
 

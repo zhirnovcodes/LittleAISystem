@@ -1,15 +1,14 @@
 using Unity.Entities;
-using Unity.Mathematics;
 
 public struct AnimalStatsComponent : IComponentData
 {
     public AnimalStats Stats;
 
-    public void SetFloat4x4(float4x4 data)
+    public static implicit operator AnimalStatsComponent(GenomeData genomeData)
     {
-        Stats = new AnimalStats
+        return new AnimalStatsComponent
         {
-            Stats = new float4x2(data.c0, data.c1)
+            Stats = genomeData.Data
         };
     }
 }

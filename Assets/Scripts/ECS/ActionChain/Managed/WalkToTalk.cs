@@ -4,24 +4,21 @@ using Unity.Transforms;
 public class WalkToTalk : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
-    private ComponentLookup<DNAComponent> DNALookup;
-    private ComponentLookup<TalkingDataComponent> TalkingDataLookup;
-    private ComponentLookup<MovingDataComponent> MovingDataLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    public WalkToTalk(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<TalkingDataComponent> talkingDataLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
+    private const float MaxDistance = 0.2f;
+    private const float FailTime = 30f;
+
+    public WalkToTalk(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
-        DNALookup = dnaLookup;
-        TalkingDataLookup = talkingDataLookup;
-        MovingDataLookup = movingDataLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
-        DNALookup.Update(system);
-        TalkingDataLookup.Update(system);
-        MovingDataLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -48,38 +45,8 @@ public class WalkToTalk : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get DNA entity first
-        if (!DNALookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var dnaEntity = DNALookup[entity].DNA;
-
-        // Get talking data from DNA entity
-        if (!TalkingDataLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        // Get moving data from DNA entity
-        if (!MovingDataLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(8);
-        }
-
-        var talkingData = TalkingDataLookup[dnaEntity];
-        var movingData = MovingDataLookup[dnaEntity];
-
-        float maxSpeed = movingData.MaxSpeed;
-        float maxRotationSpeed = movingData.MaxRotationSpeed;
-        float maxDistance = talkingData.MaxDistance;
-        float moveSpeed = movingData.WalkingSpeedT * maxSpeed;
-        float failTime = movingData.MoveFailTime;
-        float rotationSpeed = movingData.WalkingRotationSpeedT * maxRotationSpeed;
-
         // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(failTime))
+        if (timer.IsTimeout(FailTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -88,23 +55,30 @@ public class WalkToTalk : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Check if we've reached the target distance
-        if (entityTransform.IsTargetReached(targetTransform, maxDistance))
+        if (entityTransform.IsTargetReached(targetTransform, MaxDistance))
         {
             return SubActionResult.Success();
         }
 
+        // if entity does not have MovingSpeedComponent - return fail with code 3
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
+
         // Move towards target
-        MoveTowards(entity, entityTransform, targetTransform, buffer, timer, moveSpeed, rotationSpeed);
+        var movingSpeed = MovingSpeedLookup[entity];
+        MoveTowards(entity, entityTransform, targetTransform, buffer, timer, movingSpeed);
         return SubActionResult.Running();
     }
 
-    private void MoveTowards(Entity entity, LocalTransform entityTransform, LocalTransform targetTransform, EntityCommandBuffer buffer, in SubActionTimeComponent timer, float moveSpeed, float rotationSpeed)
+    private void MoveTowards(Entity entity, LocalTransform entityTransform, LocalTransform targetTransform, EntityCommandBuffer buffer, in SubActionTimeComponent timer, MovingSpeedComponent movingSpeed)
     {
-        // Move towards target
-        var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, moveSpeed);
+        // Move towards target using walking speed
+        var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, movingSpeed.GetWalkingSpeed());
 
-        // Rotate towards target
-        newTransform = newTransform.RotateTowards(targetTransform, rotationSpeed * timer.DeltaTime, 0.01f);
+        // Rotate towards target using walking rotation speed
+        newTransform = newTransform.RotateTowards(targetTransform, movingSpeed.GetWalkingRotationSpeed() * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
     }

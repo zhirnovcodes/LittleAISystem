@@ -6,24 +6,20 @@ using Unity.Transforms;
 public class RunFrom : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
-    private ComponentLookup<DNAComponent> DNALookup;
-    private ComponentLookup<MovingDataComponent> MovingDataLookup;
-    private ComponentLookup<SafetyDataComponent> SafetyDistanceLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<MovingDataComponent> movingDataLookup, ComponentLookup<SafetyDataComponent> safetyDistanceLookup)
+    private const float SafeDistance = 10f;
+
+    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
-        DNALookup = dnaLookup;
-        MovingDataLookup = movingDataLookup;
-        SafetyDistanceLookup = safetyDistanceLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
-        DNALookup.Update(system);
-        MovingDataLookup.Update(system);
-        SafetyDistanceLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -50,48 +46,28 @@ public class RunFrom : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get DNA entity first
-        if (!DNALookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var dnaEntity = DNALookup[entity].DNA;
-
-        // Get moving data from DNA entity
-        if (!MovingDataLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        // Get safety distance from DNA entity
-        if (!SafetyDistanceLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(8);
-        }
-
-        var movingData = MovingDataLookup[dnaEntity];
-        var safetyData = SafetyDistanceLookup[dnaEntity];
-
-        float moveSpeed = movingData.MaxSpeed;
-        float safeDistance = safetyData.SafeDistance;
-        float rotationSpeed = movingData.MaxRotationSpeed;
-
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
 
         // If distance >= SafeDistance - success
-        if (entityTransform.IsDistanceGreaterThan(targetTransform, safeDistance))
+        if (entityTransform.IsDistanceGreaterThan(targetTransform, SafeDistance))
         {
             return SubActionResult.Success();
         }
 
-        // Move in direction opposite from target
-        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * moveSpeed);
+        // if entity does not have MovingSpeedComponent - return fail with code 2
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(2);
+        }
 
-        // Rotate away from target
+        // Move in direction opposite from target using running speed
+        var movingSpeed = MovingSpeedLookup[entity];
+        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * movingSpeed.GetRunningSpeed());
+
+        // Rotate away from target using running rotation speed
         var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
-        newTransform = newTransform.RotateTowards(directionAwayFromTarget, rotationSpeed * timer.DeltaTime, 0.01f);
+        newTransform = newTransform.RotateTowards(directionAwayFromTarget, movingSpeed.GetRunningRotationSpeed() * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

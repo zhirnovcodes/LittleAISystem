@@ -7,25 +7,21 @@ public class StumbleUponSubActionState : ISubActionState
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<FemaleGenetaliaComponent> FemaleGenetaliaLookup;
     private ComponentLookup<MaleGenetaliaComponent> MaleGenetaliaLookup;
-    private ComponentLookup<DNAComponent> DNALookup;
-    private ComponentLookup<TalkingDataComponent> TalkingDataLookup;
 
-    private const float Delta = 0.1f;
+    private const float FailTime = 5f;
+    private const float MaxDistance = 0.3f;
+    private const float Delta = 1f;
 
     public StumbleUponSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         ComponentLookup<FemaleGenetaliaComponent> femaleGenetaliaLookup,
-        ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup,
-        ComponentLookup<DNAComponent> dnaLookup,
-        ComponentLookup<TalkingDataComponent> talkingDataLookup)
+        ComponentLookup<MaleGenetaliaComponent> maleGenetaliaLookup)
     {
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
         FemaleGenetaliaLookup = femaleGenetaliaLookup;
         MaleGenetaliaLookup = maleGenetaliaLookup;
-        DNALookup = dnaLookup;
-        TalkingDataLookup = talkingDataLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -34,13 +30,21 @@ public class StumbleUponSubActionState : ISubActionState
         AnimalStatsLookup.Update(system);
         FemaleGenetaliaLookup.Update(system);
         MaleGenetaliaLookup.Update(system);
-        DNALookup.Update(system);
-        TalkingDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to enable
+        if (FemaleGenetaliaLookup.TryGetComponent(entity, out var femaleGenitalia))
+        {
+            femaleGenitalia.IsActive = true;
+            buffer.SetComponent(entity, femaleGenitalia);
+        }
+
+        if (MaleGenetaliaLookup.TryGetComponent(entity, out var maleGenitalia))
+        {
+            maleGenitalia.IsActive = true;
+            buffer.SetComponent(entity, maleGenitalia);
+        }
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -75,35 +79,17 @@ public class StumbleUponSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get DNA entity first
-        if (!DNALookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var dnaEntity = DNALookup[entity].DNA;
-
-        // Get talking data from DNA entity
-        if (!TalkingDataLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var talkingData = TalkingDataLookup[dnaEntity];
-        float failTime = talkingData.StumbleFailTime;
-        float maxDistance = talkingData.MaxDistance;
-
         // if time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(failTime))
+        if (timer.IsTimeout(FailTime))
         {
             return SubActionResult.Fail(2);
         }
+        /*
 
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
-
-        // Check if target is reached
-        if (entityTransform.IsTargetReached(targetTransform, maxDistance) == false)
+        // Check if target is not reached
+        if (entityTransform.IsTargetReached(targetTransform, MaxDistance) == false)
         {
             return SubActionResult.Running();
         }
@@ -112,7 +98,7 @@ public class StumbleUponSubActionState : ISubActionState
         if (entityTransform.IsLookingTowards(targetTransform, Delta) == false)
         {
             return SubActionResult.Running();
-        }
+        }*/
 
         // Check if entity has male or female genitalia and set IsActive to true
         bool hasMaleGenitalia = false;

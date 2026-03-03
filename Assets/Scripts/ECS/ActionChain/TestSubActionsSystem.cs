@@ -15,25 +15,21 @@ public partial class TestSubActionsSystem : SystemBase
         var transformLookup = GetComponentLookup<LocalTransform>(true);
         var edibleLookup = GetComponentLookup<EdibleComponent>(true);
         var animalStatsLookup = GetComponentLookup<AnimalStatsComponent>(true);
+        var statsIncreaseLookup = GetComponentLookup<StatsIncreaseComponent>(true);
+        var movingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
-        var dnaLookup = GetComponentLookup<DNAComponent>(true);
-        var movingDataLookup = GetComponentLookup<MovingDataComponent>(true);
-        var talkingDataLookup = GetComponentLookup<TalkingDataComponent>(true);
-        var sleepDataLookup = GetComponentLookup<SleepDataComponent>(true);
-        var eatDataLookup = GetComponentLookup<EatDataComponent>(true);
-        var safetyDistanceLookup = GetComponentLookup<SafetyDataComponent>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
         {
-            new IdleSubActionState(dnaLookup, movingDataLookup),
-            new WalkToSubActionState(transformLookup, dnaLookup, movingDataLookup),
-            new WalkToTalk(transformLookup, dnaLookup, talkingDataLookup, movingDataLookup),
-            new RunFrom(transformLookup, dnaLookup, movingDataLookup, safetyDistanceLookup),
-            new RotateTowards(transformLookup, dnaLookup, movingDataLookup),
-            new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, dnaLookup, eatDataLookup),
-            new LayDownState(transformLookup, dnaLookup, movingDataLookup, sleepDataLookup),
-            new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup, dnaLookup, sleepDataLookup)
+            new IdleSubActionState(),
+            new WalkToSubActionState(transformLookup, movingSpeedLookup),
+            new WalkToTalk(transformLookup, movingSpeedLookup),
+            new RunFrom(transformLookup, movingSpeedLookup),
+            new RotateTowards(transformLookup, movingSpeedLookup),
+            new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, statsIncreaseLookup),
+            new LayDownState(transformLookup, movingSpeedLookup),
+            new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup)
         };
     }
 

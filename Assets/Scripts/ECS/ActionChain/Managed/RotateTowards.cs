@@ -6,21 +6,20 @@ using Unity.Transforms;
 public class RotateTowards : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
-    private ComponentLookup<DNAComponent> DNALookup;
-    private ComponentLookup<MovingDataComponent> MovingDataLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<MovingDataComponent> movingDataLookup)
+    private const float FailTime = 10f;
+
+    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
-        DNALookup = dnaLookup;
-        MovingDataLookup = movingDataLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
-        DNALookup.Update(system);
-        MovingDataLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -47,26 +46,8 @@ public class RotateTowards : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get DNA entity first
-        if (!DNALookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var dnaEntity = DNALookup[entity].DNA;
-
-        // Get moving data from DNA entity
-        if (!MovingDataLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var movingData = MovingDataLookup[dnaEntity];
-        float failTime = movingData.RotateFailTime;
-        float rotationSpeed = movingData.MaxRotationSpeed;
-
         // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(failTime))
+        if (timer.IsTimeout(FailTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -80,8 +61,15 @@ public class RotateTowards : ISubActionState
             return SubActionResult.Success();
         }
 
-        // Rotate towards target (multiply speed by deltaTime)
-        var newTransform = entityTransform.RotateTowards(targetTransform, rotationSpeed * timer.DeltaTime, 0.01f);
+        // if entity does not have MovingSpeedComponent - return fail with code 3
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
+
+        // Rotate towards target using walking rotation speed
+        var movingSpeed = MovingSpeedLookup[entity];
+        var newTransform = entityTransform.RotateTowards(targetTransform, movingSpeed.GetWalkingRotationSpeed() * timer.DeltaTime, 0.01f);
 
         buffer.SetComponent(entity, newTransform);
 

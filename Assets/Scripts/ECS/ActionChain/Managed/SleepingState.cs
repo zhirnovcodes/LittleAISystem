@@ -6,16 +6,15 @@ public class SleepingState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
-    private ComponentLookup<DNAComponent> DNALookup;
-    private ComponentLookup<SleepDataComponent> SleepDataLookup;
 
-    public SleepingState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<DNAComponent> dnaLookup, ComponentLookup<SleepDataComponent> sleepDataLookup)
+    private const float FailTime = 100f;
+    private const float MaxDistance = 0.01f;
+
+    public SleepingState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup)
     {
         TransformLookup = transformLookup;
         SleepingPlaceLookup = sleepingPlaceLookup;
         AnimalStatsLookup = animalStatsLookup;
-        DNALookup = dnaLookup;
-        SleepDataLookup = sleepDataLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -23,8 +22,6 @@ public class SleepingState : ISubActionState
         TransformLookup.Update(system);
         SleepingPlaceLookup.Update(system);
         AnimalStatsLookup.Update(system);
-        DNALookup.Update(system);
-        SleepDataLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -51,26 +48,8 @@ public class SleepingState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        // Get DNA entity first
-        if (!DNALookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var dnaEntity = DNALookup[entity].DNA;
-
-        // Get sleep data from DNA entity
-        if (!SleepDataLookup.HasComponent(dnaEntity))
-        {
-            return SubActionResult.Fail(7);
-        }
-
-        var sleepData = SleepDataLookup[dnaEntity];
-        float failTime = sleepData.FailTime;
-        float maxDistance = sleepData.MaxDistance;
-
         // if time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(failTime))
+        if (timer.IsTimeout(FailTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -79,7 +58,7 @@ public class SleepingState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // if distance between transforms > MaxDistance - fail with error code 3
-        if (!entityTransform.IsTargetReached(targetTransform, maxDistance))
+        if (!entityTransform.IsTargetReached(targetTransform, MaxDistance))
         {
             return SubActionResult.Fail(3);
         }

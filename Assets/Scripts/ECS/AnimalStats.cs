@@ -60,6 +60,15 @@ public struct AnimalStats
         return Stats.GetWeight();
     }
 
+    // Implicit conversion from float4x4
+    public static implicit operator AnimalStats(float4x4 data)
+    {
+        return new AnimalStats
+        {
+            Stats = new float4x2(data.c0, data.c1)
+        };
+    }
+
     // Operator overloads
     public static AnimalStats operator +(AnimalStats a, AnimalStats b)
     {

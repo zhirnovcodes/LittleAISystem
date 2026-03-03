@@ -17,7 +17,6 @@ public partial struct AttenuationTestSystem : ISystem
         Debug.Log("=== Starting Attenuation Extension Tests ===");
 
         TestGetY();
-        TestGetYs();
         TestConvertFromAnimationCurve();
         TestAnimalStatsAttenuation();
 
@@ -78,58 +77,6 @@ public partial struct AttenuationTestSystem : ISystem
         Debug.Log($"GetY at x=5: {result2AtMid}");
     }
 
-    private void TestGetYs()
-    {
-        Debug.Log("\n--- Testing HermiteCurve4x2.GetYs() ---");
-
-        // Create HermiteCurve4x2 with simple linear curves
-        HermiteCurve4x2 curves = new HermiteCurve4x2();
-
-        // Set up 8 curves (4x2) - all simple linear from (0,0) to (1,1)
-        for (int i = 0; i < 4; i++)
-        {
-            for (int j = 0; j < 2; j++)
-            {
-                curves[i, j] = new HermiteCurve
-                {
-                    points = new float4(0f, 0f, 1f, 1f),
-                    tangents = new float2(1f, 1f)
-                };
-            }
-        }
-
-        // Test with midpoint inputs
-        float4x2 inputs = new float4x2(
-            new float4(0.5f, 0.5f, 0.5f, 0.5f),
-            new float4(0.5f, 0.5f, 0.5f, 0.5f)
-        );
-
-        float4x2 results = curves.GetYs(inputs);
-
-        Debug.Log($"GetYs results c0: {results.c0}");
-        Debug.Log($"GetYs results c1: {results.c1}");
-
-        // Test with start points
-        float4x2 startInputs = new float4x2(
-            new float4(0f, 0f, 0f, 0f),
-            new float4(0f, 0f, 0f, 0f)
-        );
-
-        float4x2 startResults = curves.GetYs(startInputs);
-        Debug.Log($"GetYs at start c0: {startResults.c0} (expected all 0)");
-        Debug.Log($"GetYs at start c1: {startResults.c1} (expected all 0)");
-
-        // Test with end points
-        float4x2 endInputs = new float4x2(
-            new float4(1f, 1f, 1f, 1f),
-            new float4(1f, 1f, 1f, 1f)
-        );
-
-        float4x2 endResults = curves.GetYs(endInputs);
-        Debug.Log($"GetYs at end c0: {endResults.c0} (expected all 1)");
-        Debug.Log($"GetYs at end c1: {endResults.c1} (expected all 1)");
-    }
-
     private void TestConvertFromAnimationCurve()
     {
         Debug.Log("\n--- Testing ConvertFromAnimationCurve() ---");
@@ -163,67 +110,58 @@ public partial struct AttenuationTestSystem : ISystem
 
     private void TestAnimalStatsAttenuation()
     {
-        Debug.Log("\n--- Testing AnimalStatsAttenuation Integration ---");
+        Debug.Log("\n--- Testing AnimalStatsAttenuation4x4 Integration ---");
 
         // Create an attenuation structure
         var attenuationBuilder = new AnimalStatsAttenuationBuilder();
 
-        // Create simple needs attenuation curves
-        HermiteCurve4x2 needsCurves = new HermiteCurve4x2();
-        for (int i = 0; i < 4; i++)
+        // Create simple needs and distance attenuation curves
+        HermiteCurve needsCurve = new HermiteCurve
         {
-            for (int j = 0; j < 2; j++)
-            {
-                needsCurves[i, j] = new HermiteCurve
-                {
-                    points = new float4(0f, 1f, 100f, 0f), // High attenuation when need is low
-                    tangents = new float2(-0.01f, -0.01f)
-                };
-            }
-        }
-
-        // Create simple distance attenuation curves
-        HermiteCurve4x2 distanceCurves = new HermiteCurve4x2();
-        for (int i = 0; i < 4; i++)
+            points = new float4(0f, 1f, 100f, 0f), // High attenuation when need is low
+            tangents = new float2(-0.01f, -0.01f)
+        };
+        
+        HermiteCurve distanceCurve = new HermiteCurve
         {
-            for (int j = 0; j < 2; j++)
-            {
-                distanceCurves[i, j] = new HermiteCurve
-                {
-                    points = new float4(0f, 1f, 100f, 0f), // Attenuation decreases with distance
-                    tangents = new float2(-0.01f, -0.01f)
-                };
-            }
-        }
+            points = new float4(0f, 1f, 100f, 0f), // Attenuation decreases with distance
+            tangents = new float2(-0.01f, -0.01f)
+        };
 
         var attenuation = attenuationBuilder
-            .WithNeedsAttenuations(needsCurves)
-            .WithDistanceAttenuations(distanceCurves)
+            .WithEnergy(needsCurve, distanceCurve)
+            .WithFullness(needsCurve, distanceCurve)
+            .WithToilet(needsCurve, distanceCurve)
+            .WithSocial(needsCurve, distanceCurve)
+            .WithSafety(needsCurve, distanceCurve)
+            .WithHealth(needsCurve, distanceCurve)
             .Build();
 
-        // Test needs attenuation evaluation
-        float4x2 needsValues = new float4x2(
-            new float4(25f, 50f, 75f, 100f),
-            new float4(0f, 50f, 0f, 0f)
-        );
+        // Test GetStatsAttenuated method
+        AnimalStats currentStats = new AnimalStats
+        {
+            Stats = new float4x2(
+                new float4(25f, 50f, 75f, 100f),
+                new float4(0f, 50f, 0f, 0f)
+            )
+        };
+        
+        AnimalStats statsChange = new AnimalStats
+        {
+            Stats = new float4x2(
+                new float4(10f, 10f, 10f, 10f),
+                new float4(10f, 10f, 0f, 0f)
+            )
+        };
 
-        float4x2 needsAttenuationResults = attenuation.NeedsAttenuation.GetYs(needsValues);
-        Debug.Log($"Needs attenuation c0: {needsAttenuationResults.c0}");
-        Debug.Log($"Needs attenuation c1: {needsAttenuationResults.c1}");
+        float distance = 5f;
+        AnimalStats attenuatedChange = attenuation.GetStatsAttenuated(currentStats, statsChange, distance);
+        Debug.Log($"Attenuated change c0: {attenuatedChange.Stats.c0}");
+        Debug.Log($"Attenuated change c1: {attenuatedChange.Stats.c1}");
 
-        // Test distance attenuation evaluation
-        float4x2 distanceValues = new float4x2(
-            new float4(0f, 2.5f, 5f, 7.5f),
-            new float4(10f, 5f, 0f, 0f)
-        );
-
-        float4x2 distanceAttenuationResults = attenuation.DistanceAttenuation.GetYs(distanceValues);
-        Debug.Log($"Distance attenuation c0: {distanceAttenuationResults.c0}");
-        Debug.Log($"Distance attenuation c1: {distanceAttenuationResults.c1}");
-
-        // Test individual property accessors for needs and distance attenuation
-        Debug.Log($"EnergyNeedsAttenuation: {attenuation.EnergyNeedsAttenuation.points}");
-        Debug.Log($"EnergyDistanceAttenuation: {attenuation.EnergyDistanceAttenuation.points}");
+        // Test individual property accessors
+        Debug.Log($"Energy Needs curve points: {attenuation.Energy.Needs.points}");
+        Debug.Log($"Energy Distance curve points: {attenuation.Energy.Distance.points}");
     }
 
     private void AssertApprox(float actual, float expected, string testName, float tolerance = 0.001f)

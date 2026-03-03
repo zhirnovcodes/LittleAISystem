@@ -1,15 +1,17 @@
 using Unity.Entities;
-using Unity.Mathematics;
 
 public struct NeedsActionChainComponent : IComponentData, IEnableableComponent
 {
     public float CancelThreshold;
     public float AddThreshold;
 
-    public void SetFloat4(float4 data)
+    public static implicit operator NeedsActionChainComponent(GenomeData genomeData)
     {
-        CancelThreshold = data.x;
-        AddThreshold = data.y;
+        return new NeedsActionChainComponent
+        {
+            CancelThreshold = genomeData.Data.c0.x,
+            AddThreshold = genomeData.Data.c0.y
+        };
     }
 }
 

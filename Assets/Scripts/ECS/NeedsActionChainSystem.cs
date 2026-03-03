@@ -114,9 +114,6 @@ public partial struct NeedsActionChainSystem : ISystem
             if (!StatAdvertiserLookup.TryGetBuffer(targetEntity, out var statAdvertisers))
                 return 0f;
 
-            // Calculate distance with scales
-            float distance = selfTransform.CalculateDistance(targetTransform);
-
             // Find the best advertiser weight for the current target and action
             for (int i = 0; i < statAdvertisers.Length; i++)
             {
@@ -126,12 +123,21 @@ public partial struct NeedsActionChainSystem : ISystem
                 if (advertiser.ActionType != currentAction)
                     continue;
                 
+                // Create a NeedBasedInputItem for weight calculation
+                var item = new NeedBasedInputItem
+                {
+                    Target = targetEntity,
+                    StatsAdvertised = advertiser.AdvertisedValue,
+                    Position = targetTransform.Position,
+                    Scale = targetTransform.Scale,
+                    ActionType = advertiser.ActionType
+                };
+                
                 float weight = NeedBasedSystem.NeedBasedCalculationJob.CalculateWeight(
-                    distance,
+                    selfTransform,
+                    item,
                     statsComponent.Stats,
-                    advertiser.AdvertisedValue,
-                    attenuationComponent.Attenuation.NeedsAttenuation,
-                    attenuationComponent.Attenuation.DistanceAttenuation
+                    attenuationComponent.Attenuation
                 );
 
                 return weight;
