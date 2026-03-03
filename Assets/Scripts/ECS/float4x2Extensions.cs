@@ -50,6 +50,11 @@ public static class float4x2Extensions
                value.c1.x + value.c1.y + value.c1.z + value.c1.w;
     }
 
+    public static float4x4 ToFloat4x4(this float4x2 value)
+    {
+        return new float4x4(value.c0, value.c1, float4.zero, float4.zero);
+    }
+
     private static float InverseLerpScalar(float a, float b, float value)
     {
         if (math.abs(b - a) < 0.0001f)
