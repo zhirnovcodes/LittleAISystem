@@ -22,7 +22,7 @@ public class NeedBasedAiAuthoring : MonoBehaviour
             AddComponent(entity, new NeedBasedOutputComponent
             {
                 Target = Entity.Null,
-                Action = ActionTypes.Idle,
+                Action = ActionTypes.None,
                 StatsWeight = 0f
             });
 

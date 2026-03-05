@@ -16,7 +16,7 @@ public class ActionChainAuthoring : UnityEngine.MonoBehaviour
             AddComponent(entity, new ActionRunnerComponent
             {
                 Target = entity,
-                Action = ActionTypes.Idle,
+                Action = ActionTypes.None,
                 CurrentSubActionIndex = 0,
                 IsCancellationRequested = false
             });

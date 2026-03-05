@@ -17,7 +17,7 @@ public struct NeedBasedAIBuilder
         CommandBuffer.AddComponent(entity, new NeedBasedOutputComponent
         {
             Target = Entity.Null,
-            Action = LittleAI.Enums.ActionTypes.Idle,
+            Action = LittleAI.Enums.ActionTypes.None,
             StatsWeight = 0f
         });
     }

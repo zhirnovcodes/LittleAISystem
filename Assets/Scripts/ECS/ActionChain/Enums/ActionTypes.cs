@@ -2,6 +2,7 @@ namespace LittleAI.Enums
 {
     public enum ActionTypes : byte
     {
+        None,
         Idle,
         Search,
         Eat,

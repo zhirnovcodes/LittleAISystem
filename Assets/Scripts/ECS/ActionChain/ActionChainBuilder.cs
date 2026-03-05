@@ -16,7 +16,7 @@ public struct ActionChainBuilder
         CommandBuffer.AddComponent(entity, new ActionRunnerComponent
         {
             Target = entity,
-            Action = ActionTypes.Idle,
+            Action = ActionTypes.None,
             CurrentSubActionIndex = 0
         });
 

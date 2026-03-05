@@ -203,7 +203,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PrefabEntries:
   - Flag: 25
-    Prefab: {fileID: 6012004025461367740, guid: 7693b0d2e95baf94db50295872285de7,
+    Prefab: {fileID: 5183471412207633956, guid: 7f232d54af137244eb256492901dd90e,
       type: 3}
 --- !u!4 &619924420
 Transform:
@@ -336,7 +336,7 @@ MonoBehaviour:
           z: 0
           w: 0
     ActorConditions: 25
-    ActionType: 6
+    ActionType: 7
   HasAging: 1
   Aging:
     MinSize: 1.57
@@ -568,7 +568,7 @@ MonoBehaviour:
           z: 0
           w: 0
     ActorConditions: 25
-    ActionType: 6
+    ActionType: 7
   HasAging: 1
   Aging:
     MinSize: 1

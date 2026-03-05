@@ -10,7 +10,6 @@ public partial class ActionRunnerSystem : SystemBase
     private Dictionary<SubActionTypes, ISubActionState> SubActionStates;
 
     private bool AreSubActionsInitialized;
-    private bool IsEnabled;
 
     protected override void OnCreate()
     {
@@ -40,20 +39,6 @@ public partial class ActionRunnerSystem : SystemBase
 
         var deltaTime = SystemAPI.Time.DeltaTime;
 
-        if (IsEnabled == false)
-        {
-            Entities.ForEach((Entity entity,
-                ref ActionRunnerComponent runner,
-                ref ActionRandomComponent randomComponent) =>
-
-            {
-                var subActionState = GetState(in runner);
-                subActionState.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
-            }).WithoutBurst().Run();
-
-            IsEnabled = true;
-        }
-
         Entities.ForEach((Entity entity, 
             ref ActionRunnerComponent runner, 
             ref SubActionTimeComponent timer,
@@ -67,6 +52,13 @@ public partial class ActionRunnerSystem : SystemBase
 
             timer.DeltaTime = deltaTime;
             timer.TimeElapsed += deltaTime;
+
+            if (runner.Action == ActionTypes.None)
+            {
+                SetActionIdle(ref runner);
+                var idle = GetState(in runner);
+                idle.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
+            }
 
             var status = runner.IsCancellationRequested ? SubActionStatus.Cancel : 
                 subActionState.Update(entity, runner.Target, buffer, timer, ref randomComponent.Random).Status;
