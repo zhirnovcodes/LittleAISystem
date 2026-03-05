@@ -7,29 +7,34 @@ public class WalkToSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     private const float FailTime = 30f;
 
-    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
+    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
     {
         TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
+        MoveControllerOutputLookup = moveControllerOutputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
+        MoveControllerOutputLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for walk
+        // Enable MoveController
+        MoveControllerExtensions.Enable(buffer, entity);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for walk
+        // Disable using extension method
+        MoveControllerExtensions.Disable(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -52,29 +57,33 @@ public class WalkToSubActionState : ISubActionState
             return SubActionResult.Fail(2);
         }
 
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        // After distance < 0.001 - returns success
-        if (entityTransform.IsTargetReached(targetTransform, 0.001f))
-        {
-            return SubActionResult.Success();
-        }
-
         // if entity does not have MovingSpeedComponent - return fail with code 3
         if (!MovingSpeedLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(3);
         }
 
-        // Move towards target using walking speed
+        // if entity does not have MoveControllerOutputComponent - return fail with code 4
+        if (!MoveControllerOutputLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(4);
+        }
+
+        var moveOutput = MoveControllerOutputLookup[entity];
+
+        // Check if arrived and looking at target
+        if (moveOutput.HasArrived && moveOutput.IsLookingAt)
+        {
+            return SubActionResult.Success();
+        }
+
+        // Update target position
+        var entityTransform = TransformLookup[entity];
+        var targetTransform = TransformLookup[target];
         var movingSpeed = MovingSpeedLookup[entity];
-        var newTransform = entityTransform.MovePositionTowards(targetTransform, timer.DeltaTime, movingSpeed.GetWalkingSpeed());
 
-        // Rotate towards target using walking rotation speed
-        newTransform = newTransform.RotateTowards(targetTransform, movingSpeed.GetWalkingRotationSpeed() * timer.DeltaTime, 0.01f);
-
-        buffer.SetComponent(entity, newTransform);
+        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
+            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }

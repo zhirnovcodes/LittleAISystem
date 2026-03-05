@@ -1,25 +1,51 @@
 using LittleAI.Enums;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 
 public class IdleSubActionState : ISubActionState
 {
-    private const float IdleTime = 2f;
+    private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    public IdleSubActionState()
+    private const float IdleTime = 2f;
+    private const float WanderRadius = 3f;
+
+    public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
+        TransformLookup = transformLookup;
+        MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
+        TransformLookup.Update(system);
+        MovingSpeedLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
+        // Check if entity has required components
+        if (!TransformLookup.HasComponent(entity) || !MovingSpeedLookup.HasComponent(entity))
+        {
+            return;
+        }
+
+        var entityTransform = TransformLookup[entity];
+        var movingSpeed = MovingSpeedLookup[entity];
+
+        // Generate random position around entity
+        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, WanderRadius, ref random);
+
+        // Enable and set random target
+        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
+            targetPosition, entityTransform.Scale, 0, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
+        MoveControllerExtensions.Disable(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)

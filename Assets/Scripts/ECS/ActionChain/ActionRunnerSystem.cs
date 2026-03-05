@@ -10,6 +10,7 @@ public partial class ActionRunnerSystem : SystemBase
     private Dictionary<SubActionTypes, ISubActionState> SubActionStates;
 
     private bool AreSubActionsInitialized;
+    private bool IsEnabled;
 
     protected override void OnCreate()
     {
@@ -39,6 +40,20 @@ public partial class ActionRunnerSystem : SystemBase
 
         var deltaTime = SystemAPI.Time.DeltaTime;
 
+        if (IsEnabled == false)
+        {
+            Entities.ForEach((Entity entity,
+                ref ActionRunnerComponent runner,
+                ref ActionRandomComponent randomComponent) =>
+
+            {
+                var subActionState = GetState(in runner);
+                subActionState.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
+            }).WithoutBurst().Run();
+
+            IsEnabled = true;
+        }
+
         Entities.ForEach((Entity entity, 
             ref ActionRunnerComponent runner, 
             ref SubActionTimeComponent timer,
@@ -59,17 +74,17 @@ public partial class ActionRunnerSystem : SystemBase
             switch (status)
             {
                 case SubActionStatus.Running:
-                    return;
+                    break;
                 case SubActionStatus.Success:
                     subActionState.Disable(entity, runner.Target, buffer);
 
                     SetNextSubAction(ref runner, ref chain);
 
-                    var nextState = GetState(in runner);
-                    nextState.Enable(entity, runner.Target, buffer);
-
                     timer.TimeElapsed = 0;
-                    return;
+
+                    var nextState = GetState(in runner);
+                    nextState.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
+                    break;
                 case SubActionStatus.Fail:
                 case SubActionStatus.Cancel:
                     subActionState.Disable(entity, runner.Target, buffer);
@@ -78,7 +93,10 @@ public partial class ActionRunnerSystem : SystemBase
                     SetNextAction(ref runner, ref chain);
 
                     timer.TimeElapsed = 0;
-                    return;
+
+                    var next = GetState(in runner);
+                    next.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
+                    break;
             }
         }).WithoutBurst().Run();
 
@@ -99,6 +117,7 @@ public partial class ActionRunnerSystem : SystemBase
         
         if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction))
         {
+            SetActionIdle(ref runner);
             return;
         }
 
@@ -120,6 +139,8 @@ public partial class ActionRunnerSystem : SystemBase
         runner.Action = nextAction.Action;
         runner.CurrentSubActionIndex = 0;
         runner.Target = nextAction.Target;
+
+
     }
 
     private ISubActionState GetState(in ActionRunnerComponent runner)

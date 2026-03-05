@@ -3,6 +3,15 @@ using Unity.Transforms;
 
 public static class LocalTransformExtensions
 {
+    /// <summary>
+    /// Generates a random position around the current position with the given offset
+    /// </summary>
+    public static float3 GenerateRandomPosition(float3 currentPosition, float offset, ref Random random)
+    {
+        var randomDirection = random.NextFloat3Direction();
+        //randomDirection.y = 0; // Keep on same height
+        return currentPosition + randomDirection * offset;// * random.NextFloat(0.5f, offset);
+    }
     public static bool IsTargetPositionReached(this LocalTransform transform, float3 position, float distance = 0.01f)
     {
         return transform.Position.IsTargetPositionReached(position, distance);

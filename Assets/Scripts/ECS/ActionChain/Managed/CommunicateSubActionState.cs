@@ -43,7 +43,7 @@ public class CommunicateSubActionState : ISubActionState
         ReproductionLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
         // Enable genitalia component
         if (GenetaliaLookup.HasComponent(entity))

@@ -29,7 +29,7 @@ public class StumbleUponSubActionState : ISubActionState
         GenetaliaLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
         if (GenetaliaLookup.HasComponent(entity))
         {

@@ -7,30 +7,35 @@ public class LayDownState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     private const float FailTime = 5f;
     private const float Distance = 0.01f;
 
-    public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
+    public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
     {
         TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
+        MoveControllerOutputLookup = moveControllerOutputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
+        MoveControllerOutputLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for lay down
+        // Enable MoveController
+        MoveControllerExtensions.Enable(buffer, entity);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for lay down
+        // Disable using extension method
+        MoveControllerExtensions.Disable(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -53,6 +58,18 @@ public class LayDownState : ISubActionState
             return SubActionResult.Fail(2);
         }
 
+        // if entity does not have MovingSpeedComponent - return fail with code 3
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
+
+        // if entity does not have MoveControllerOutputComponent - return fail with code 4
+        if (!MoveControllerOutputLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(4);
+        }
+
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
 
@@ -62,17 +79,9 @@ public class LayDownState : ISubActionState
             return SubActionResult.Success();
         }
 
-        // if entity does not have MovingSpeedComponent - return fail with code 3
-        if (!MovingSpeedLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(3);
-        }
-
-        // Move towards target position using crawling speed (targetScale = 0)
-        var movingSpeed = MovingSpeedLookup[entity];
-        var newTransform = entityTransform.MovePositionTowards(targetTransform.Position, 0, timer.DeltaTime, movingSpeed.GetCrawlingSpeed());
-
-        buffer.SetComponent(entity, newTransform);
+        // Update target position (using crawling speed, no rotation)
+        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
+            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, MovingSpeedLookup[entity].GetCrawlingSpeed(), 0f);
 
         return SubActionResult.Running();
     }

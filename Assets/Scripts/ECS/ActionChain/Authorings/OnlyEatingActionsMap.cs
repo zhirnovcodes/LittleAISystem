@@ -18,17 +18,18 @@ public class OnlyEatingActionsMap : ActionMapBase
         var reproductionLookup = system.GetComponentLookup<ReproductionComponent>(false);
         var dnaChainLookup = system.GetBufferLookup<DNAChainItem>(true);
         var dnaStorageLookup = system.GetBufferLookup<DNAStorageItem>(false);
+        var moveControllerOutputLookup = system.GetComponentLookup<MoveControllerOutputComponent>(true);
 
         // Initialize list of ISubActionState
         var subActions = new Dictionary<SubActionTypes, ISubActionState>
         {
-            { SubActionTypes.Idle, new IdleSubActionState() },
-            { SubActionTypes.MoveTo, new WalkToSubActionState(transformLookup, movingSpeedLookup) },
-            { SubActionTypes.MoveToTalk, new WalkToTalk(transformLookup, movingSpeedLookup) },
-            { SubActionTypes.RunFrom, new RunFrom(transformLookup, movingSpeedLookup) },
-            { SubActionTypes.RotateTowards, new RotateTowards(transformLookup, movingSpeedLookup) },
+            { SubActionTypes.Idle, new IdleSubActionState(transformLookup, movingSpeedLookup) },
+            { SubActionTypes.MoveTo, new WalkToSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
+            { SubActionTypes.MoveToTalk, new WalkToTalk(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
+            { SubActionTypes.RunFrom, new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
+            { SubActionTypes.RotateTowards, new RotateTowards(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.Eat, new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, statsIncreaseLookup) },
-            { SubActionTypes.MoveInto, new LayDownState(transformLookup, movingSpeedLookup) },
+            { SubActionTypes.MoveInto, new LayDownState(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup) },
             { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(transformLookup, animalStatsLookup, genetaliaLookup) },
             { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, genetaliaLookup, statsIncreaseLookup, dnaChainLookup, dnaStorageLookup, reproductionLookup) }

@@ -18,17 +18,18 @@ public partial class TestSubActionsSystem : SystemBase
         var statsIncreaseLookup = GetComponentLookup<StatsIncreaseComponent>(true);
         var movingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
+        var moveControllerOutputLookup = GetComponentLookup<MoveControllerOutputComponent>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
         {
-            new IdleSubActionState(),
-            new WalkToSubActionState(transformLookup, movingSpeedLookup),
-            new WalkToTalk(transformLookup, movingSpeedLookup),
-            new RunFrom(transformLookup, movingSpeedLookup),
-            new RotateTowards(transformLookup, movingSpeedLookup),
+            new IdleSubActionState(transformLookup, movingSpeedLookup),
+            new WalkToSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
+            new WalkToTalk(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
+            new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
+            new RotateTowards(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, statsIncreaseLookup),
-            new LayDownState(transformLookup, movingSpeedLookup),
+            new LayDownState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup)
         };
     }
@@ -67,7 +68,7 @@ public partial class TestSubActionsSystem : SystemBase
                 int previousIndex = currentIndex;
                 testComponent.ValueRW.CurrentSubActionIndex = keyboardInput;
                 currentIndex = keyboardInput;
-                HandleStateChange(entity, previousIndex, currentIndex, testComponent.ValueRO.Target, timer, buffer);
+                HandleStateChange(entity, previousIndex, currentIndex, testComponent.ValueRO.Target, timer, buffer, ref random.ValueRW.Random);
             }
 
             // If active, call Refresh and Update
@@ -106,7 +107,7 @@ public partial class TestSubActionsSystem : SystemBase
         buffer.Dispose();
     }
 
-    private void HandleStateChange(Entity entity, int previousIndex, int currentIndex, Entity target, RefRW<SubActionTimeComponent> timer, EntityCommandBuffer buffer)
+    private void HandleStateChange(Entity entity, int previousIndex, int currentIndex, Entity target, RefRW<SubActionTimeComponent> timer, EntityCommandBuffer buffer, ref Unity.Mathematics.Random random)
     {
         timer.ValueRW.TimeElapsed = 0f;
 
@@ -120,7 +121,7 @@ public partial class TestSubActionsSystem : SystemBase
         // Enable next state
         if (currentIndex >= 0)
         {
-            SubActions[currentIndex].Enable(entity, target, buffer);
+            SubActions[currentIndex].Enable(entity, target, buffer, ref random);
             Debug.Log($"Entity {entity.Index} Enabled SubAction {currentIndex}");
         }
     }

@@ -7,29 +7,54 @@ public class RunFrom : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     private const float SafeDistance = 10f;
 
-    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
+    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
     {
         TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
+        MoveControllerOutputLookup = moveControllerOutputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
+        MoveControllerOutputLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for run from
+        // Check if entity does not exist in transform lookup, skip setup
+        if (!TransformLookup.HasComponent(entity) || !TransformLookup.HasComponent(target))
+        {
+            return;
+        }
+
+        // if entity does not have MovingSpeedComponent - skip setup
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return;
+        }
+
+        var entityTransform = TransformLookup[entity];
+        var movingSpeed = MovingSpeedLookup[entity];
+
+        // Generate random position away from current position
+        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, SafeDistance * 2f, ref random);
+
+        // Enable and set initial target
+        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
+            targetPosition, entityTransform.Scale, 0, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for run from
+        // Disable using extension method
+        MoveControllerExtensions.Disable(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -61,15 +86,24 @@ public class RunFrom : ISubActionState
             return SubActionResult.Fail(2);
         }
 
-        // Move in direction opposite from target using running speed
-        var movingSpeed = MovingSpeedLookup[entity];
-        var newTransform = entityTransform.MovePositionAwayFrom(targetTransform, timer.DeltaTime * movingSpeed.GetRunningSpeed());
+        // if entity does not have MoveControllerOutputComponent - return fail with code 3
+        if (!MoveControllerOutputLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(3);
+        }
 
-        // Rotate away from target using running rotation speed
-        var directionAwayFromTarget = entityTransform.Position - targetTransform.Position;
-        newTransform = newTransform.RotateTowards(directionAwayFromTarget, movingSpeed.GetRunningRotationSpeed() * timer.DeltaTime, 0.01f);
+        var moveOutput = MoveControllerOutputLookup[entity];
 
-        buffer.SetComponent(entity, newTransform);
+        // If arrived at current target, set new random target
+        if (moveOutput.HasArrived)
+        {
+            // Generate new random position
+            var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, SafeDistance * 2f, ref random);
+
+            var movingSpeed = MovingSpeedLookup[entity];
+            MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
+                targetPosition, entityTransform.Scale, 1f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+        }
 
         return SubActionResult.Running();
     }

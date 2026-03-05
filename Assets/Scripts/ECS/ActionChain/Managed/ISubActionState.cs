@@ -5,7 +5,7 @@ using Unity.Mathematics;
 public interface ISubActionState
 {
     void Refresh(SystemBase system);
-    void Enable(Entity entity, Entity target, EntityCommandBuffer buffer);
+    void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random);
     void Disable(Entity entity, Entity target, EntityCommandBuffer buffer);
     SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random);
 }

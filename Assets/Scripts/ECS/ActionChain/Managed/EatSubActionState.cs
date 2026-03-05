@@ -28,7 +28,7 @@ public class EatSubActionState : ISubActionState
         StatsIncreaseLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
         // Nothing to enable for eat
     }

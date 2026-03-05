@@ -8,7 +8,7 @@ public class TestEat : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
 
     private const float EatDuration = 3.0f;
-    private const float RotationSpeed = 5.0f;
+    private const float RotationSpeed = 180.0f; // Degrees per second
 
     public TestEat(ComponentLookup<LocalTransform> transformLookup)
     {
@@ -20,14 +20,16 @@ public class TestEat : ISubActionState
         TransformLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for eat
+        // Enable MoveController
+        MoveControllerExtensions.Enable(buffer, entity);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for eat
+        // Disable using extension method
+        MoveControllerExtensions.Disable(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -41,28 +43,9 @@ public class TestEat : ISubActionState
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
 
-        // Calculate direction to target
-        var directionToTarget = targetTransform.Position - entityTransform.Position;
-        
-        // Rotate towards target using transform rotation
-        if (math.lengthsq(directionToTarget) > 0.001f)
-        {
-            directionToTarget = math.normalize(directionToTarget);
-            
-            // Calculate target rotation to face the target
-            var targetRotation = quaternion.LookRotationSafe(directionToTarget, new float3(0, 1, 0));
-            
-            // Smoothly interpolate rotation
-            var t = math.min(1.0f, RotationSpeed * timer.DeltaTime);
-            var newRotation = math.slerp(entityTransform.Rotation, targetRotation, t);
-            
-            buffer.SetComponent(entity, new LocalTransform
-            {
-                Position = entityTransform.Position,
-                Rotation = newRotation,
-                Scale = entityTransform.Scale
-            });
-        }
+        // Update target for rotation only (target position = entity position for rotation only)
+        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
+            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, 0f, RotationSpeed);
 
         // Check if eating duration is complete
         if (timer.TimeElapsed >= EatDuration)

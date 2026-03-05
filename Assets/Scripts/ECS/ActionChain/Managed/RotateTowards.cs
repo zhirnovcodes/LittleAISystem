@@ -7,29 +7,34 @@ public class RotateTowards : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     private const float FailTime = 10f;
 
-    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
+    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
     {
         TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
+        MoveControllerOutputLookup = moveControllerOutputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
+        MoveControllerOutputLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for rotate
+        // Enable MoveController
+        MoveControllerExtensions.Enable(buffer, entity);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for rotate
+        // Disable using extension method
+        MoveControllerExtensions.Disable(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -52,26 +57,32 @@ public class RotateTowards : ISubActionState
             return SubActionResult.Fail(2);
         }
 
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        // Check if already facing target
-        if (entityTransform.IsLookingTowards(targetTransform.Position, 0.01f))
-        {
-            return SubActionResult.Success();
-        }
-
         // if entity does not have MovingSpeedComponent - return fail with code 3
         if (!MovingSpeedLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(3);
         }
 
-        // Rotate towards target using walking rotation speed
-        var movingSpeed = MovingSpeedLookup[entity];
-        var newTransform = entityTransform.RotateTowards(targetTransform, movingSpeed.GetWalkingRotationSpeed() * timer.DeltaTime, 0.01f);
+        // if entity does not have MoveControllerOutputComponent - return fail with code 4
+        if (!MoveControllerOutputLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(4);
+        }
 
-        buffer.SetComponent(entity, newTransform);
+        var moveOutput = MoveControllerOutputLookup[entity];
+
+        // Check if looking at target
+        if (moveOutput.IsLookingAt)
+        {
+            return SubActionResult.Success();
+        }
+
+        // Update target for rotation only (target position = entity position)
+        var entityTransform = TransformLookup[entity];
+        var targetTransform = TransformLookup[target];
+
+        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
+            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }

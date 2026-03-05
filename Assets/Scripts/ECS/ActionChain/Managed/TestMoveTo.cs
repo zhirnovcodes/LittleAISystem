@@ -6,29 +6,35 @@ using Unity.Transforms;
 public class TestMoveTo : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
     private Random RandomGenerator;
 
     private const float MoveSpeed = 5.0f;
+    private const float RotationSpeed = 180.0f;
 
-    public TestMoveTo(ComponentLookup<LocalTransform> transformLookup)
+    public TestMoveTo(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
     {
         TransformLookup = transformLookup;
+        MoveControllerOutputLookup = moveControllerOutputLookup;
         RandomGenerator = Random.CreateFromIndex((uint)System.DateTime.Now.Ticks);
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MoveControllerOutputLookup.Update(system);
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for move
+        // Enable MoveController
+        MoveControllerExtensions.Enable(buffer, entity);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for move
+        // Disable using extension method
+        MoveControllerExtensions.Disable(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -39,37 +45,24 @@ public class TestMoveTo : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        // if entity does not have MoveControllerOutputComponent - return fail with code 2
+        if (!MoveControllerOutputLookup.HasComponent(entity))
+        {
+            return SubActionResult.Fail(2);
+        }
+
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
 
-        var directionToTarget = targetTransform.Position - entityTransform.Position;
-        var distanceToTarget = math.length(directionToTarget);
-
         // Check if reached target
-        var reachDistance = entityTransform.Scale / 2f + targetTransform.Scale / 2f;
-        if (distanceToTarget <= reachDistance)
+        if (entityTransform.IsTargetReached(targetTransform, 0.001f))
         {
             return SubActionResult.Success();
         }
 
-        // Move towards target using transform position
-        var normalizedDirection = directionToTarget / distanceToTarget;
-        var moveDistance = MoveSpeed * timer.DeltaTime;
-        
-        // Clamp movement to not overshoot target
-        if (moveDistance > distanceToTarget)
-        {
-            moveDistance = distanceToTarget;
-        }
-
-        var newPosition = entityTransform.Position + normalizedDirection * moveDistance;
-        
-        buffer.SetComponent(entity, new LocalTransform
-        {
-            Position = newPosition,
-            Rotation = entityTransform.Rotation,
-            Scale = entityTransform.Scale
-        });
+        // Update target position
+        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
+            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, MoveSpeed, RotationSpeed);
 
         return SubActionResult.Running();
     }

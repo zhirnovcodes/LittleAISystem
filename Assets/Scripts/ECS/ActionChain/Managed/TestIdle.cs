@@ -13,7 +13,7 @@ public class TestIdle : ISubActionState
     {
     }
 
-    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer)
+    public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
         // Nothing to enable for idle
     }
