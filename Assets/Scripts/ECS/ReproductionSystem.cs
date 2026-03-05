@@ -31,8 +31,7 @@ public partial struct ReproductionSystem : ISystem
             PrefabLibrary = prefabLibrary
         };
 
-        laborJob.Schedule();
-        state.Dependency.Complete();
+        laborJob.Run();
 
         ecb.Playback(state.EntityManager);
         ecb.Dispose();
@@ -51,7 +50,7 @@ public partial struct ReproductionSystem : ISystem
             ref ReproductionComponent reproduction,
             in ConditionFlagsComponent flags,
             in DynamicBuffer<DNAChainItem> motherDNA,
-            in DynamicBuffer<DNAStorageItem> dnaStorage)
+            ref DynamicBuffer<DNAStorageItem> dnaStorage)
         {
             // Only process females with enabled reproduction component
             if (reproduction.IsMale)
@@ -61,7 +60,7 @@ public partial struct ReproductionSystem : ISystem
 
             if (reproduction.TimeElapsed >= reproduction.GestationTime)
             {
-                Labor(entity, ref reproduction, in flags, in motherDNA, in dnaStorage);
+                Labor(entity, ref reproduction, in flags, in motherDNA, ref dnaStorage);
             }
         }
 
@@ -70,7 +69,7 @@ public partial struct ReproductionSystem : ISystem
             ref ReproductionComponent reproduction,
             in ConditionFlagsComponent motherFlags,
             in DynamicBuffer<DNAChainItem> motherDNA,
-            in DynamicBuffer<DNAStorageItem> dnaStorage)
+            ref DynamicBuffer<DNAStorageItem> dnaStorage)
         {
             // 1. Take prefab from prefab library singleton by actor's flags
             var prefab = PrefabLibrary.GetPrefab(motherFlags.Conditions);
@@ -83,10 +82,7 @@ public partial struct ReproductionSystem : ISystem
                 return;
             }
 
-            // 2. Instantiate entity from prefab
-            var offspring = ECB.Instantiate(prefab);
-
-            // 3. Get random father from DNAStorage
+            // 2. Get random father from DNAStorage
             var random = reproduction.Random;
             var father = DNAExtensions.GetRandomFather(dnaStorage, ref random);
 
@@ -98,33 +94,32 @@ public partial struct ReproductionSystem : ISystem
                 return;
             }
 
-            // 4. Get father's DNA
+            // 3. Get father's DNA
             var fatherDNAList = new NativeList<DNAChainData>(Allocator.Temp);
             DNAExtensions.GetFatherDNA(dnaStorage, father, ref fatherDNAList);
-
+            
             // Convert mother DNA buffer to list
             var motherDNAList = new NativeList<DNAChainData>(Allocator.Temp);
             DNAExtensions.ToList(motherDNA, ref motherDNAList);
-
-            // 6. Lerp mother and father DNAs
-            var offspringDNAList = new NativeList<DNAChainData>(Allocator.Temp);
-            DNAExtensions.Lerp(fatherDNAList, motherDNAList, ref offspringDNAList, ref random);
-
-            // 7. Call GenomeBuilder.WithFlags(mother flags).WithDNA(resulted dna array)
-            var genomeBuilder = new AnimalGenomeBuilder(ECB, offspring, random.NextUInt());
-            genomeBuilder.WithBaseConditionFlags(motherFlags.Conditions);
-            genomeBuilder.WithDNA(offspringDNAList);
-            genomeBuilder.Build();
-
+            
+            // 4. Call BornEntity to create offspring
+            var offspring = DNAExtensions.BornEntity(
+                motherFlags.Conditions,
+                fatherDNAList,
+                motherDNAList,
+                prefab,
+                ref random,
+                ECB);
+            
             // Clean up
             fatherDNAList.Dispose();
             motherDNAList.Dispose();
-            offspringDNAList.Dispose();
 
             // 5. Clear storage
-            ECB.SetBuffer<DNAStorageItem>(mother);
+            dnaStorage.Clear();
 
             // Reset reproduction
+            reproduction.Random = random;
             reproduction.TimeElapsed = 0f;
             ECB.SetComponentEnabled<ReproductionComponent>(mother, false);
         }

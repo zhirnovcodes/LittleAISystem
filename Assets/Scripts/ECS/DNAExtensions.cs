@@ -149,5 +149,62 @@ public static class DNAExtensions
             result.Add(offspringGene);
         }
     }
+    
+    /// <summary>
+    /// Creates a new offspring entity from father and mother DNA (using buffers)
+    /// </summary>
+    public static Entity BornEntity(
+        ConditionFlags flags,
+        in DynamicBuffer<DNAChainItem> fatherDNA,
+        in DynamicBuffer<DNAChainItem> motherDNA,
+        Entity prefab,
+        ref Random random,
+        EntityCommandBuffer ecb)
+    {
+        // Convert DNA buffers to lists
+        var fatherDNAList = new NativeList<DNAChainData>(Allocator.Temp);
+        DNAExtensions.ToList(fatherDNA, ref fatherDNAList);
+        
+        var motherDNAList = new NativeList<DNAChainData>(Allocator.Temp);
+        DNAExtensions.ToList(motherDNA, ref motherDNAList);
+        
+        var offspring = BornEntity(flags, fatherDNAList, motherDNAList, prefab, ref random, ecb);
+        
+        // Clean up
+        fatherDNAList.Dispose();
+        motherDNAList.Dispose();
+        
+        return offspring;
+    }
+    
+    /// <summary>
+    /// Creates a new offspring entity from father and mother DNA (using NativeLists)
+    /// </summary>
+    public static Entity BornEntity(
+        ConditionFlags flags,
+        NativeList<DNAChainData> fatherDNA,
+        NativeList<DNAChainData> motherDNA,
+        Entity prefab,
+        ref Random random,
+        EntityCommandBuffer ecb)
+    {
+        // 1. Instantiate entity from prefab
+        var offspring = ecb.Instantiate(prefab);
+        
+        // 2. Lerp father and mother DNAs
+        var offspringDNAList = new NativeList<DNAChainData>(Allocator.Temp);
+        DNAExtensions.Lerp(fatherDNA, motherDNA, ref offspringDNAList, ref random);
+        
+        // 3. Build genome with flags and DNA
+        var genomeBuilder = new AnimalGenomeBuilder(ecb, offspring, random.NextUInt());
+        genomeBuilder.WithBaseConditionFlags(flags);
+        genomeBuilder.WithDNA(offspringDNAList);
+        genomeBuilder.Build();
+        
+        // Clean up
+        offspringDNAList.Dispose();
+        
+        return offspring;
+    }
 }
 

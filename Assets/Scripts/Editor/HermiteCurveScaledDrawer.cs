@@ -1,18 +1,18 @@
 using UnityEditor;
 using UnityEngine;
-using Unity.Mathematics;
 
-[CustomPropertyDrawer(typeof(HermiteCurveNormalizedAttribute))]
-public class HermiteCurveNormalizedDrawer : PropertyDrawer
+[CustomPropertyDrawer(typeof(HermiteCurveScaledAttribute))]
+public class HermiteCurveScaledDrawer : PropertyDrawer
 {
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
         EditorGUI.BeginProperty(position, label, property);
 
-        // Calculate the width for buttons (let's use 15% of total width)
-        float buttonsWidth = position.width * 0.15f;
+        // Calculate the width for buttons and float field
+        float buttonsWidth = position.width * 0.15f; // 15% for 3 buttons
+        float floatFieldWidth = 60f; // Fixed width for float input
+        float curveWidth = position.width - buttonsWidth - floatFieldWidth - 10f; // 10f for spacing
         float buttonWidth = buttonsWidth / 3f;
-        float curveWidth = position.width - buttonsWidth - 5f; // 5f for spacing
 
         // Create AnimationCurve from HermiteCurve
         AnimationCurve animCurve = ConvertToAnimationCurve(property);
@@ -48,10 +48,25 @@ public class HermiteCurveNormalizedDrawer : PropertyDrawer
             ClampValues(property);
         }
 
-        // Button 3: Revert horizontally (<- .-> button)
+        // Button 3: Revert horizontally (<-> button)
         if (GUI.Button(button3Rect, "<>"))
         {
             RevertHorizontally(property);
+        }
+
+        // Draw the float input field for second node time (x1)
+        float floatFieldX = buttonX + buttonsWidth + 5f;
+        Rect floatFieldRect = new Rect(floatFieldX, position.y, floatFieldWidth, position.height);
+        
+        SerializedProperty pointsProp = property.FindPropertyRelative("points");
+        SerializedProperty x1Prop = pointsProp.FindPropertyRelative("z");
+        
+        EditorGUI.BeginChangeCheck();
+        float x1Value = EditorGUI.FloatField(floatFieldRect, x1Prop.floatValue);
+        if (EditorGUI.EndChangeCheck())
+        {
+            x1Prop.floatValue = x1Value;
+            property.serializedObject.ApplyModifiedProperties();
         }
 
         EditorGUI.EndProperty();
@@ -105,7 +120,7 @@ public class HermiteCurveNormalizedDrawer : PropertyDrawer
         
         // Set x0 = 0 and x1 = 1
         pointsProp.FindPropertyRelative("x").floatValue = 0f;
-        pointsProp.FindPropertyRelative("z").floatValue = 1f;
+       // pointsProp.FindPropertyRelative("z").floatValue = 1f;
 
         property.serializedObject.ApplyModifiedProperties();
     }

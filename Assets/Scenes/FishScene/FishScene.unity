@@ -633,6 +633,8 @@ GameObject:
   - component: {fileID: 8855842756627374781}
   - component: {fileID: 8855842756627374782}
   - component: {fileID: 8855842756627374783}
+  - component: {fileID: 8855842756627374785}
+  - component: {fileID: 8855842756627374784}
   m_Layer: 0
   m_Name: Fish
   m_TagString: Untagged
@@ -1193,6 +1195,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 264d5b249de44074896bb25ba89cd2fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Seed: 1
+--- !u!114 &8855842756627374784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1584030869499583381}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d58251e577a956a46935590cdcb58846, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  StatIncreasePerSecond:
+    Stats:
+      c0:
+        x: 10
+        y: 10
+        z: 10
+        w: 10
+      c1:
+        x: 10
+        y: 10
+        z: 0
+        w: 0
+--- !u!114 &8855842756627374785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1584030869499583381}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe7e815a2c098ee419f7e5693fd6dead, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaxSpeed: 3
+  MaxRotationSpeed: 160
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

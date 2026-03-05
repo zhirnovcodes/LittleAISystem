@@ -3,10 +3,8 @@ using Unity.Mathematics;
 
 public struct FishSpawnComponent : IComponentData
 {
-    public Entity Prefab;
-    public int Count;
-    public float2 VisionRange;
-    public float2 VisionInterval;
-    public uint RandomSeed;
+    public float2 SpawnInterval;
+    public float TimeElapsed;
+    public float3 SpawnPosition;
+    public Random Random;
 }
-

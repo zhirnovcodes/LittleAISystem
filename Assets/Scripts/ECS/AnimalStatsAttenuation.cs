@@ -3,8 +3,8 @@ using Unity.Mathematics;
 [System.Serializable]
 public struct AnimalStatsAttenuation
 {
-    public HermiteCurve Needs;
-    public HermiteCurve Distance;
+    [HermiteCurveNormalized] public HermiteCurve Needs;
+    [HermiteCurveScaled] public HermiteCurve Distance;
 
     public static implicit operator AnimalStatsAttenuation(GenomeData genomeData)
     {

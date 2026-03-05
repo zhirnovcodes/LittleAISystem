@@ -1,49 +1,128 @@
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
+[UpdateInGroup(typeof(SimulationSystemGroup))]
+[BurstCompile]
 public partial struct FishSpawnSystem : ISystem
 {
+    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<FishSpawnComponent>();
+        state.RequireForUpdate<PrefabLibraryItem>();
+        state.RequireForUpdate<WorldOriginItem>();
     }
 
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        state.Enabled = false;
+        var deltaTime = SystemAPI.Time.DeltaTime;
+        var ecb = new EntityCommandBuffer(Allocator.TempJob);
+        
+        // Get singletons
+        var prefabLibraryEntity = SystemAPI.GetSingletonEntity<PrefabLibraryItem>();
+        var prefabLibrary = SystemAPI.GetBuffer<PrefabLibraryItem>(prefabLibraryEntity);
+        
+        var worldOriginEntity = SystemAPI.GetSingletonEntity<WorldOriginItem>();
+        var worldOriginBuffer = SystemAPI.GetBuffer<WorldOriginItem>(worldOriginEntity);
 
-        // Get singleton component
-        var spawnComponent = SystemAPI.GetSingleton<FishSpawnComponent>();
-
-        EntityCommandBuffer buffer = new EntityCommandBuffer(Allocator.Temp);
-
-        var random = Unity.Mathematics.Random.CreateFromIndex(spawnComponent.RandomSeed);
-
-        for (int i = 0; i < spawnComponent.Count; i++)
+        var spawnJob = new FishSpawnJob
         {
-            var fishEntity = buffer.Instantiate(spawnComponent.Prefab);
-            
-            // Add action chain components
-            var actionBuilder = new ActionChainBuilder(fishEntity, buffer);
-            var builtEntity = actionBuilder.Build();
-            
-            // Add need-based AI components
-            var needBuilder = new NeedBasedAIBuilder(builtEntity, buffer);
-            builtEntity = needBuilder.Build();
-            
-            // Add vision and other fish-specific components
-            var fishBuilder = new FishBuilder(builtEntity, buffer);
-            
-            // Randomize vision parameters within the specified ranges
-            float visionRange = random.NextFloat(spawnComponent.VisionRange.x, spawnComponent.VisionRange.y);
-            float visionInterval = random.NextFloat(spawnComponent.VisionInterval.x, spawnComponent.VisionInterval.y);
-            
-            fishBuilder.WithVision(visionRange, visionInterval).Build();
-        }
+            DeltaTime = deltaTime,
+            ECB = ecb,
+            PrefabLibrary = prefabLibrary,
+            WorldOriginBuffer = worldOriginBuffer,
+            ParentDNALookup = SystemAPI.GetBufferLookup<DNAChainItem>(true),
+            ParentFlagsLookup = SystemAPI.GetComponentLookup<ParentDNAComponent>(true)
+        };
 
-        buffer.Playback(state.EntityManager);
-        buffer.Dispose();
+        spawnJob.Run();
+
+        ecb.Playback(state.EntityManager);
+        ecb.Dispose();
+    }
+
+    [BurstCompile]
+    partial struct FishSpawnJob : IJobEntity
+    {
+        public float DeltaTime;
+        public EntityCommandBuffer ECB;
+        [ReadOnly] public DynamicBuffer<PrefabLibraryItem> PrefabLibrary;
+        [ReadOnly] public DynamicBuffer<WorldOriginItem> WorldOriginBuffer;
+        [ReadOnly] public BufferLookup<DNAChainItem> ParentDNALookup;
+        [ReadOnly] public ComponentLookup<ParentDNAComponent> ParentFlagsLookup;
+
+        public void Execute(ref FishSpawnComponent spawnComponent)
+        {
+            spawnComponent.TimeElapsed += DeltaTime;
+
+            // Check if it's time to spawn
+            float randomInterval = spawnComponent.Random.NextFloat(
+                spawnComponent.SpawnInterval.x, 
+                spawnComponent.SpawnInterval.y);
+
+            if (spawnComponent.TimeElapsed >= randomInterval)
+            {
+                // Reset timer
+                spawnComponent.TimeElapsed = 0f;
+
+                // Check if we have at least 2 parents
+                if (WorldOriginBuffer.Length < 2)
+                    return;
+
+                // Select 2 random different parents
+                int fatherIndex = spawnComponent.Random.NextInt(0, WorldOriginBuffer.Length);
+                int motherIndex;
+                do
+                {
+                    motherIndex = spawnComponent.Random.NextInt(0, WorldOriginBuffer.Length);
+                } while (motherIndex == fatherIndex);
+
+                var fatherEntity = WorldOriginBuffer[fatherIndex].Parent;
+                var motherEntity = WorldOriginBuffer[motherIndex].Parent;
+
+                // Check if both parents have DNA
+                if (!ParentDNALookup.HasBuffer(fatherEntity) || !ParentDNALookup.HasBuffer(motherEntity))
+                    return;
+
+                var fatherDNA = ParentDNALookup[fatherEntity];
+                var motherDNA = ParentDNALookup[motherEntity];
+
+                // Check compatibility
+                if (!DNAExtensions.IsCompatible(fatherDNA, motherDNA))
+                    return;
+
+                // Get flags from one of the parents (assuming they should be compatible)
+                ConditionFlags flags = ConditionFlags.None;
+                if (ParentFlagsLookup.HasComponent(motherEntity))
+                {
+                    flags = ParentFlagsLookup[motherEntity].Flags;
+                }
+                else if (ParentFlagsLookup.HasComponent(fatherEntity))
+                {
+                    flags = ParentFlagsLookup[fatherEntity].Flags;
+                }
+
+                // Get prefab from library
+                var prefab = PrefabLibrary.GetPrefab(flags);
+                if (prefab == Entity.Null)
+                    return;
+
+                // Call BornEntity
+                var offspring = DNAExtensions.BornEntity(
+                    flags,
+                    fatherDNA,
+                    motherDNA,
+                    prefab,
+                    ref spawnComponent.Random,
+                    ECB);
+
+                // Set spawn position
+                // Note: Position setting would typically be done via TransformDataAuthoring or similar
+                // For now, we just note the spawn position is available in spawnComponent.SpawnPosition
+            }
+        }
     }
 }
-
