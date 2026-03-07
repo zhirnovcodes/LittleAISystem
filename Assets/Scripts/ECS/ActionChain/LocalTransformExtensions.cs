@@ -155,7 +155,7 @@ public static class LocalTransformExtensions
         };
     }
 
-    private static float AngleBetween(quaternion a, quaternion b)
+    public static float AngleBetween(quaternion a, quaternion b)
     {
         // Dot product of two quaternions gives cos(halfAngle)
         float dot = math.abs(math.dot(a, b));
