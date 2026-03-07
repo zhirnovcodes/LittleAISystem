@@ -37,6 +37,19 @@ public static class MoveControllerExtensions
         });
     }
 
+    public static void ResetInput(EntityCommandBuffer buffer, Entity entity)
+    {
+        buffer.SetComponent(entity, new MoveControllerInputComponent
+        {
+            TargetPosition = float.MaxValue * new float3(1, 1, 1),
+            LookDirection = float3.zero,
+            TargetScale = 0,
+            Speed = 0,
+            RotationSpeed = 0,
+            Distance = 0
+        });
+    }
+
     /// <summary>
     /// Disables the MoveControllerInputComponent and resets the output
     /// </summary>
@@ -45,6 +58,8 @@ public static class MoveControllerExtensions
         buffer.SetComponentEnabled<MoveControllerInputComponent>(entity, false);
 
         ResetOutput(buffer, entity);
+
+        ResetInput(buffer, entity);
     }
 }
 

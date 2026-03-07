@@ -125,8 +125,6 @@ public partial class ActionRunnerSystem : SystemBase
         runner.Action = nextAction.Action;
         runner.CurrentSubActionIndex = 0;
         runner.Target = nextAction.Target;
-
-
     }
 
     private ISubActionState GetState(in ActionRunnerComponent runner)

@@ -8,7 +8,7 @@ public class StumbleUponSubActionState : ISubActionState
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
 
-    private const float FailTime = 5f;
+    private const float FailTime = 2f;
     private const float MaxDistance = 0.3f;
     private const float Delta = 1f;
 
@@ -70,11 +70,10 @@ public class StumbleUponSubActionState : ISubActionState
             return SubActionResult.Fail(2);
         }
         /*
-
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
         // Check if target is not reached
-        if (entityTransform.IsTargetReached(targetTransform, MaxDistance) == false)
+        if (entityTransform.IsTargetDistanceReached(targetTransform, MaxDistance) == false)
         {
             return SubActionResult.Running();
         }

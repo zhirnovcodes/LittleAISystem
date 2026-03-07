@@ -714,7 +714,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxSpeed: 4
-  MaxRotationSpeed: 70
+  MaxRotationSpeed: 190
 --- !u!114 &450879529
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1474,7 +1474,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxSpeed: 5
-  MaxRotationSpeed: 60
+  MaxRotationSpeed: 180
 --- !u!114 &1815018782
 MonoBehaviour:
   m_ObjectHideFlags: 0
