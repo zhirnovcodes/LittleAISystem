@@ -48,46 +48,42 @@ public partial class ActionRunnerSystem : SystemBase
             // if entity doesnt exist
             // if target doesnt exist
             
-            var subActionState = GetState(in runner);
-
             timer.DeltaTime = deltaTime;
             timer.TimeElapsed += deltaTime;
 
             if (runner.Action == ActionTypes.None)
             {
                 SetActionIdle(ref runner);
-                var idle = GetState(in runner);
-                idle.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
+
+                EnableState(entity, buffer, in runner, ref randomComponent);
             }
 
-            var status = runner.IsCancellationRequested ? SubActionStatus.Cancel : 
-                subActionState.Update(entity, runner.Target, buffer, timer, ref randomComponent.Random).Status;
+            var status = runner.IsCancellationRequested ? SubActionStatus.Cancel :
+                UpdateState(entity, buffer, runner, ref randomComponent, timer).Status;
 
             switch (status)
             {
                 case SubActionStatus.Running:
                     break;
                 case SubActionStatus.Success:
-                    subActionState.Disable(entity, runner.Target, buffer);
+                    DisableState(entity, buffer, in runner);
 
                     SetNextSubAction(ref runner, ref chain);
 
                     timer.TimeElapsed = 0;
 
-                    var nextState = GetState(in runner);
-                    nextState.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
+                    EnableState(entity, buffer, in runner, ref randomComponent);
                     break;
                 case SubActionStatus.Fail:
                 case SubActionStatus.Cancel:
-                    subActionState.Disable(entity, runner.Target, buffer);
+                    DisableState(entity, buffer, in runner);
 
                     runner.IsCancellationRequested = false;
                     SetNextAction(ref runner, ref chain);
 
                     timer.TimeElapsed = 0;
 
-                    var next = GetState(in runner);
-                    next.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
+                    EnableState(entity, buffer, in runner, ref randomComponent);
                     break;
             }
         }).WithoutBurst().Run();
@@ -109,7 +105,6 @@ public partial class ActionRunnerSystem : SystemBase
         
         if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction))
         {
-            SetActionIdle(ref runner);
             return;
         }
 
@@ -123,7 +118,6 @@ public partial class ActionRunnerSystem : SystemBase
             SetActionIdle(ref runner);
             return;
         }
-
         var nextAction = chain[0];
 
         chain.RemoveAt(0);
@@ -143,5 +137,31 @@ public partial class ActionRunnerSystem : SystemBase
         }
 
         return SubActionStates[SubActionTypes.Idle];
+    }
+
+    private void DisableState(Entity entity, EntityCommandBuffer buffer, in ActionRunnerComponent runner)
+    {
+        //UnityEngine.Debug.Log("Disable " + entity + " " + runner.Action + " " + runner.CurrentSubActionIndex);
+
+        var subActionState = GetState(in runner);
+        subActionState.Disable(entity, runner.Target, buffer);
+    }
+
+    private void EnableState(Entity entity, EntityCommandBuffer buffer, in ActionRunnerComponent runner, ref ActionRandomComponent randomComponent)
+    {
+        //UnityEngine.Debug.Log("Enable " + entity + " " + runner.Action + " " + runner.CurrentSubActionIndex);
+
+        var nextState = GetState(in runner);
+        nextState.Enable(entity, runner.Target, buffer, ref randomComponent.Random);
+    }
+
+    private SubActionResult UpdateState(Entity entity, EntityCommandBuffer buffer, in ActionRunnerComponent runner, ref ActionRandomComponent randomComponent, in SubActionTimeComponent timer)
+    {
+        var subActionState = GetState(in runner);
+        var state = subActionState.Update(entity, runner.Target, buffer, timer, ref randomComponent.Random);
+
+        //UnityEngine.Debug.Log("Update " + entity + " " + runner.Action + " " + runner.CurrentSubActionIndex + " " + state.Status + " " + state.FailCode);
+
+        return state;
     }
 }

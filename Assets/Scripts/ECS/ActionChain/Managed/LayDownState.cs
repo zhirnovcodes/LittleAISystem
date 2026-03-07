@@ -80,8 +80,8 @@ public class LayDownState : ISubActionState
         }
 
         // Update target position (using crawling speed, no rotation)
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, MovingSpeedLookup[entity].GetCrawlingSpeed(), 0f);
+        var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
+        MoveControllerExtensions.SetTarget(buffer, entity, targetTransform.Position, 0, lookDirection, 0.01f, MovingSpeedLookup[entity].GetCrawlingSpeed(), 0f);
 
         return SubActionResult.Running();
     }

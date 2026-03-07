@@ -8,6 +8,7 @@ public class TestEat : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
 
     private const float EatDuration = 3.0f;
+    private const float MoveSpeed = 2f; // Degrees per second
     private const float RotationSpeed = 180.0f; // Degrees per second
 
     public TestEat(ComponentLookup<LocalTransform> transformLookup)
@@ -44,8 +45,9 @@ public class TestEat : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Update target for rotation only (target position = entity position for rotation only)
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, 0f, RotationSpeed);
+        var rotation = math.normalize(targetTransform.Position - entityTransform.Position);
+        MoveControllerExtensions.SetTarget(buffer, entity,
+            targetTransform.Position, targetTransform.Scale, rotation, 0.2f, MoveSpeed, RotationSpeed);
 
         // Check if eating duration is complete
         if (timer.TimeElapsed >= EatDuration)

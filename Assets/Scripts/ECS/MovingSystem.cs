@@ -17,7 +17,7 @@ public partial struct MovingSystem : ISystem
         new MovingJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime
-        }.ScheduleParallel();
+        }.Schedule();
     }
 }
 
@@ -29,22 +29,15 @@ public partial struct MovingJob : IJobEntity
     public void Execute(
         ref LocalTransform transform,
         ref MoveControllerOutputComponent output,
-        in MoveControllerInputComponent input,
-        EnabledRefRO<MoveControllerInputComponent> enabled)
+        in MoveControllerInputComponent input)
     {
-        // Only process if enabled
-        if (!enabled.ValueRO)
-        {
-            return;
-        }
-
         var currentTransform = transform;
         
         // Check if position target is reached
-        bool hasArrived = currentTransform.IsTargetReached(input.TargetPosition, input.TargetScale, 0.001f);
+        bool hasArrived = currentTransform.IsTargetDistanceReached(input.TargetPosition, input.TargetScale, input.Distance);
         
         // Check if looking at target direction
-        bool isLookingAt = currentTransform.IsLookingTowards(input.LookDirection, 0.01f);
+        bool isLookingAt = currentTransform.Rotation.IsLookingTowards(input.LookDirection, 0.01f);
         
         // Update output component
         output.HasArrived = hasArrived;
@@ -61,7 +54,7 @@ public partial struct MovingJob : IJobEntity
         // Move towards target position if not arrived
         if (!hasArrived)
         {
-            newTransform = newTransform.MovePositionTowards(input.TargetPosition, input.TargetScale, DeltaTime, input.Speed);
+            newTransform = newTransform.MovePositionTowards(input.TargetPosition, input.TargetScale, input.Distance, input.Speed, DeltaTime);
         }
         
         // Rotate towards look direction if not looking at it

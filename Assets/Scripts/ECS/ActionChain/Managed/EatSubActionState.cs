@@ -62,7 +62,7 @@ public class EatSubActionState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // if distance between transforms > MaxDistance - fail with error code 3
-        if (!entityTransform.IsTargetReached(targetTransform, MaxDistance))
+        if (!entityTransform.IsTargetDistanceReached(targetTransform, MaxDistance))
         {
             return SubActionResult.Fail(3);
         }

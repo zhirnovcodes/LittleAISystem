@@ -64,7 +64,7 @@ public class WalkToTalk : ISubActionState
         }
 
         // if entity does not have MoveControllerOutputComponent - return fail with code 4
-        if (!MoveControllerOutputLookup.HasComponent(entity))
+        if (!MoveControllerOutputLookup.TryGetComponent(entity, out var output))
         {
             return SubActionResult.Fail(4);
         }
@@ -73,14 +73,14 @@ public class WalkToTalk : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Check if we've reached the target distance
-        if (entityTransform.IsTargetReached(targetTransform, MaxDistance))
+        if (output.HasArrived && output.IsLookingAt)
         {
             return SubActionResult.Success();
         }
 
         // Update target position
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, MovingSpeedLookup[entity].GetWalkingSpeed(), 
+        var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
+        MoveControllerExtensions.SetTarget(buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MaxDistance, MovingSpeedLookup[entity].GetWalkingSpeed(), 
             MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
         return SubActionResult.Running();

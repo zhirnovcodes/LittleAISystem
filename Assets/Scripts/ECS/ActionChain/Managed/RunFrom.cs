@@ -25,10 +25,23 @@ public class RunFrom : ISubActionState
         MoveControllerOutputLookup.Update(system);
     }
 
+    private void SetRandomEscapeTarget(EntityCommandBuffer buffer, Entity entity, float3 entityPosition, float3 targetPosition, ref Random random)
+    {
+        // Generate new random position
+        var movingSpeed = MovingSpeedLookup[entity];
+        var safeDistance = new float2(1, 1.5f) * SafeDistance;
+        var escapePoition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
+        var lookDirection = math.normalize(escapePoition - entityPosition);
+
+        MoveControllerExtensions.SetTarget(buffer, entity, escapePoition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+        MoveControllerExtensions.ResetOutput(buffer, entity);
+    }
+
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
         // Check if entity does not exist in transform lookup, skip setup
-        if (!TransformLookup.HasComponent(entity) || !TransformLookup.HasComponent(target))
+        if (!TransformLookup.TryGetComponent(entity, out var entityTransform) || 
+            !TransformLookup.TryGetComponent(target, out var targetTransform))
         {
             return;
         }
@@ -39,16 +52,10 @@ public class RunFrom : ISubActionState
             return;
         }
 
-        var entityTransform = TransformLookup[entity];
-        var movingSpeed = MovingSpeedLookup[entity];
-
-        // Generate random position away from current position
-        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, SafeDistance * 2f, ref random);
 
         // Enable and set initial target
         MoveControllerExtensions.Enable(buffer, entity);
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-            targetPosition, entityTransform.Scale, 0, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+        SetRandomEscapeTarget(buffer, entity, entityTransform.Position, targetTransform.Position, ref random);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -97,12 +104,7 @@ public class RunFrom : ISubActionState
         // If arrived at current target, set new random target
         if (moveOutput.HasArrived)
         {
-            // Generate new random position
-            var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, SafeDistance * 2f, ref random);
-
-            var movingSpeed = MovingSpeedLookup[entity];
-            MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-                targetPosition, entityTransform.Scale, 1f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+            SetRandomEscapeTarget(buffer, entity, entityTransform.Position, targetTransform.Position, ref random);
         }
 
         return SubActionResult.Running();

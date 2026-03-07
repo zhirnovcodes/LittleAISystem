@@ -9,6 +9,7 @@ public class WalkToSubActionState : ISubActionState
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
     private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
+    private const float MaxDistance = 0.2f;
     private const float FailTime = 30f;
 
     public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
@@ -81,9 +82,9 @@ public class WalkToSubActionState : ISubActionState
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
         var movingSpeed = MovingSpeedLookup[entity];
+        var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
 
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveControllerExtensions.SetTarget(buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }

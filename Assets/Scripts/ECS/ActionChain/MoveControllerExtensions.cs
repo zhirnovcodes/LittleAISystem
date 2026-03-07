@@ -15,20 +15,21 @@ public static class MoveControllerExtensions
     /// <summary>
     /// Sets the target - calculates look direction automatically and resets output
     /// </summary>
-    public static void SetTarget(EntityCommandBuffer buffer, Entity entity, float3 entityPosition, float3 targetPosition, float entityScale, float targetScale, float speed, float rotationSpeed)
+    public static void SetTarget(EntityCommandBuffer buffer, Entity entity, float3 targetPosition, float targetScale, float3 lookDirection, float distance, float speed, float rotationSpeed)
     {
-        var lookDirection = targetPosition - entityPosition;
-        
         buffer.SetComponent(entity, new MoveControllerInputComponent
         {
             TargetPosition = targetPosition,
             LookDirection = lookDirection,
             TargetScale = targetScale,
             Speed = speed,
-            RotationSpeed = rotationSpeed
+            RotationSpeed = rotationSpeed,
+            Distance = distance
         });
-        
-        // Reset output component
+    }
+
+    public static void ResetOutput(EntityCommandBuffer buffer, Entity entity)
+    {
         buffer.SetComponent(entity, new MoveControllerOutputComponent
         {
             HasArrived = false,
@@ -42,12 +43,8 @@ public static class MoveControllerExtensions
     public static void Disable(EntityCommandBuffer buffer, Entity entity)
     {
         buffer.SetComponentEnabled<MoveControllerInputComponent>(entity, false);
-        
-        buffer.SetComponent(entity, new MoveControllerOutputComponent
-        {
-            HasArrived = false,
-            IsLookingAt = false
-        });
+
+        ResetOutput(buffer, entity);
     }
 }
 

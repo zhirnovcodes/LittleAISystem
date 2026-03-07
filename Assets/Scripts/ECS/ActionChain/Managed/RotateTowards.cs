@@ -80,9 +80,9 @@ public class RotateTowards : ISubActionState
         // Update target for rotation only (target position = entity position)
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
+        var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
 
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
+        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }

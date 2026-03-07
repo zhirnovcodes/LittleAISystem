@@ -33,7 +33,7 @@ public struct AnimalStatsAttenuation
     public float GetStatAttenuated(float currentValue, float valueChange, float distance)
     {
         // 1 - Apply distance attenuation to the value change
-        float distanceAttenuation = Distance.GetY(distance);
+        float distanceAttenuation = Distance.GetY(math.max( distance, 0));
         float attenuatedChange = valueChange * distanceAttenuation;
 
         // 2 - Calculate needs attenuation of current state (normalized to 0-1)

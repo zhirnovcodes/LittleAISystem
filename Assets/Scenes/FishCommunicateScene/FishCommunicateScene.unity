@@ -221,7 +221,7 @@ MonoBehaviour:
           z: 0
           w: 0
     ActorConditions: 16
-    ActionType: 6
+    ActionType: 7
 --- !u!114 &450879518
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -981,7 +981,7 @@ MonoBehaviour:
           z: 0
           w: 0
     ActorConditions: 16
-    ActionType: 6
+    ActionType: 7
 --- !u!114 &1815018771
 MonoBehaviour:
   m_ObjectHideFlags: 0

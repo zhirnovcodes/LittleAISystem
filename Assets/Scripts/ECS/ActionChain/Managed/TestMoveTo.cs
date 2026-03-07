@@ -55,14 +55,15 @@ public class TestMoveTo : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Check if reached target
-        if (entityTransform.IsTargetReached(targetTransform, 0.001f))
+        if (entityTransform.IsTargetDistanceReached(targetTransform, 0.001f))
         {
             return SubActionResult.Success();
         }
 
         // Update target position
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-            targetTransform.Position, entityTransform.Scale, targetTransform.Scale, MoveSpeed, RotationSpeed);
+        var rotation = math.normalize(targetTransform.Position - entityTransform.Position);
+        MoveControllerExtensions.SetTarget(buffer, entity, 
+            targetTransform.Position, targetTransform.Scale, rotation, 0.2f, MoveSpeed, RotationSpeed);
 
         return SubActionResult.Running();
     }

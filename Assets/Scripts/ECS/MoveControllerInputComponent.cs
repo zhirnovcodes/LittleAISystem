@@ -8,5 +8,6 @@ public struct MoveControllerInputComponent : IComponentData, IEnableableComponen
     public float3 TargetPosition;
     public float3 LookDirection;
     public float TargetScale;
+    public float Distance;
 }
 

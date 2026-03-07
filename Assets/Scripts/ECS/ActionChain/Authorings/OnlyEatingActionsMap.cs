@@ -42,10 +42,10 @@ public class OnlyEatingActionsMap : ActionMapBase
     {
         return new List<ActionsMapItem> {
             ActionTypes.Idle.           BuildMapItem( SubActionTypes.Idle ),
-            ActionTypes.Eat.            BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.RotateTowards, SubActionTypes.Eat ),
+            ActionTypes.Eat.            BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.Eat ),
             ActionTypes.Sleep.          BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.MoveInto, SubActionTypes.Sleep ),
             ActionTypes.Escape.         BuildMapItem( SubActionTypes.RunFrom ),
-            ActionTypes.Communicate.    BuildMapItem( SubActionTypes.MoveToTalk, SubActionTypes.RotateTowards, SubActionTypes.StumbleUpon, SubActionTypes.Communicate, SubActionTypes.RunFrom )
+            ActionTypes.Communicate.    BuildMapItem( SubActionTypes.MoveTo, SubActionTypes.StumbleUpon, SubActionTypes.Communicate, SubActionTypes.RunFrom )
         };
     }
 

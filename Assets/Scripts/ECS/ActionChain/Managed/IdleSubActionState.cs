@@ -36,11 +36,11 @@ public class IdleSubActionState : ISubActionState
 
         // Generate random position around entity
         var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, WanderRadius, ref random);
+        var lookDirection = math.normalize(targetPosition - entityTransform.Position);
 
         // Enable and set random target
         MoveControllerExtensions.Enable(buffer, entity);
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position,
-            targetPosition, entityTransform.Scale, 0, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveControllerExtensions.SetTarget(buffer, entity, targetPosition, 0, lookDirection, 0.01f, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)

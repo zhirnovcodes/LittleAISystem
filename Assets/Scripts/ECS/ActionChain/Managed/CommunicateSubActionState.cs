@@ -83,7 +83,7 @@ public class CommunicateSubActionState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Check if target is reached
-        if (entityTransform.IsTargetReached(targetTransform, MaxDistance) == false)
+        if (entityTransform.IsTargetDistanceReached(targetTransform, MaxDistance) == false)
         {
             return SubActionResult.Fail(2);
         }
