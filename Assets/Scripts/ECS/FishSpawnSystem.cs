@@ -54,7 +54,7 @@ public partial struct FishSpawnSystem : ISystem
         [ReadOnly] public BufferLookup<DNAChainItem> ParentDNALookup;
         [ReadOnly] public ComponentLookup<ParentDNAComponent> ParentFlagsLookup;
 
-        public void Execute(ref FishSpawnComponent spawnComponent)
+        public void Execute(Entity entity, ref FishSpawnComponent spawnComponent)
         {
             spawnComponent.TimeElapsed += DeltaTime;
 
@@ -118,6 +118,13 @@ public partial struct FishSpawnSystem : ISystem
                     prefab,
                     ref spawnComponent.Random,
                     ECB);
+
+                spawnComponent.Count++;
+
+                if (spawnComponent.Count >= spawnComponent.MaxCount)
+                {
+                    ECB.SetComponentEnabled<FishSpawnComponent>(entity, false);
+                }
 
                 // Set spawn position
                 // Note: Position setting would typically be done via TransformDataAuthoring or similar

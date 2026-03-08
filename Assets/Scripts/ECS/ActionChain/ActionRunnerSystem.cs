@@ -19,6 +19,7 @@ public partial class ActionRunnerSystem : SystemBase
 
     protected override void OnUpdate()
     {
+        return;
         Initialize();
 
         EntityCommandBuffer buffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
