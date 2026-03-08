@@ -1,6 +1,7 @@
 using Unity.Entities;
 using Unity.Transforms;
 using Unity.Burst;
+using Unity.Physics;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial struct MovingTransformSystem : ISystem
@@ -13,7 +14,6 @@ public partial struct MovingTransformSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        return;
         new MovingTransformJob
         {
             DeltaTime = SystemAPI.Time.DeltaTime
@@ -22,6 +22,7 @@ public partial struct MovingTransformSystem : ISystem
 }
 
 [BurstCompile]
+[WithNone(typeof(PhysicsVelocity))]
 public partial struct MovingTransformJob : IJobEntity
 {
     public float DeltaTime;

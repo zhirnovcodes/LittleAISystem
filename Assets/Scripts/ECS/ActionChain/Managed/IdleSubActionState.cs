@@ -8,8 +8,8 @@ public class IdleSubActionState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    private const float IdleTime = 2f;
-    private const float WanderRadius = 3f;
+    private const float IdleTime = 10f;
+    private const float WanderRadius = 10f;
 
     public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {

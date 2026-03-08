@@ -55,17 +55,7 @@ public partial struct MovingPhysicsSystem : ISystem
             }
             else
             {
-                float3 toTarget = input.TargetPosition - currentTransform.Position;
-                float dist = math.length(toTarget);
-
-                if (dist > input.Distance)
-                {
-                    velocity.Linear = math.normalize(toTarget) * input.Speed;
-                }
-                else
-                {
-                    velocity.Linear = float3.zero;
-                }
+                velocity.Linear += GetLinearVelocity(transform, velocity, input);
             }
 
             if (isLookingAt)
@@ -78,6 +68,35 @@ public partial struct MovingPhysicsSystem : ISystem
                 velocity.Angular = GetAngularVelocity(input.LookDirection, transform.Rotation, mass, input.RotationSpeed, DeltaTime);
             }
         }
+        private float3 GetLinearVelocity(
+            in LocalTransform transform,
+            in PhysicsVelocity velocity,
+            in MoveControllerInputComponent input)
+        {
+            // Already at target - no velocity to add
+            if (transform.IsTargetDistanceReached(input.TargetPosition, input.TargetScale, input.Distance))
+                return float3.zero;
+
+            float3 toTarget = math.normalize(input.TargetPosition - transform.Position);
+            float3 desiredVelocity = toTarget * input.Speed;
+            float3 velocityToAdd = desiredVelocity - velocity.Linear;
+
+            // If we're already at or above target speed in the desired direction, don't add more
+            float currentSpeedAlongDirection = math.dot(velocity.Linear, toTarget);
+            if (currentSpeedAlongDirection >= input.Speed)
+                return float3.zero;
+
+            // Clamp so we don't overshoot the target speed
+            float3 newVelocity = velocity.Linear + velocityToAdd;
+            if (math.length(newVelocity) > input.Speed)
+            {
+                newVelocity = math.normalize(newVelocity) * input.Speed;
+                velocityToAdd = newVelocity - velocity.Linear;
+            }
+
+            return velocityToAdd;
+        }
+
         [BurstCompile]
         public static float3 GetAngularVelocity(
             in float3 lookDirection,

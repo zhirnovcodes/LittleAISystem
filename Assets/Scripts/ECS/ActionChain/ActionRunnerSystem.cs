@@ -7,8 +7,6 @@ public partial class ActionRunnerSystem : SystemBase
 {
     private ActionChainConfigComponent ActionsMap;
 
-    private Dictionary<SubActionTypes, ISubActionState> SubActionStates;
-
     private bool AreSubActionsInitialized;
 
     protected override void OnCreate()
@@ -21,33 +19,22 @@ public partial class ActionRunnerSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        if (AreSubActionsInitialized == false)
-        {
-            var initializeComponent = SystemAPI.GetSingleton<ActionMapInitializeComponent>();
-            SubActionStates = initializeComponent.Map.Value.ConstructSubActionsStates(this);
-            AreSubActionsInitialized = true;
-        }
+        Initialize();
 
         EntityCommandBuffer buffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
 
         ActionsMap = SystemAPI.GetSingleton<ActionChainConfigComponent>();
 
-        foreach (var subActionState in SubActionStates.Values)
-        {
-            subActionState.Refresh(this);
-        }
+        RefreshAll();
 
         var deltaTime = SystemAPI.Time.DeltaTime;
 
-        Entities.ForEach((Entity entity, 
-            ref ActionRunnerComponent runner, 
+        Entities.ForEach((Entity entity,
+            ref ActionRunnerComponent runner,
             ref SubActionTimeComponent timer,
             ref ActionRandomComponent randomComponent,
             ref DynamicBuffer<ActionChainItem> chain) =>
         {
-            // if entity doesnt exist
-            // if target doesnt exist
-            
             timer.DeltaTime = deltaTime;
             timer.TimeElapsed += deltaTime;
 
@@ -127,6 +114,30 @@ public partial class ActionRunnerSystem : SystemBase
         runner.Target = nextAction.Target;
     }
 
+#region WithoutBurst
+
+    private Dictionary<SubActionTypes, ISubActionState> SubActionStates;
+
+    private void Initialize()
+    {
+        if (AreSubActionsInitialized)
+        {
+            return;
+        }
+
+        var initializeComponent = SystemAPI.GetSingleton<ActionMapInitializeComponent>();
+        SubActionStates = initializeComponent.Map.Value.ConstructSubActionsStates(this);
+        AreSubActionsInitialized = true;
+    }
+
+    private void RefreshAll()
+    {
+        foreach (var subActionState in SubActionStates.Values)
+        {
+            subActionState.Refresh(this);
+        }
+    }
+
     private ISubActionState GetState(in ActionRunnerComponent runner)
     {
         if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction))
@@ -162,4 +173,5 @@ public partial class ActionRunnerSystem : SystemBase
 
         return state;
     }
+    #endregion
 }
