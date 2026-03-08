@@ -1,13 +1,14 @@
 using LittleAI.Enums;
+using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-public partial class ActionRunnerUnmanagedSystem : SystemBase
+[BurstCompile]
+public partial struct ActionRunnerUnmanagedSystem : ISystem
 {
-    private ActionChainConfigComponent ActionsMap;
-
     // Component lookups
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<EdibleComponent> EdibleLookup;
@@ -20,6 +21,92 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     private BufferLookup<DNAChainItem> DNAChainLookup;
     private BufferLookup<DNAStorageItem> DNAStorageLookup;
     private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
+
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<ActionChainConfigComponent>();
+        state.RequireForUpdate<ActionChainItem>();
+        state.RequireForUpdate<ActionRunnerComponent>();
+        state.RequireForUpdate<ActionMapInitializeComponent>();
+
+        TransformLookup = state.GetComponentLookup<LocalTransform>(true);
+        EdibleLookup = state.GetComponentLookup<EdibleComponent>(true);
+        GenetaliaLookup = state.GetComponentLookup<GenetaliaComponent>(true);
+        AnimalStatsLookup = state.GetComponentLookup<AnimalStatsComponent>(true);
+        StatsIncreaseLookup = state.GetComponentLookup<StatsIncreaseComponent>(true);
+        MovingSpeedLookup = state.GetComponentLookup<MovingSpeedComponent>(true);
+        SleepingPlaceLookup = state.GetComponentLookup<SleepingPlaceComponent>(true);
+        ReproductionLookup = state.GetComponentLookup<ReproductionComponent>(true);
+        DNAChainLookup = state.GetBufferLookup<DNAChainItem>(true);
+        DNAStorageLookup = state.GetBufferLookup<DNAStorageItem>(true);
+        MoveControllerOutputLookup = state.GetComponentLookup<MoveControllerOutputComponent>(true);
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        TransformLookup.Update(ref state);
+        EdibleLookup.Update(ref state);
+        GenetaliaLookup.Update(ref state);
+        AnimalStatsLookup.Update(ref state);
+        StatsIncreaseLookup.Update(ref state);
+        MovingSpeedLookup.Update(ref state);
+        SleepingPlaceLookup.Update(ref state);
+        ReproductionLookup.Update(ref state);
+        DNAChainLookup.Update(ref state);
+        DNAStorageLookup.Update(ref state);
+        MoveControllerOutputLookup.Update(ref state);
+
+        var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var buffer = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
+        var job = new ActionRunnerJob
+        {
+            ActionsMap = SystemAPI.GetSingleton<ActionChainConfigComponent>(),
+            DeltaTime = SystemAPI.Time.DeltaTime,
+            Buffer = buffer,
+            TransformLookup = TransformLookup,
+            EdibleLookup = EdibleLookup,
+            GenetaliaLookup = GenetaliaLookup,
+            AnimalStatsLookup = AnimalStatsLookup,
+            StatsIncreaseLookup = StatsIncreaseLookup,
+            MovingSpeedLookup = MovingSpeedLookup,
+            SleepingPlaceLookup = SleepingPlaceLookup,
+            ReproductionLookup = ReproductionLookup,
+            DNAChainLookup = DNAChainLookup,
+            DNAStorageLookup = DNAStorageLookup,
+            MoveControllerOutputLookup = MoveControllerOutputLookup,
+        };
+
+        state.Dependency = job.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    public void OnDestroy(ref SystemState state)
+    {
+    }
+}
+
+[BurstCompile]
+public partial struct ActionRunnerJob : IJobEntity
+{
+    public ActionChainConfigComponent ActionsMap;
+    public float DeltaTime;
+
+    public EntityCommandBuffer Buffer;
+
+    [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
+    [ReadOnly] public ComponentLookup<EdibleComponent> EdibleLookup;
+    [ReadOnly] public ComponentLookup<GenetaliaComponent> GenetaliaLookup;
+    [ReadOnly] public ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    [ReadOnly] public ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
+    [ReadOnly] public ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] public ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
+    [ReadOnly] public ComponentLookup<ReproductionComponent> ReproductionLookup;
+    [ReadOnly] public BufferLookup<DNAChainItem> DNAChainLookup;
+    [ReadOnly] public BufferLookup<DNAStorageItem> DNAStorageLookup;
+    [ReadOnly] public ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     // Constants for sub-actions
     private const float Idle_IdleTime = 10f;
@@ -48,75 +135,49 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
 
     private const float Communicate_MaxDistance = 0.3f;
 
-    protected override void OnCreate()
+    public void Execute(
+        Entity entity,
+        ref ActionRunnerComponent runner,
+        ref SubActionTimeComponent timer,
+        ref ActionRandomComponent randomComponent,
+        ref DynamicBuffer<ActionChainItem> chain)
     {
-        RequireForUpdate<ActionChainConfigComponent>();
-        RequireForUpdate<ActionChainItem>();
-        RequireForUpdate<ActionRunnerComponent>();
-        RequireForUpdate<ActionMapInitializeComponent>();
-    }
+        timer.DeltaTime = DeltaTime;
+        timer.TimeElapsed += DeltaTime;
 
-    protected override void OnUpdate()
-    {
-        Initialize();
-
-        EntityCommandBuffer buffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
-
-        ActionsMap = SystemAPI.GetSingleton<ActionChainConfigComponent>();
-
-        RefreshAll();
-
-        var deltaTime = SystemAPI.Time.DeltaTime;
-
-        Entities.ForEach((Entity entity,
-            ref ActionRunnerComponent runner,
-            ref SubActionTimeComponent timer,
-            ref ActionRandomComponent randomComponent,
-            ref DynamicBuffer<ActionChainItem> chain) =>
+        if (runner.Action == ActionTypes.None)
         {
-            timer.DeltaTime = deltaTime;
-            timer.TimeElapsed += deltaTime;
+            SetActionIdle(ref runner);
+            EnableState(entity, in runner, ref randomComponent);
+        }
 
-            if (runner.Action == ActionTypes.None)
-            {
-                SetActionIdle(ref runner);
+        var status = runner.IsCancellationRequested ? SubActionStatus.Cancel :
+            UpdateState(entity, in runner, ref randomComponent, in timer).Status;
 
-                EnableState(entity, buffer, in runner, ref randomComponent);
-            }
-
-            var status = runner.IsCancellationRequested ? SubActionStatus.Cancel :
-                UpdateState(entity, buffer, runner, ref randomComponent, timer).Status;
-
-            switch (status)
-            {
-                case SubActionStatus.Running:
-                    break;
-                case SubActionStatus.Success:
-                    DisableState(entity, buffer, in runner);
-
-                    SetNextSubAction(ref runner, ref chain);
-
-                    timer.TimeElapsed = 0;
-
-                    EnableState(entity, buffer, in runner, ref randomComponent);
-                    break;
-                case SubActionStatus.Fail:
-                case SubActionStatus.Cancel:
-                    DisableState(entity, buffer, in runner);
-
-                    runner.IsCancellationRequested = false;
-                    SetNextAction(ref runner, ref chain);
-
-                    timer.TimeElapsed = 0;
-
-                    EnableState(entity, buffer, in runner, ref randomComponent);
-                    break;
-            }
-        }).WithoutBurst().Run();
-
-        buffer.Playback(EntityManager);
-        buffer.Dispose();
+        switch (status)
+        {
+            case SubActionStatus.Running:
+                break;
+            case SubActionStatus.Success:
+                DisableState(entity, in runner);
+                SetNextSubAction(ref runner, ref chain);
+                timer.TimeElapsed = 0;
+                EnableState(entity, in runner, ref randomComponent);
+                break;
+            case SubActionStatus.Fail:
+            case SubActionStatus.Cancel:
+                DisableState(entity, in runner);
+                runner.IsCancellationRequested = false;
+                SetNextAction(ref runner, ref chain);
+                timer.TimeElapsed = 0;
+                EnableState(entity, in runner, ref randomComponent);
+                break;
+        }
     }
+
+    // =========================================================================
+    // Action flow control
+    // =========================================================================
 
     private void SetActionIdle(ref ActionRunnerComponent runner)
     {
@@ -154,34 +215,10 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     }
 
     // =========================================================================
-    // Initialize & Refresh
-    // =========================================================================
-
-    private void Initialize()
-    {
-        // does nothing
-    }
-
-    private void RefreshAll()
-    {
-        TransformLookup = GetComponentLookup<LocalTransform>(true);
-        EdibleLookup = GetComponentLookup<EdibleComponent>(true);
-        GenetaliaLookup = GetComponentLookup<GenetaliaComponent>(true);
-        AnimalStatsLookup = GetComponentLookup<AnimalStatsComponent>(true);
-        StatsIncreaseLookup = GetComponentLookup<StatsIncreaseComponent>(true);
-        MovingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
-        SleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
-        ReproductionLookup = GetComponentLookup<ReproductionComponent>(false);
-        DNAChainLookup = GetBufferLookup<DNAChainItem>(true);
-        DNAStorageLookup = GetBufferLookup<DNAStorageItem>(false);
-        MoveControllerOutputLookup = GetComponentLookup<MoveControllerOutputComponent>(true);
-    }
-
-    // =========================================================================
     // DisableState
     // =========================================================================
 
-    private void DisableState(Entity entity, EntityCommandBuffer buffer, in ActionRunnerComponent runner)
+    private void DisableState(Entity entity, in ActionRunnerComponent runner)
     {
         if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction) == false)
         {
@@ -191,34 +228,34 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         switch (subaction)
         {
             case SubActionTypes.Idle:
-                Disable_Idle(entity, runner.Target, buffer);
+                Disable_Idle(entity, runner.Target);
                 break;
             case SubActionTypes.MoveTo:
-                Disable_MoveTo(entity, runner.Target, buffer);
+                Disable_MoveTo(entity, runner.Target);
                 break;
             case SubActionTypes.MoveToTalk:
-                Disable_MoveToTalk(entity, runner.Target, buffer);
+                Disable_MoveToTalk(entity, runner.Target);
                 break;
             case SubActionTypes.RunFrom:
-                Disable_RunFrom(entity, runner.Target, buffer);
+                Disable_RunFrom(entity, runner.Target);
                 break;
             case SubActionTypes.RotateTowards:
-                Disable_RotateTowards(entity, runner.Target, buffer);
+                Disable_RotateTowards(entity, runner.Target);
                 break;
             case SubActionTypes.Eat:
-                Disable_Eat(entity, runner.Target, buffer);
+                Disable_Eat(entity, runner.Target);
                 break;
             case SubActionTypes.MoveInto:
-                Disable_MoveInto(entity, runner.Target, buffer);
+                Disable_MoveInto(entity, runner.Target);
                 break;
             case SubActionTypes.Sleep:
-                Disable_Sleep(entity, runner.Target, buffer);
+                Disable_Sleep(entity, runner.Target);
                 break;
             case SubActionTypes.StumbleUpon:
-                Disable_StumbleUpon(entity, runner.Target, buffer);
+                Disable_StumbleUpon(entity, runner.Target);
                 break;
             case SubActionTypes.Communicate:
-                Disable_Communicate(entity, runner.Target, buffer);
+                Disable_Communicate(entity, runner.Target);
                 break;
         }
     }
@@ -227,7 +264,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // EnableState
     // =========================================================================
 
-    private void EnableState(Entity entity, EntityCommandBuffer buffer, in ActionRunnerComponent runner, ref ActionRandomComponent randomComponent)
+    private void EnableState(Entity entity, in ActionRunnerComponent runner, ref ActionRandomComponent randomComponent)
     {
         if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction) == false)
         {
@@ -237,34 +274,34 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         switch (subaction)
         {
             case SubActionTypes.Idle:
-                Enable_Idle(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_Idle(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.MoveTo:
-                Enable_MoveTo(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_MoveTo(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.MoveToTalk:
-                Enable_MoveToTalk(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_MoveToTalk(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.RunFrom:
-                Enable_RunFrom(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_RunFrom(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.RotateTowards:
-                Enable_RotateTowards(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_RotateTowards(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.Eat:
-                Enable_Eat(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_Eat(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.MoveInto:
-                Enable_MoveInto(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_MoveInto(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.Sleep:
-                Enable_Sleep(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_Sleep(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.StumbleUpon:
-                Enable_StumbleUpon(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_StumbleUpon(entity, runner.Target, ref randomComponent.Random);
                 break;
             case SubActionTypes.Communicate:
-                Enable_Communicate(entity, runner.Target, buffer, ref randomComponent.Random);
+                Enable_Communicate(entity, runner.Target, ref randomComponent.Random);
                 break;
         }
     }
@@ -273,7 +310,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // UpdateState
     // =========================================================================
 
-    private SubActionResult UpdateState(Entity entity, EntityCommandBuffer buffer, in ActionRunnerComponent runner, ref ActionRandomComponent randomComponent, in SubActionTimeComponent timer)
+    private SubActionResult UpdateState(Entity entity, in ActionRunnerComponent runner, ref ActionRandomComponent randomComponent, in SubActionTimeComponent timer)
     {
         if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction) == false)
         {
@@ -283,25 +320,25 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         switch (subaction)
         {
             case SubActionTypes.Idle:
-                return Update_Idle(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_Idle(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.MoveTo:
-                return Update_MoveTo(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_MoveTo(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.MoveToTalk:
-                return Update_MoveToTalk(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_MoveToTalk(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.RunFrom:
-                return Update_RunFrom(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_RunFrom(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.RotateTowards:
-                return Update_RotateTowards(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_RotateTowards(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.Eat:
-                return Update_Eat(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_Eat(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.MoveInto:
-                return Update_MoveInto(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_MoveInto(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.Sleep:
-                return Update_Sleep(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_Sleep(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.StumbleUpon:
-                return Update_StumbleUpon(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_StumbleUpon(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.Communicate:
-                return Update_Communicate(entity, runner.Target, buffer, in timer, ref randomComponent.Random);
+                return Update_Communicate(entity, runner.Target, in timer, ref randomComponent.Random);
             default:
                 return SubActionResult.Fail(-1);
         }
@@ -311,7 +348,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // Idle
     // =========================================================================
 
-    private void Enable_Idle(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_Idle(Entity entity, Entity target, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity) || !MovingSpeedLookup.HasComponent(entity))
         {
@@ -324,16 +361,16 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, Idle_WanderRadius, ref random);
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
 
-        MoveControllerExtensions.Enable(buffer, entity);
-        MoveControllerExtensions.SetTarget(buffer, entity, targetPosition, 0, lookDirection, 0.01f, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveControllerExtensions.Enable(Buffer, entity);
+        MoveControllerExtensions.SetTarget(Buffer, entity, targetPosition, 0, lookDirection, 0.01f, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
     }
 
-    private void Disable_Idle(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_Idle(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.Disable(Buffer, entity);
     }
 
-    private SubActionResult Update_Idle(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_Idle(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (timer.IsTimeout(Idle_IdleTime))
         {
@@ -347,17 +384,17 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // MoveTo
     // =========================================================================
 
-    private void Enable_MoveTo(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_MoveTo(Entity entity, Entity target, ref Random random)
     {
-        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerExtensions.Enable(Buffer, entity);
     }
 
-    private void Disable_MoveTo(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_MoveTo(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.Disable(Buffer, entity);
     }
 
-    private SubActionResult Update_MoveTo(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_MoveTo(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -396,7 +433,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         var movingSpeed = MovingSpeedLookup[entity];
         var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
 
-        MoveControllerExtensions.SetTarget(buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MoveTo_MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveControllerExtensions.SetTarget(Buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MoveTo_MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }
@@ -405,17 +442,17 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // MoveToTalk
     // =========================================================================
 
-    private void Enable_MoveToTalk(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_MoveToTalk(Entity entity, Entity target, ref Random random)
     {
-        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerExtensions.Enable(Buffer, entity);
     }
 
-    private void Disable_MoveToTalk(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_MoveToTalk(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.Disable(Buffer, entity);
     }
 
-    private SubActionResult Update_MoveToTalk(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_MoveToTalk(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -451,7 +488,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         }
 
         var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
-        MoveControllerExtensions.SetTarget(buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MoveToTalk_MaxDistance, MovingSpeedLookup[entity].GetWalkingSpeed(),
+        MoveControllerExtensions.SetTarget(Buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MoveToTalk_MaxDistance, MovingSpeedLookup[entity].GetWalkingSpeed(),
             MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
@@ -461,18 +498,18 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // RunFrom
     // =========================================================================
 
-    private void SetRandomEscapeTarget(EntityCommandBuffer buffer, Entity entity, float3 entityPosition, float3 targetPosition, ref Random random)
+    private void SetRandomEscapeTarget(Entity entity, float3 entityPosition, float3 targetPosition, ref Random random)
     {
         var movingSpeed = MovingSpeedLookup[entity];
         var safeDistance = new float2(1, 1.5f) * RunFrom_SafeDistance;
         var escapePosition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
         var lookDirection = math.normalize(escapePosition - entityPosition);
 
-        MoveControllerExtensions.SetTarget(buffer, entity, escapePosition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
-        MoveControllerExtensions.ResetOutput(buffer, entity);
+        MoveControllerExtensions.SetTarget(Buffer, entity, escapePosition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+        MoveControllerExtensions.ResetOutput(Buffer, entity);
     }
 
-    private void Enable_RunFrom(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_RunFrom(Entity entity, Entity target, ref Random random)
     {
         if (!TransformLookup.TryGetComponent(entity, out var entityTransform) ||
             !TransformLookup.TryGetComponent(target, out var targetTransform))
@@ -485,16 +522,16 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
             return;
         }
 
-        MoveControllerExtensions.Enable(buffer, entity);
-        SetRandomEscapeTarget(buffer, entity, entityTransform.Position, targetTransform.Position, ref random);
+        MoveControllerExtensions.Enable(Buffer, entity);
+        SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
     }
 
-    private void Disable_RunFrom(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_RunFrom(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.Disable(Buffer, entity);
     }
 
-    private SubActionResult Update_RunFrom(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_RunFrom(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -528,7 +565,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
 
         if (moveOutput.HasArrived)
         {
-            SetRandomEscapeTarget(buffer, entity, entityTransform.Position, targetTransform.Position, ref random);
+            SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
         }
 
         return SubActionResult.Running();
@@ -538,17 +575,17 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // RotateTowards
     // =========================================================================
 
-    private void Enable_RotateTowards(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_RotateTowards(Entity entity, Entity target, ref Random random)
     {
-        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerExtensions.Enable(Buffer, entity);
     }
 
-    private void Disable_RotateTowards(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_RotateTowards(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.Disable(Buffer, entity);
     }
 
-    private SubActionResult Update_RotateTowards(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_RotateTowards(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -586,7 +623,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         var targetTransform = TransformLookup[target];
         var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
 
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
+        MoveControllerExtensions.SetTarget(Buffer, entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }
@@ -595,17 +632,17 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // Eat
     // =========================================================================
 
-    private void Enable_Eat(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_Eat(Entity entity, Entity target, ref Random random)
     {
         // Nothing to enable for eat
     }
 
-    private void Disable_Eat(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_Eat(Entity entity, Entity target)
     {
         // Nothing to disable for eat
     }
 
-    private SubActionResult Update_Eat(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_Eat(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -666,12 +703,12 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         }
 
         var statsIncrease = StatsIncreaseLookup[entity];
-        Eat(entity, target, edibleComponent, edibleBodyTransform, buffer, statsIncrease.AnimalStats.Fullness, timer.DeltaTime);
+        Eat(entity, target, edibleComponent, edibleBodyTransform, statsIncrease.AnimalStats.Fullness, timer.DeltaTime);
 
         return SubActionResult.Running();
     }
 
-    private void Eat(Entity entity, Entity target, EdibleComponent edibleComponent, LocalTransform edibleBodyTransform, EntityCommandBuffer buffer, float eatingSpeed, float deltaTime)
+    private void Eat(Entity entity, Entity target, EdibleComponent edibleComponent, LocalTransform edibleBodyTransform, float eatingSpeed, float deltaTime)
     {
         float biteSize = (eatingSpeed / 100f) * deltaTime;
 
@@ -685,20 +722,20 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         }
 
         edibleBodyTransform.Scale = newScale;
-        buffer.SetComponent(edibleComponent.EdibleBody, edibleBodyTransform);
+        Buffer.SetComponent(edibleComponent.EdibleBody, edibleBodyTransform);
 
         var nutritionGained = actualBiteSize * edibleComponent.Nutrition;
 
         var statsChange = new AnimalStatsBuilder().WithFullness(nutritionGained).Build();
 
-        buffer.AppendToBuffer(entity, new StatsChangeItem
+        Buffer.AppendToBuffer(entity, new StatsChangeItem
         {
             StatsChange = statsChange
         });
 
         if (newScale <= 0)
         {
-            buffer.DestroyEntity(target);
+            Buffer.DestroyEntity(target);
         }
     }
 
@@ -706,17 +743,17 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // MoveInto (LayDown)
     // =========================================================================
 
-    private void Enable_MoveInto(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_MoveInto(Entity entity, Entity target, ref Random random)
     {
-        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerExtensions.Enable(Buffer, entity);
     }
 
-    private void Disable_MoveInto(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_MoveInto(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.Disable(Buffer, entity);
     }
 
-    private SubActionResult Update_MoveInto(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_MoveInto(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -752,7 +789,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         }
 
         var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
-        MoveControllerExtensions.SetTarget(buffer, entity, targetTransform.Position, 0, lookDirection, 0.01f, MovingSpeedLookup[entity].GetCrawlingSpeed(), 0f);
+        MoveControllerExtensions.SetTarget(Buffer, entity, targetTransform.Position, 0, lookDirection, 0.01f, MovingSpeedLookup[entity].GetCrawlingSpeed(), 0f);
 
         return SubActionResult.Running();
     }
@@ -761,17 +798,17 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // Sleep
     // =========================================================================
 
-    private void Enable_Sleep(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_Sleep(Entity entity, Entity target, ref Random random)
     {
         // Nothing to enable for sleeping
     }
 
-    private void Disable_Sleep(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_Sleep(Entity entity, Entity target)
     {
         // Nothing to disable for sleeping
     }
 
-    private SubActionResult Update_Sleep(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_Sleep(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -812,7 +849,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
 
         var statsChange = new AnimalStatsBuilder().WithEnergy(energyGain).Build();
 
-        buffer.AppendToBuffer(entity, new StatsChangeItem
+        Buffer.AppendToBuffer(entity, new StatsChangeItem
         {
             StatsChange = statsChange
         });
@@ -824,27 +861,27 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // StumbleUpon
     // =========================================================================
 
-    private void Enable_StumbleUpon(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_StumbleUpon(Entity entity, Entity target, ref Random random)
     {
         if (GenetaliaLookup.HasComponent(entity))
         {
             var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = true;
-            buffer.SetComponent(entity, genitalia);
+            Buffer.SetComponent(entity, genitalia);
         }
     }
 
-    private void Disable_StumbleUpon(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_StumbleUpon(Entity entity, Entity target)
     {
         if (GenetaliaLookup.HasComponent(entity))
         {
             var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = false;
-            buffer.SetComponent(entity, genitalia);
+            Buffer.SetComponent(entity, genitalia);
         }
     }
 
-    private SubActionResult Update_StumbleUpon(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_StumbleUpon(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -901,27 +938,27 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
     // Communicate
     // =========================================================================
 
-    private void Enable_Communicate(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void Enable_Communicate(Entity entity, Entity target, ref Random random)
     {
         if (GenetaliaLookup.HasComponent(entity))
         {
             var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = true;
-            buffer.SetComponent(entity, genitalia);
+            Buffer.SetComponent(entity, genitalia);
         }
     }
 
-    private void Disable_Communicate(Entity entity, Entity target, EntityCommandBuffer buffer)
+    private void Disable_Communicate(Entity entity, Entity target)
     {
         if (GenetaliaLookup.HasComponent(entity))
         {
             var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = false;
-            buffer.SetComponent(entity, genitalia);
+            Buffer.SetComponent(entity, genitalia);
         }
     }
 
-    private SubActionResult Update_Communicate(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
+    private SubActionResult Update_Communicate(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
         if (!TransformLookup.HasComponent(entity))
         {
@@ -951,7 +988,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
 
         var statsChange = new AnimalStatsBuilder().WithSocial(socialGain).Build();
 
-        buffer.AppendToBuffer(entity, new StatsChangeItem
+        Buffer.AppendToBuffer(entity, new StatsChangeItem
         {
             StatsChange = statsChange
         });
@@ -971,7 +1008,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
             {
                 if (genitalia.IsMale)
                 {
-                    AddDNAToTarget(entity, target, buffer, ref random);
+                    AddDNAToTarget(entity, target, ref random);
                 }
 
                 return SubActionResult.Success();
@@ -981,7 +1018,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         return SubActionResult.Running();
     }
 
-    private void AddDNAToTarget(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
+    private void AddDNAToTarget(Entity entity, Entity target, ref Random random)
     {
         if (!DNAChainLookup.HasBuffer(entity))
         {
@@ -1008,7 +1045,7 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
 
         for (int i = 0; i < fatherDNA.Length; i++)
         {
-            buffer.AppendToBuffer(target, new DNAStorageItem
+            Buffer.AppendToBuffer(target, new DNAStorageItem
             {
                 Father = entity,
                 Data = fatherDNA[i].Data
@@ -1019,9 +1056,9 @@ public partial class ActionRunnerUnmanagedSystem : SystemBase
         {
             var reproduction = ReproductionLookup[target];
             reproduction.Random = Random.CreateFromIndex(random.NextUInt());
-            buffer.SetComponent(target, reproduction);
+            Buffer.SetComponent(target, reproduction);
         }
 
-        buffer.SetComponentEnabled<ReproductionComponent>(target, true);
+        Buffer.SetComponentEnabled<ReproductionComponent>(target, true);
     }
 }

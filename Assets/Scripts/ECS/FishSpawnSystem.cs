@@ -1,7 +1,6 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
@@ -19,8 +18,9 @@ public partial struct FishSpawnSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var deltaTime = SystemAPI.Time.DeltaTime;
-        var ecb = new EntityCommandBuffer(Allocator.TempJob);
-        
+        var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
         // Get singletons
         var prefabLibraryEntity = SystemAPI.GetSingletonEntity<PrefabLibraryItem>();
         var prefabLibrary = SystemAPI.GetBuffer<PrefabLibraryItem>(prefabLibraryEntity);
@@ -38,10 +38,8 @@ public partial struct FishSpawnSystem : ISystem
             ParentFlagsLookup = SystemAPI.GetComponentLookup<ParentDNAComponent>(true)
         };
 
-        spawnJob.Run();
+        state.Dependency = spawnJob.Schedule(state.Dependency);
 
-        ecb.Playback(state.EntityManager);
-        ecb.Dispose();
     }
 
     [BurstCompile]

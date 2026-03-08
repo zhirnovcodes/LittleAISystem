@@ -18,8 +18,9 @@ public partial struct ReproductionSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var deltaTime = SystemAPI.Time.DeltaTime;
-        var ecb = new EntityCommandBuffer(Allocator.TempJob);
-        
+        var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
         // Get the prefab library singleton entity
         var prefabLibraryEntity = SystemAPI.GetSingletonEntity<PrefabLibraryItem>();
         var prefabLibrary = SystemAPI.GetBuffer<PrefabLibraryItem>(prefabLibraryEntity);
@@ -31,10 +32,7 @@ public partial struct ReproductionSystem : ISystem
             PrefabLibrary = prefabLibrary
         };
 
-        laborJob.Run();
-
-        ecb.Playback(state.EntityManager);
-        ecb.Dispose();
+        state.Dependency = laborJob.Schedule(state.Dependency);
     }
 
     [BurstCompile]

@@ -97,7 +97,6 @@ public partial struct MovingPhysicsSystem : ISystem
             return velocityToAdd;
         }
 
-        [BurstCompile]
         public static float3 GetAngularVelocity(
             in float3 lookDirection,
             in quaternion rotation,
