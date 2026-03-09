@@ -1,4 +1,3 @@
-using LittleAI.Enums;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -7,20 +6,23 @@ public class IdleSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    private ComponentLookup<MoveControllerOutputComponent> OutputComponent;
 
-    private const float IdleTime = 10f;
+    private const float IdleTime = 20f;
     private const float WanderRadius = 10f;
 
-    public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
+    public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> outputLookup)
     {
         TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
+        OutputComponent = outputLookup; 
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
+        OutputComponent.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
@@ -35,7 +37,8 @@ public class IdleSubActionState : ISubActionState
         var movingSpeed = MovingSpeedLookup[entity];
 
         // Generate random position around entity
-        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, WanderRadius, ref random);
+        var radius = random.NextFloat(WanderRadius / 2f, WanderRadius);
+        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
 
         // Enable and set random target
@@ -53,6 +56,14 @@ public class IdleSubActionState : ISubActionState
         if (timer.IsTimeout(IdleTime))
         {
             return SubActionResult.Success();
+        }
+
+        if (OutputComponent.TryGetComponent(entity, out var moveOutput))
+        {
+            if (moveOutput.HasArrived)
+            {
+                return SubActionResult.Success();
+            }
         }
 
         return SubActionResult.Running();

@@ -25,15 +25,11 @@ public partial struct FishSpawnSystem : ISystem
         var prefabLibraryEntity = SystemAPI.GetSingletonEntity<PrefabLibraryItem>();
         var prefabLibrary = SystemAPI.GetBuffer<PrefabLibraryItem>(prefabLibraryEntity);
         
-        var worldOriginEntity = SystemAPI.GetSingletonEntity<WorldOriginItem>();
-        var worldOriginBuffer = SystemAPI.GetBuffer<WorldOriginItem>(worldOriginEntity);
-
         var spawnJob = new FishSpawnJob
         {
             DeltaTime = deltaTime,
             ECB = ecb,
             PrefabLibrary = prefabLibrary,
-            WorldOriginBuffer = worldOriginBuffer,
             ParentDNALookup = SystemAPI.GetBufferLookup<DNAChainItem>(true),
             ParentFlagsLookup = SystemAPI.GetComponentLookup<ParentDNAComponent>(true)
         };
@@ -48,11 +44,10 @@ public partial struct FishSpawnSystem : ISystem
         public float DeltaTime;
         public EntityCommandBuffer ECB;
         [ReadOnly] public DynamicBuffer<PrefabLibraryItem> PrefabLibrary;
-        [ReadOnly] public DynamicBuffer<WorldOriginItem> WorldOriginBuffer;
         [ReadOnly] public BufferLookup<DNAChainItem> ParentDNALookup;
         [ReadOnly] public ComponentLookup<ParentDNAComponent> ParentFlagsLookup;
 
-        public void Execute(Entity entity, ref FishSpawnComponent spawnComponent)
+        public void Execute(Entity entity, ref FishSpawnComponent spawnComponent, in DynamicBuffer<WorldOriginItem> originDNA)
         {
             spawnComponent.TimeElapsed += DeltaTime;
 
@@ -67,19 +62,19 @@ public partial struct FishSpawnSystem : ISystem
                 spawnComponent.TimeElapsed = 0f;
 
                 // Check if we have at least 2 parents
-                if (WorldOriginBuffer.Length < 2)
+                if (originDNA.Length < 2)
                     return;
 
                 // Select 2 random different parents
-                int fatherIndex = spawnComponent.Random.NextInt(0, WorldOriginBuffer.Length);
+                int fatherIndex = spawnComponent.Random.NextInt(0, originDNA.Length);
                 int motherIndex;
                 do
                 {
-                    motherIndex = spawnComponent.Random.NextInt(0, WorldOriginBuffer.Length);
+                    motherIndex = spawnComponent.Random.NextInt(0, originDNA.Length);
                 } while (motherIndex == fatherIndex);
 
-                var fatherEntity = WorldOriginBuffer[fatherIndex].Parent;
-                var motherEntity = WorldOriginBuffer[motherIndex].Parent;
+                var fatherEntity = originDNA[fatherIndex].Parent;
+                var motherEntity = originDNA[motherIndex].Parent;
 
                 // Check if both parents have DNA
                 if (!ParentDNALookup.HasBuffer(fatherEntity) || !ParentDNALookup.HasBuffer(motherEntity))

@@ -23,7 +23,7 @@ public partial class TestSubActionsSystem : SystemBase
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
         {
-            new IdleSubActionState(transformLookup, movingSpeedLookup),
+            new IdleSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new WalkToSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new WalkToTalk(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup),

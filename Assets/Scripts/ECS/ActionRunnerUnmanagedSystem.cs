@@ -358,7 +358,8 @@ public partial struct ActionRunnerJob : IJobEntity
         var entityTransform = TransformLookup[entity];
         var movingSpeed = MovingSpeedLookup[entity];
 
-        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, Idle_WanderRadius, ref random);
+        var radius = random.NextFloat(Idle_WanderRadius / 2f, Idle_WanderRadius);
+        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
 
         MoveControllerExtensions.Enable(Buffer, entity);
@@ -375,6 +376,14 @@ public partial struct ActionRunnerJob : IJobEntity
         if (timer.IsTimeout(Idle_IdleTime))
         {
             return SubActionResult.Success();
+        }
+
+        if (MoveControllerOutputLookup.TryGetComponent(entity, out var moveOutput))
+        {
+            if (moveOutput.HasArrived)
+            {
+                return SubActionResult.Success();
+            }
         }
 
         return SubActionResult.Running();

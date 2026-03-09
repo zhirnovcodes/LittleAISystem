@@ -23,7 +23,7 @@ public class OnlyEatingActionsMap : ActionMapBase
         // Initialize list of ISubActionState
         var subActions = new Dictionary<SubActionTypes, ISubActionState>
         {
-            { SubActionTypes.Idle, new IdleSubActionState(transformLookup, movingSpeedLookup) },
+            { SubActionTypes.Idle, new IdleSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.MoveTo, new WalkToSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.MoveToTalk, new WalkToTalk(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.RunFrom, new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
