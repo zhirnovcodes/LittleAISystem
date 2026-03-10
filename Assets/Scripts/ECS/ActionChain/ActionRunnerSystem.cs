@@ -36,15 +36,15 @@ public partial class ActionRunnerSystem : SystemBase
             ref ActionRandomComponent randomComponent,
             ref DynamicBuffer<ActionChainItem> chain) =>
         {
-            timer.DeltaTime = deltaTime;
-            timer.TimeElapsed += deltaTime;
-
             if (runner.Action == ActionTypes.None)
             {
                 SetActionIdle(ref runner);
 
                 EnableState(entity, buffer, in runner, ref randomComponent);
             }
+
+            timer.DeltaTime = deltaTime;
+            timer.TimeElapsed += deltaTime;
 
             var status = runner.IsCancellationRequested ? SubActionStatus.Cancel :
                 UpdateState(entity, buffer, runner, ref randomComponent, timer).Status;

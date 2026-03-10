@@ -363,7 +363,7 @@ Transform:
   m_GameObject: {fileID: 829554478}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -4.23}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -507,37 +507,6 @@ MonoBehaviour:
     mipBias: 0
     varianceClampScale: 0.9
     contrastAdaptiveSharpening: 0
---- !u!1 &1270934328
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1270934329}
-  m_Layer: 0
-  m_Name: Fish02
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1270934329
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1270934328}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.78927785, y: 0.027125925, z: 0.8477479}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1339893337
 GameObject:
   m_ObjectHideFlags: 0
@@ -668,6 +637,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Fish01LowPoly
+      objectReference: {fileID: 0}
+    - target: {fileID: 814948915472607519, guid: e682f1a88b68fa34ebfeaaa27482f694,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2527906377386226179, guid: e682f1a88b68fa34ebfeaaa27482f694,
         type: 3}
@@ -841,6 +815,74 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1001 &3995255533824206690
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8778109812505074581, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_Name
+      value: FishLod
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8a718ff3d727db6409c7225a9e9f4c1d, type: 3}
 --- !u!33 &3996217882689286939
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -939,4 +981,4 @@ SceneRoots:
   - {fileID: 1135851904053243452}
   - {fileID: 829554480}
   - {fileID: 978635504625148372}
-  - {fileID: 1270934329}
+  - {fileID: 3995255533824206690}

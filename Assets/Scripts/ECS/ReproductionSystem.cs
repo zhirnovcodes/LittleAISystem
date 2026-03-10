@@ -100,8 +100,6 @@ public partial struct ReproductionSystem : ISystem
             var motherDNAList = new NativeList<DNAChainData>(Allocator.Temp);
             DNAExtensions.ToList(motherDNA, ref motherDNAList);
 
-            UnityEngine.Debug.Log("NEWBORN");
-
             // 4. Call BornEntity to create offspring
             var offspring = DNAExtensions.BornEntity(
                 motherFlags.Conditions,
