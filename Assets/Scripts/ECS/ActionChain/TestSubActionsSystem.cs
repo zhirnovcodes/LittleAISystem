@@ -24,8 +24,7 @@ public partial class TestSubActionsSystem : SystemBase
         SubActions = new List<ISubActionState>
         {
             new IdleSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
-            new WalkToSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
-            new WalkToTalk(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
+            new WalkToSubActionState( movingSpeedLookup, moveControllerOutputLookup),
             new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new RotateTowards(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, statsIncreaseLookup),

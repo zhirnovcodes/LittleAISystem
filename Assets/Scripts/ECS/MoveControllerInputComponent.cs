@@ -3,6 +3,7 @@ using Unity.Mathematics;
 
 public struct MoveControllerInputComponent : IComponentData, IEnableableComponent
 {
+    public Entity TargetEntity;
     public float Speed;
     public float RotationSpeed;
     public float3 TargetPosition;

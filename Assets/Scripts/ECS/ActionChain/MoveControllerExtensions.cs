@@ -28,12 +28,24 @@ public static class MoveControllerExtensions
         });
     }
 
+    public static void SetTarget(EntityCommandBuffer buffer, Entity entity, Entity targetEntity, float distance, float speed, float rotationSpeed)
+    {
+        buffer.SetComponent(entity, new MoveControllerInputComponent
+        {
+            TargetEntity = targetEntity,
+            Speed = speed,
+            RotationSpeed = rotationSpeed,
+            Distance = distance
+        });
+    }
+
     public static void ResetOutput(EntityCommandBuffer buffer, Entity entity)
     {
         buffer.SetComponent(entity, new MoveControllerOutputComponent
         {
             HasArrived = false,
-            IsLookingAt = false
+            IsLookingAt = false,
+            IsFailed = false
         });
     }
 
@@ -41,6 +53,7 @@ public static class MoveControllerExtensions
     {
         buffer.SetComponent(entity, new MoveControllerInputComponent
         {
+            TargetEntity = Entity.Null,
             TargetPosition = float.MaxValue * new float3(1, 1, 1),
             LookDirection = float3.zero,
             TargetScale = 0,

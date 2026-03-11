@@ -5,23 +5,20 @@ using Unity.Transforms;
 
 public class WalkToSubActionState : ISubActionState
 {
-    private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
     private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     private const float MaxDistance = 0.2f;
     private const float FailTime = 30f;
 
-    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
+    public WalkToSubActionState( ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
     {
-        TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
         MoveControllerOutputLookup = moveControllerOutputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
-        TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
         MoveControllerOutputLookup.Update(system);
     }
@@ -30,6 +27,11 @@ public class WalkToSubActionState : ISubActionState
     {
         // Enable MoveController
         MoveControllerExtensions.Enable(buffer, entity);
+
+        // Update target position
+        var movingSpeed = MovingSpeedLookup[entity];
+
+        MoveControllerExtensions.SetTarget(buffer, entity, target, MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -40,51 +42,32 @@ public class WalkToSubActionState : ISubActionState
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // Check if entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (timer.IsTimeout(FailTime))
         {
             return SubActionResult.Fail(0);
         }
 
-        // Check if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MovingSpeedLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(1);
         }
 
-        // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (!MoveControllerOutputLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(2);
         }
 
-        // if entity does not have MovingSpeedComponent - return fail with code 3
-        if (!MovingSpeedLookup.HasComponent(entity))
+        var moveOutput = MoveControllerOutputLookup[entity];
+
+        if (moveOutput.IsFailed)
         {
             return SubActionResult.Fail(3);
         }
 
-        // if entity does not have MoveControllerOutputComponent - return fail with code 4
-        if (!MoveControllerOutputLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(4);
-        }
-
-        var moveOutput = MoveControllerOutputLookup[entity];
-
-        // Check if arrived and looking at target
         if (moveOutput.HasArrived && moveOutput.IsLookingAt)
         {
             return SubActionResult.Success();
         }
-
-        // Update target position
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-        var movingSpeed = MovingSpeedLookup[entity];
-        var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
-
-        MoveControllerExtensions.SetTarget(buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }

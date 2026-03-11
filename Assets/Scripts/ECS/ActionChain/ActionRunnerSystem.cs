@@ -19,10 +19,9 @@ public partial class ActionRunnerSystem : SystemBase
 
     protected override void OnUpdate()
     {
-        return;
         Initialize();
 
-        EntityCommandBuffer buffer = new EntityCommandBuffer(Unity.Collections.Allocator.Temp);
+        EntityCommandBuffer buffer = new EntityCommandBuffer(Unity.Collections.Allocator.TempJob);
 
         ActionsMap = SystemAPI.GetSingleton<ActionChainConfigComponent>();
 

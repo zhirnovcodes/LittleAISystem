@@ -3,6 +3,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using Unity.Burst;
 using Unity.Physics;
+using Unity.Collections;
 
 [BurstCompile]
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
@@ -11,9 +12,12 @@ public partial struct MovingPhysicsSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
+
         var job = new MovingPhysicsJob
         {
-            DeltaTime = SystemAPI.Time.DeltaTime
+            DeltaTime = SystemAPI.Time.DeltaTime,
+            TransformLookup = transformLookup
         };
         var handle0 = job.Schedule(state.Dependency);
 
@@ -29,6 +33,7 @@ public partial struct MovingPhysicsSystem : ISystem
     public partial struct MovingPhysicsJob : IJobEntity
     {
         public float DeltaTime;
+        [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
 
         public void Execute(
             in LocalTransform transform,
@@ -39,11 +44,27 @@ public partial struct MovingPhysicsSystem : ISystem
         {
             var currentTransform = transform;
 
+            var targetScale = input.TargetScale;
+            var targetPosition = input.TargetPosition;
+            var lookDirection = input.LookDirection;
+
+            if (input.TargetEntity == Entity.Null == false)
+            {
+                if (TransformLookup.TryGetComponent(input.TargetEntity, out var targetTransform) == false)
+                {
+                    output.IsFailed = false;
+                }
+
+                targetScale = targetTransform.Scale;
+                targetPosition = targetTransform.Position;
+                lookDirection = math.normalize(targetPosition - transform.Position);
+            }
+
             bool hasArrived = currentTransform.IsTargetDistanceReached(
-                input.TargetPosition, input.TargetScale, input.Distance);
+                targetPosition, targetScale, input.Distance);
 
             bool isLookingAt = currentTransform.Rotation.IsLookingTowards(
-                input.LookDirection, 0.01f);
+                lookDirection, 0.01f);
 
             output.HasArrived = hasArrived;
             output.IsLookingAt = isLookingAt;
@@ -65,7 +86,7 @@ public partial struct MovingPhysicsSystem : ISystem
             else
             {
 
-                velocity.Angular = GetAngularVelocity(input.LookDirection, transform.Rotation, mass, input.RotationSpeed, DeltaTime);
+                velocity.Angular = GetAngularVelocity(lookDirection, transform.Rotation, mass, input.RotationSpeed, DeltaTime);
             }
         }
         private float3 GetLinearVelocity(
