@@ -82,7 +82,7 @@ public partial struct MovingPhysicsSystem : ISystem
 
             if (isLookingAt)
             {
-                velocity.Angular += float3.zero;
+                velocity.Angular = float3.zero;
             }
             else
             {

@@ -191,6 +191,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Fish
       objectReference: {fileID: 0}
+    - target: {fileID: 9018585889365045146, guid: 7f232d54af137244eb256492901dd90e,
+        type: 3}
+      propertyPath: m_UseGravity
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -871,6 +876,11 @@ PrefabInstance:
     - target: {fileID: 939236402015046204, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8061670187676942536, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+        type: 3}
+      propertyPath: m_UseGravity
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8778109812505074581, guid: 8a718ff3d727db6409c7225a9e9f4c1d,

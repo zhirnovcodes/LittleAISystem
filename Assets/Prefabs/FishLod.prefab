@@ -541,7 +541,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
@@ -583,11 +583,11 @@ LODGroup:
   m_AnimateCrossFading: 0
   m_LastLODIsBillboard: 0
   m_LODs:
-  - screenRelativeHeight: 0.35325313
+  - screenRelativeHeight: 0.119380586
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 3471961670937220019}
-  - screenRelativeHeight: 0.060609765
+  - screenRelativeHeight: 0.031206472
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 3407320428449734157}

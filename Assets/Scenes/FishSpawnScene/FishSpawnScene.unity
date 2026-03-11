@@ -312,7 +312,7 @@ MonoBehaviour:
   HasSpeed: 1
   Speed:
     MaxSpeed: 5
-    MaxRotationSpeed: 200
+    MaxRotationSpeed: 300
   HasStatsIncrease: 1
   StatsIncrease:
     AnimalStats:
@@ -360,7 +360,7 @@ MonoBehaviour:
           x: 50
           y: 50
           z: 50
-          w: 50
+          w: 84.5
         c1:
           x: 50
           y: 50
@@ -660,7 +660,7 @@ MonoBehaviour:
   HasSpeed: 1
   Speed:
     MaxSpeed: 3
-    MaxRotationSpeed: 180
+    MaxRotationSpeed: 250
   HasStatsIncrease: 1
   StatsIncrease:
     AnimalStats:
@@ -708,7 +708,7 @@ MonoBehaviour:
           x: 50
           y: 50
           z: 50
-          w: 50
+          w: 82.1
         c1:
           x: 50
           y: 50
