@@ -9,21 +9,22 @@ public class OnlyEatingActionsMap : ActionMapBase
     {
         var transformLookup = system.GetComponentLookup<LocalTransform>(true);
         var genetaliaLookup = system.GetComponentLookup<GenetaliaComponent>(true);
-        var biteLookup = system.GetBufferLookup<BiteItem>();
+        var biteLookup = system.GetBufferLookup<BiteItem>(true);
         var sleepingPlaceLookup = system.GetComponentLookup<SleepingPlaceComponent>(true);
 
         var animalStatsLookup = system.GetComponentLookup<AnimalStatsComponent>(true);
         var statsIncreaseLookup = system.GetComponentLookup<StatsIncreaseComponent>(true);
         var movingSpeedLookup = system.GetComponentLookup<MovingSpeedComponent>(true);
-        var reproductionLookup = system.GetComponentLookup<ReproductionComponent>(false);
+        var reproductionLookup = system.GetComponentLookup<ReproductionComponent>(true);
         var dnaChainLookup = system.GetBufferLookup<DNAChainItem>(true);
-        var dnaStorageLookup = system.GetBufferLookup<DNAStorageItem>(false);
+        var dnaStorageLookup = system.GetBufferLookup<DNAStorageItem>(true);
         var moveControllerOutputLookup = system.GetComponentLookup<MoveControllerOutputComponent>(true);
+        var limitationLookup = system.GetComponentLookup<MoveLimitationComponent>(true);
 
         // Initialize list of ISubActionState
         var subActions = new Dictionary<SubActionTypes, ISubActionState>
         {
-            { SubActionTypes.Idle, new IdleSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
+            { SubActionTypes.Idle, new IdleSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup, limitationLookup) },
             { SubActionTypes.MoveTo, new WalkToSubActionState( movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.RunFrom, new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.RotateTowards, new RotateTowards(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },

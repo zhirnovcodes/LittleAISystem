@@ -1,4 +1,5 @@
 using LittleAI.Enums;
+using System;
 using Unity.Entities;
 
 public struct AnimalGenomeBuilder
@@ -87,11 +88,14 @@ public struct AnimalGenomeBuilder
             case GenomeType.StatAttenuation:
                 WithStatAttenuation(data);
                 break;
+            case GenomeType.MoveLimitation:
+                WithMoveLimitation(data);
+                break;
         }
         
         return this;
     }
-    
+
     public Entity Build()
     {
         return Entity;
@@ -201,5 +205,11 @@ public struct AnimalGenomeBuilder
             Attenuation = StatAttenuation
         });
     }
-}
 
+    private void WithMoveLimitation(GenomeData data)
+    {
+        var moveLimitation = (MoveLimitationComponent)data;
+
+        CommandBuffer.AddComponent(Entity, moveLimitation);
+    }
+}

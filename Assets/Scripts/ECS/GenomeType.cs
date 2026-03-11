@@ -9,6 +9,7 @@ public enum GenomeType
     ActionChain,
     Advertiser,
     Reproduction,
-    StatAttenuation
+    StatAttenuation,
+    MoveLimitation
 }
 

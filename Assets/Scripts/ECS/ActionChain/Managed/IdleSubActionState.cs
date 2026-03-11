@@ -7,15 +7,17 @@ public class IdleSubActionState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
     private ComponentLookup<MoveControllerOutputComponent> OutputComponent;
+    private ComponentLookup<MoveLimitationComponent> LimitationComponent;
 
     private const float IdleTime = 20f;
     private const float WanderRadius = 10f;
 
-    public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> outputLookup)
+    public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> outputLookup, ComponentLookup<MoveLimitationComponent> limitationComponent)
     {
         TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
-        OutputComponent = outputLookup; 
+        OutputComponent = outputLookup;
+        LimitationComponent = limitationComponent;
     }
 
     public void Refresh(SystemBase system)
@@ -23,6 +25,7 @@ public class IdleSubActionState : ISubActionState
         TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
         OutputComponent.Update(system);
+        LimitationComponent.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
@@ -38,7 +41,17 @@ public class IdleSubActionState : ISubActionState
 
         // Generate random position around entity
         var radius = random.NextFloat(WanderRadius / 2f, WanderRadius);
-        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
+        float3 targetPosition;
+
+        if (LimitationComponent.TryGetComponent(entity, out var limitation))
+        {
+            targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
+        }
+        else
+        {
+            targetPosition = LocalTransformExtensions.GenerateRandomPosition(limitation.Central, limitation.Scale, ref random);
+        }
+
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
 
         // Enable and set random target

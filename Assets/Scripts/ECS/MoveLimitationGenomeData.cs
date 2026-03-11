@@ -1,23 +1,23 @@
-using System;
+﻿using System;
 using Unity.Mathematics;
 
 [Serializable]
-public class VisionGenomeData : IGenomeDataConvertible
+public class MoveLimitationGenomeData : IGenomeDataConvertible
 {
-    public float MaxDistance;
-    public float Interval;
-    
+    public float3 Central;
+    public float3 Scale;
+
     public DNAChainData GetDNAData()
     {
         return new DNAChainData
         {
-            GenomeType = GenomeType.Vision,
+            GenomeType = GenomeType.MoveLimitation,
             GenomeData = new GenomeData
             {
                 Index = 0,
                 Data = new float4x4(
-                    new float4(MaxDistance, Interval, 0, 0),
-                    float4.zero,
+                    new float4(Central, 0),
+                    new float4(Scale, 0),
                     float4.zero,
                     float4.zero
                 )

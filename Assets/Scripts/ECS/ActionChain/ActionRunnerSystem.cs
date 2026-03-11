@@ -2,7 +2,7 @@ using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
 
-/*
+
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial class ActionRunnerSystem : SystemBase
 {
@@ -176,4 +176,3 @@ public partial class ActionRunnerSystem : SystemBase
     }
     #endregion
 }
-*/

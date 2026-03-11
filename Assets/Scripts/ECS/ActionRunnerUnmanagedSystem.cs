@@ -46,6 +46,8 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        return;
+
         TransformLookup.Update(ref state);
         BiteLookup.Update(ref state);
         GenetaliaLookup.Update(ref state);

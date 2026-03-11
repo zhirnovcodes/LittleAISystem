@@ -19,11 +19,12 @@ public partial class TestSubActionsSystem : SystemBase
         var movingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
         var moveControllerOutputLookup = GetComponentLookup<MoveControllerOutputComponent>(true);
+        var limitationLookup = GetComponentLookup<MoveLimitationComponent>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
         {
-            new IdleSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
+            new IdleSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup, limitationLookup),
             new WalkToSubActionState( movingSpeedLookup, moveControllerOutputLookup),
             new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new RotateTowards(transformLookup, movingSpeedLookup, moveControllerOutputLookup),

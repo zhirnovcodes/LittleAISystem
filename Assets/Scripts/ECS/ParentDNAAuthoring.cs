@@ -36,6 +36,9 @@ public class ParentDNAAuthoring : MonoBehaviour
     
     public bool HasVision;
     public VisionGenomeData Vision = new VisionGenomeData();
+
+    public bool HasMoveLimitation;
+    public MoveLimitationGenomeData MoveLimitation = new MoveLimitationGenomeData();
     
     public List<IGenomeDataConvertible> GetGenomes()
     {
@@ -63,6 +66,7 @@ public class ParentDNAAuthoring : MonoBehaviour
             }
         }
         if (HasVision) genomes.Add(Vision);
+        if (HasMoveLimitation) genomes.Add(MoveLimitation);
         
         return genomes;
     }
