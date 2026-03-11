@@ -362,7 +362,7 @@ MonoBehaviour:
           z: 0
           w: 0
     ActorConditions: 1
-    ActionType: 3
+    ActionType: 4
 --- !u!114 &959891455
 MonoBehaviour:
   m_ObjectHideFlags: 0

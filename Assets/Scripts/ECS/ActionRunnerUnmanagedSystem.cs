@@ -21,6 +21,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
     private BufferLookup<DNAChainItem> DNAChainLookup;
     private BufferLookup<DNAStorageItem> DNAStorageLookup;
     private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
+    private ComponentLookup<MoveLimitationComponent> MoveLimitationLookup;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -41,13 +42,12 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         DNAChainLookup = state.GetBufferLookup<DNAChainItem>(true);
         DNAStorageLookup = state.GetBufferLookup<DNAStorageItem>(true);
         MoveControllerOutputLookup = state.GetComponentLookup<MoveControllerOutputComponent>(true);
+        MoveLimitationLookup = state.GetComponentLookup<MoveLimitationComponent>(true);
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        return;
-
         TransformLookup.Update(ref state);
         BiteLookup.Update(ref state);
         GenetaliaLookup.Update(ref state);
@@ -59,6 +59,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         DNAChainLookup.Update(ref state);
         DNAStorageLookup.Update(ref state);
         MoveControllerOutputLookup.Update(ref state);
+        MoveLimitationLookup.Update(ref state);
 
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var buffer = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
@@ -79,6 +80,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             DNAChainLookup = DNAChainLookup,
             DNAStorageLookup = DNAStorageLookup,
             MoveControllerOutputLookup = MoveControllerOutputLookup,
+            MoveLimitationLookup = MoveLimitationLookup,
         };
 
         state.Dependency = job.Schedule(state.Dependency);
@@ -109,6 +111,7 @@ public partial struct ActionRunnerJob : IJobEntity
     [ReadOnly] public BufferLookup<DNAChainItem> DNAChainLookup;
     [ReadOnly] public BufferLookup<DNAStorageItem> DNAStorageLookup;
     [ReadOnly] public ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
+    [ReadOnly] public ComponentLookup<MoveLimitationComponent> MoveLimitationLookup;
 
     // Constants for sub-actions
     private const float Idle_IdleTime = 20f;
@@ -350,7 +353,17 @@ public partial struct ActionRunnerJob : IJobEntity
         var movingSpeed = MovingSpeedLookup[entity];
 
         var radius = random.NextFloat(Idle_WanderRadius / 2f, Idle_WanderRadius);
-        var targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
+        float3 targetPosition;
+
+        if (MoveLimitationLookup.TryGetComponent(entity, out var limitation))
+        {
+            targetPosition = LocalTransformExtensions.GenerateRandomPosition(limitation.Central, limitation.Scale, ref random);
+        }
+        else
+        {
+            targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
+        }
+
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
 
         MoveControllerExtensions.Enable(Buffer, entity);

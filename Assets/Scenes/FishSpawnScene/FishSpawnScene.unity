@@ -492,6 +492,16 @@ MonoBehaviour:
   Vision:
     MaxDistance: 9.44
     Interval: 2.33
+  HasMoveLimitation: 1
+  MoveLimitation:
+    Central:
+      x: -10
+      y: 0
+      z: 0
+    Scale:
+      x: 50
+      y: 10
+      z: 50
 --- !u!4 &882793483
 Transform:
   m_ObjectHideFlags: 0
@@ -830,6 +840,16 @@ MonoBehaviour:
   Vision:
     MaxDistance: 10
     Interval: 2
+  HasMoveLimitation: 1
+  MoveLimitation:
+    Central:
+      x: 10
+      y: 0
+      z: 0
+    Scale:
+      x: 50
+      y: 10
+      z: 50
 --- !u!4 &1268306807
 Transform:
   m_ObjectHideFlags: 0

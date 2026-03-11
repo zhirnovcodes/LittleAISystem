@@ -45,11 +45,11 @@ public class IdleSubActionState : ISubActionState
 
         if (LimitationComponent.TryGetComponent(entity, out var limitation))
         {
-            targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
+            targetPosition = LocalTransformExtensions.GenerateRandomPosition(limitation.Central, limitation.Scale, ref random);
         }
         else
         {
-            targetPosition = LocalTransformExtensions.GenerateRandomPosition(limitation.Central, limitation.Scale, ref random);
+            targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
         }
 
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
