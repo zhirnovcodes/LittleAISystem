@@ -5,7 +5,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-[UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
 [BurstCompile]
 public partial struct ActionRunnerUnmanagedSystem : ISystem
 {
