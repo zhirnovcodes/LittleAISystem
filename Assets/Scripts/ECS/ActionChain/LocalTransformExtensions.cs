@@ -12,6 +12,19 @@ public static class LocalTransformExtensions
         //randomDirection.y = 0; // Keep on same height
         return currentPosition + randomDirection * offset;// * random.NextFloat(0.5f, offset);
     }
+    /// <summary>
+    /// Generates a random position around the current position with the given offset
+    /// </summary>
+    public static float3 GenerateRandomPosition(float3 position, float3 scale, ref Random random)
+    {
+        var randomPosition = position;
+        var minPos = scale / 2 * -1;
+        var maxPos = scale / 2;
+        var randomScaleRange = random.NextFloat3(minPos, maxPos);
+        randomPosition += randomScaleRange;
+        return randomPosition;
+    }
+
     public static float3 GenerateRandomEscapePosition(float3 currentPosition, float3 targetPosition, float2 safeDistance, ref Random random)
     {
         var randomDirection = math.normalize(currentPosition - targetPosition);

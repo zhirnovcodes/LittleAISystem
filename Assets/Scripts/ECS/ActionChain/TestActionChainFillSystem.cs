@@ -4,7 +4,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateBefore(typeof(ActionRunnerSystem))]
+[UpdateBefore(typeof(ActionRunnerUnmanagedSystem))]
 [BurstCompile]
 public partial struct TestActionChainFillSystem : ISystem
 {

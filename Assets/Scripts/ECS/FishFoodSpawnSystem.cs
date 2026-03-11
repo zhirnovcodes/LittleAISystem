@@ -53,12 +53,8 @@ public partial struct FishFoodSpawnSystem : ISystem
                 return;
             }
 
-            var randomPosition = spawnComponent.Position;
-            var minPos = spawnComponent.Scale / 2 * -1;
-            var maxPos = spawnComponent.Scale / 2;
-            var randomScaleRange = spawnComponent.Random.NextFloat3(minPos, maxPos);
-            randomScaleRange.y = 0;
-            randomPosition += randomScaleRange;
+            var randomPosition = LocalTransformExtensions.GenerateRandomPosition(spawnComponent.Position, spawnComponent.Scale, ref spawnComponent.Random);
+
             var localTransform = new LocalTransform
             {
                 Position = randomPosition,

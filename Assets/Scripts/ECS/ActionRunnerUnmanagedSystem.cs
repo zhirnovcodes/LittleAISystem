@@ -11,7 +11,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
 {
     // Component lookups
     private ComponentLookup<LocalTransform> TransformLookup;
-    private ComponentLookup<EdibleComponent> EdibleLookup;
+    private BufferLookup<BiteItem> BiteLookup;
     private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
@@ -31,7 +31,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         state.RequireForUpdate<ActionMapInitializeComponent>();
 
         TransformLookup = state.GetComponentLookup<LocalTransform>(true);
-        EdibleLookup = state.GetComponentLookup<EdibleComponent>(true);
+        BiteLookup = state.GetBufferLookup<BiteItem>(true);
         GenetaliaLookup = state.GetComponentLookup<GenetaliaComponent>(true);
         AnimalStatsLookup = state.GetComponentLookup<AnimalStatsComponent>(true);
         StatsIncreaseLookup = state.GetComponentLookup<StatsIncreaseComponent>(true);
@@ -46,10 +46,8 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        return;
-
         TransformLookup.Update(ref state);
-        EdibleLookup.Update(ref state);
+        BiteLookup.Update(ref state);
         GenetaliaLookup.Update(ref state);
         AnimalStatsLookup.Update(ref state);
         StatsIncreaseLookup.Update(ref state);
@@ -69,7 +67,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             DeltaTime = SystemAPI.Time.DeltaTime,
             Buffer = buffer,
             TransformLookup = TransformLookup,
-            EdibleLookup = EdibleLookup,
+            BiteLookup = BiteLookup,
             GenetaliaLookup = GenetaliaLookup,
             AnimalStatsLookup = AnimalStatsLookup,
             StatsIncreaseLookup = StatsIncreaseLookup,
@@ -99,7 +97,7 @@ public partial struct ActionRunnerJob : IJobEntity
     public EntityCommandBuffer Buffer;
 
     [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
-    [ReadOnly] public ComponentLookup<EdibleComponent> EdibleLookup;
+    [ReadOnly] public BufferLookup<BiteItem> BiteLookup;
     [ReadOnly] public ComponentLookup<GenetaliaComponent> GenetaliaLookup;
     [ReadOnly] public ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     [ReadOnly] public ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
@@ -111,31 +109,28 @@ public partial struct ActionRunnerJob : IJobEntity
     [ReadOnly] public ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     // Constants for sub-actions
-    private const float Idle_IdleTime = 10f;
+    private const float Idle_IdleTime = 20f;
     private const float Idle_WanderRadius = 10f;
 
-    private const float MoveTo_MaxDistance = 0.2f;
+    private const float MoveTo_MaxDistance = 0.4f;
     private const float MoveTo_FailTime = 30f;
-
-    private const float MoveToTalk_MaxDistance = 0.2f;
-    private const float MoveToTalk_FailTime = 30f;
 
     private const float RunFrom_SafeDistance = 10f;
 
     private const float RotateTowards_FailTime = 10f;
 
     private const float Eat_FailTime = 20f;
-    private const float Eat_MaxDistance = 0.2f;
+    private const float Eat_MaxDistance = 0.4f;
 
     private const float MoveInto_FailTime = 5f;
     private const float MoveInto_Distance = 0.01f;
 
     private const float Sleep_FailTime = 100f;
-    private const float Sleep_MaxDistance = 0.01f;
+    private const float Sleep_MaxDistance = 0.1f;
 
     private const float StumbleUpon_FailTime = 2f;
 
-    private const float Communicate_MaxDistance = 0.3f;
+    private const float Communicate_MaxDistance = 0.4f;
 
     public void Execute(
         Entity entity,
@@ -235,9 +230,6 @@ public partial struct ActionRunnerJob : IJobEntity
             case SubActionTypes.MoveTo:
                 Disable_MoveTo(entity, runner.Target);
                 break;
-            case SubActionTypes.MoveToTalk:
-                Disable_MoveToTalk(entity, runner.Target);
-                break;
             case SubActionTypes.RunFrom:
                 Disable_RunFrom(entity, runner.Target);
                 break;
@@ -281,9 +273,6 @@ public partial struct ActionRunnerJob : IJobEntity
             case SubActionTypes.MoveTo:
                 Enable_MoveTo(entity, runner.Target, ref randomComponent.Random);
                 break;
-            case SubActionTypes.MoveToTalk:
-                Enable_MoveToTalk(entity, runner.Target, ref randomComponent.Random);
-                break;
             case SubActionTypes.RunFrom:
                 Enable_RunFrom(entity, runner.Target, ref randomComponent.Random);
                 break;
@@ -325,8 +314,6 @@ public partial struct ActionRunnerJob : IJobEntity
                 return Update_Idle(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.MoveTo:
                 return Update_MoveTo(entity, runner.Target, in timer, ref randomComponent.Random);
-            case SubActionTypes.MoveToTalk:
-                return Update_MoveToTalk(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.RunFrom:
                 return Update_RunFrom(entity, runner.Target, in timer, ref randomComponent.Random);
             case SubActionTypes.RotateTowards:
@@ -398,6 +385,14 @@ public partial struct ActionRunnerJob : IJobEntity
     private void Enable_MoveTo(Entity entity, Entity target, ref Random random)
     {
         MoveControllerExtensions.Enable(Buffer, entity);
+
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return;
+        }
+
+        var movingSpeed = MovingSpeedLookup[entity];
+        MoveControllerExtensions.SetTarget(Buffer, entity, target, MoveTo_MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
     }
 
     private void Disable_MoveTo(Entity entity, Entity target)
@@ -407,100 +402,32 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private SubActionResult Update_MoveTo(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
-        if (!TransformLookup.HasComponent(entity))
+        if (timer.IsTimeout(MoveTo_FailTime))
         {
             return SubActionResult.Fail(0);
         }
 
-        if (!TransformLookup.HasComponent(target))
+        if (!MovingSpeedLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(1);
         }
 
-        if (timer.IsTimeout(MoveTo_FailTime))
+        if (!MoveControllerOutputLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(2);
         }
 
-        if (!MovingSpeedLookup.HasComponent(entity))
+        var moveOutput = MoveControllerOutputLookup[entity];
+
+        if (moveOutput.IsFailed)
         {
             return SubActionResult.Fail(3);
         }
-
-        if (!MoveControllerOutputLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(4);
-        }
-
-        var moveOutput = MoveControllerOutputLookup[entity];
 
         if (moveOutput.HasArrived && moveOutput.IsLookingAt)
         {
             return SubActionResult.Success();
         }
-
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-        var movingSpeed = MovingSpeedLookup[entity];
-        var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
-
-        MoveControllerExtensions.SetTarget(Buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MoveTo_MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
-
-        return SubActionResult.Running();
-    }
-
-    // =========================================================================
-    // MoveToTalk
-    // =========================================================================
-
-    private void Enable_MoveToTalk(Entity entity, Entity target, ref Random random)
-    {
-        MoveControllerExtensions.Enable(Buffer, entity);
-    }
-
-    private void Disable_MoveToTalk(Entity entity, Entity target)
-    {
-        MoveControllerExtensions.Disable(Buffer, entity);
-    }
-
-    private SubActionResult Update_MoveToTalk(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
-    {
-        if (!TransformLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(0);
-        }
-
-        if (!TransformLookup.HasComponent(target))
-        {
-            return SubActionResult.Fail(1);
-        }
-
-        if (timer.IsTimeout(MoveToTalk_FailTime))
-        {
-            return SubActionResult.Fail(2);
-        }
-
-        if (!MovingSpeedLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(3);
-        }
-
-        if (!MoveControllerOutputLookup.TryGetComponent(entity, out var output))
-        {
-            return SubActionResult.Fail(4);
-        }
-
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        if (output.HasArrived && output.IsLookingAt)
-        {
-            return SubActionResult.Success();
-        }
-
-        var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
-        MoveControllerExtensions.SetTarget(Buffer, entity, targetTransform.Position, targetTransform.Scale, lookDirection, MoveToTalk_MaxDistance, MovingSpeedLookup[entity].GetWalkingSpeed(),
-            MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }
@@ -655,12 +582,12 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private SubActionResult Update_Eat(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
-        if (!TransformLookup.HasComponent(entity))
+        if (!TransformLookup.TryGetComponent(entity, out var entityTransform))
         {
             return SubActionResult.Fail(0);
         }
 
-        if (!TransformLookup.HasComponent(target))
+        if (!TransformLookup.TryGetComponent(target, out var targetTransform))
         {
             return SubActionResult.Fail(1);
         }
@@ -670,84 +597,35 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(2);
         }
 
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        if (!entityTransform.IsTargetDistanceReached(targetTransform, Eat_MaxDistance))
+        if (entityTransform.IsTargetDistanceReached(targetTransform, Eat_MaxDistance) == false)
         {
             return SubActionResult.Fail(3);
         }
 
-        if (!EdibleLookup.HasComponent(target))
+        if (BiteLookup.HasBuffer(target) == false)
         {
             return SubActionResult.Fail(4);
         }
 
-        var edibleComponent = EdibleLookup[target];
-
-        if (!TransformLookup.HasComponent(edibleComponent.EdibleBody))
-        {
-            return SubActionResult.Fail(5);
-        }
-
-        var edibleBodyTransform = TransformLookup[edibleComponent.EdibleBody];
-
-        if (edibleBodyTransform.Scale <= 0)
-        {
-            return SubActionResult.Fail(6);
-        }
-
-        if (!AnimalStatsLookup.HasComponent(entity))
+        if (!AnimalStatsLookup.TryGetComponent(entity, out var animalStats))
         {
             return SubActionResult.Fail(7);
         }
 
-        if (!StatsIncreaseLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(8);
-        }
-
-        var animalStats = AnimalStatsLookup[entity];
         if (animalStats.Stats.Fullness >= 100f)
         {
             return SubActionResult.Success();
         }
 
-        var statsIncrease = StatsIncreaseLookup[entity];
-        Eat(entity, target, edibleComponent, edibleBodyTransform, statsIncrease.AnimalStats.Fullness, timer.DeltaTime);
+        var biteValue = StatsIncreaseLookup[entity].AnimalStats.Fullness * timer.DeltaTime;
 
-        return SubActionResult.Running();
-    }
-
-    private void Eat(Entity entity, Entity target, EdibleComponent edibleComponent, LocalTransform edibleBodyTransform, float eatingSpeed, float deltaTime)
-    {
-        float biteSize = (eatingSpeed / 100f) * deltaTime;
-
-        var actualBiteSize = biteSize;
-        var newScale = edibleBodyTransform.Scale - biteSize;
-
-        if (newScale < 0)
+        Buffer.AppendToBuffer(target, new BiteItem
         {
-            actualBiteSize = edibleBodyTransform.Scale;
-            newScale = 0;
-        }
-
-        edibleBodyTransform.Scale = newScale;
-        Buffer.SetComponent(edibleComponent.EdibleBody, edibleBodyTransform);
-
-        var nutritionGained = actualBiteSize * edibleComponent.Nutrition;
-
-        var statsChange = new AnimalStatsBuilder().WithFullness(nutritionGained).Build();
-
-        Buffer.AppendToBuffer(entity, new StatsChangeItem
-        {
-            StatsChange = statsChange
+            Actor = entity,
+            BittenNutritionValue = biteValue
         });
 
-        if (newScale <= 0)
-        {
-            Buffer.DestroyEntity(target);
-        }
+        return SubActionResult.Running();
     }
 
     // =========================================================================

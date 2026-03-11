@@ -620,8 +620,8 @@ Rigidbody:
   m_GameObject: {fileID: 450879515}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.5
+  m_Drag: 3
+  m_AngularDrag: 1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -714,7 +714,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxSpeed: 4
-  MaxRotationSpeed: 190
+  MaxRotationSpeed: 250
 --- !u!114 &450879529
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1380,8 +1380,8 @@ Rigidbody:
   m_GameObject: {fileID: 1815018768}
   serializedVersion: 4
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.5
+  m_Drag: 3
+  m_AngularDrag: 1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -1474,7 +1474,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxSpeed: 5
-  MaxRotationSpeed: 180
+  MaxRotationSpeed: 300
 --- !u!114 &1815018782
 MonoBehaviour:
   m_ObjectHideFlags: 0
