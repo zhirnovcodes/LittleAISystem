@@ -52,7 +52,8 @@ public partial struct MovingPhysicsSystem : ISystem
             {
                 if (TransformLookup.TryGetComponent(input.TargetEntity, out var targetTransform) == false)
                 {
-                    output.IsFailed = false;
+                    output.IsFailed = true;
+                    return;
                 }
 
                 targetScale = targetTransform.Scale;
@@ -76,7 +77,7 @@ public partial struct MovingPhysicsSystem : ISystem
             }
             else
             {
-                velocity.Linear += GetLinearVelocity(transform, velocity, input);
+                velocity.Linear += GetLinearVelocity(transform, velocity, targetPosition, targetScale, input.Distance, input.Speed);
             }
 
             if (isLookingAt)
@@ -92,26 +93,29 @@ public partial struct MovingPhysicsSystem : ISystem
         private float3 GetLinearVelocity(
             in LocalTransform transform,
             in PhysicsVelocity velocity,
-            in MoveControllerInputComponent input)
+            float3 targetPosition, 
+            float targetScale,
+            float distance,
+            float speed)
         {
             // Already at target - no velocity to add
-            if (transform.IsTargetDistanceReached(input.TargetPosition, input.TargetScale, input.Distance))
+            if (transform.IsTargetDistanceReached(targetPosition, targetScale, distance))
                 return float3.zero;
 
-            float3 toTarget = math.normalize(input.TargetPosition - transform.Position);
-            float3 desiredVelocity = toTarget * input.Speed;
+            float3 toTarget = math.normalize(targetPosition - transform.Position);
+            float3 desiredVelocity = toTarget * speed;
             float3 velocityToAdd = desiredVelocity - velocity.Linear;
 
             // If we're already at or above target speed in the desired direction, don't add more
             float currentSpeedAlongDirection = math.dot(velocity.Linear, toTarget);
-            if (currentSpeedAlongDirection >= input.Speed)
+            if (currentSpeedAlongDirection >= speed)
                 return float3.zero;
 
             // Clamp so we don't overshoot the target speed
             float3 newVelocity = velocity.Linear + velocityToAdd;
-            if (math.length(newVelocity) > input.Speed)
+            if (math.length(newVelocity) > speed)
             {
-                newVelocity = math.normalize(newVelocity) * input.Speed;
+                newVelocity = math.normalize(newVelocity) * speed;
                 velocityToAdd = newVelocity - velocity.Linear;
             }
 

@@ -13,7 +13,7 @@ public partial class TestSubActionsSystem : SystemBase
     protected override void OnCreate()
     {
         var transformLookup = GetComponentLookup<LocalTransform>(true);
-        var edibleLookup = GetComponentLookup<EdibleComponent>(true);
+        var biteLookup = GetBufferLookup<BiteItem>();
         var animalStatsLookup = GetComponentLookup<AnimalStatsComponent>(true);
         var statsIncreaseLookup = GetComponentLookup<StatsIncreaseComponent>(true);
         var movingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
@@ -27,7 +27,7 @@ public partial class TestSubActionsSystem : SystemBase
             new WalkToSubActionState( movingSpeedLookup, moveControllerOutputLookup),
             new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new RotateTowards(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
-            new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, statsIncreaseLookup),
+            new EatSubActionState(transformLookup, biteLookup, animalStatsLookup, statsIncreaseLookup),
             new LayDownState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
             new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup)
         };

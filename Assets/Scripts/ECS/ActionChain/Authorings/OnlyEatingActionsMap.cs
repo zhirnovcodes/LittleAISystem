@@ -8,13 +8,13 @@ public class OnlyEatingActionsMap : ActionMapBase
     public override Dictionary<SubActionTypes, ISubActionState> ConstructSubActionsStates(SystemBase system)
     {
         var transformLookup = system.GetComponentLookup<LocalTransform>(true);
-        var edibleLookup = system.GetComponentLookup<EdibleComponent>(true);
         var genetaliaLookup = system.GetComponentLookup<GenetaliaComponent>(true);
+        var biteLookup = system.GetBufferLookup<BiteItem>();
+        var sleepingPlaceLookup = system.GetComponentLookup<SleepingPlaceComponent>(true);
 
         var animalStatsLookup = system.GetComponentLookup<AnimalStatsComponent>(true);
         var statsIncreaseLookup = system.GetComponentLookup<StatsIncreaseComponent>(true);
         var movingSpeedLookup = system.GetComponentLookup<MovingSpeedComponent>(true);
-        var sleepingPlaceLookup = system.GetComponentLookup<SleepingPlaceComponent>(true);
         var reproductionLookup = system.GetComponentLookup<ReproductionComponent>(false);
         var dnaChainLookup = system.GetBufferLookup<DNAChainItem>(true);
         var dnaStorageLookup = system.GetBufferLookup<DNAStorageItem>(false);
@@ -27,7 +27,7 @@ public class OnlyEatingActionsMap : ActionMapBase
             { SubActionTypes.MoveTo, new WalkToSubActionState( movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.RunFrom, new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.RotateTowards, new RotateTowards(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
-            { SubActionTypes.Eat, new EatSubActionState(transformLookup, edibleLookup, animalStatsLookup, statsIncreaseLookup) },
+            { SubActionTypes.Eat, new EatSubActionState(transformLookup, biteLookup, animalStatsLookup, statsIncreaseLookup) },
             { SubActionTypes.MoveInto, new LayDownState(transformLookup, movingSpeedLookup, moveControllerOutputLookup) },
             { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup) },
             { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(transformLookup, animalStatsLookup, genetaliaLookup) },

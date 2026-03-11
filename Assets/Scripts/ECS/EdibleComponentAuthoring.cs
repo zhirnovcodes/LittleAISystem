@@ -14,6 +14,7 @@ public class EdibleComponentAuthoring : MonoBehaviour
             
             var edibleBodyEntity = GetEntity(authoring.EdibleBody, TransformUsageFlags.Dynamic);
 
+            AddBuffer<BiteItem>(entity);
             
             AddComponent(entity, new EdibleComponent
             {
