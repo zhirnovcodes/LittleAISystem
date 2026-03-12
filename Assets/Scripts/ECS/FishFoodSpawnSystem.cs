@@ -53,12 +53,12 @@ public partial struct FishFoodSpawnSystem : ISystem
                 return;
             }
 
-            var randomPosition = LocalTransformExtensions.GenerateRandomPosition(spawnComponent.Position, spawnComponent.Scale, ref spawnComponent.Random);
+            var randomPosition = LocalTransformExtensions.GenerateRandomPosition(spawnComponent.Position, spawnComponent.SpawnScaleRange, ref spawnComponent.Random);
 
             var localTransform = new LocalTransform
             {
                 Position = randomPosition,
-                Scale = 1,
+                Scale = spawnComponent.FoodScale,
                 Rotation = quaternion.identity
             };
 

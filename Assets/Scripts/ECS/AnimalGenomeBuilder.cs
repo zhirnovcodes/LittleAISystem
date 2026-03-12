@@ -112,7 +112,6 @@ public struct AnimalGenomeBuilder
         
         // Add MoveControllerInputComponent (disabled by default)
         CommandBuffer.AddComponent(Entity, new MoveControllerInputComponent());
-        CommandBuffer.SetComponentEnabled<MoveControllerInputComponent>(Entity, false);
         
         // Add MoveControllerOutputComponent
         CommandBuffer.AddComponent(Entity, new MoveControllerOutputComponent());

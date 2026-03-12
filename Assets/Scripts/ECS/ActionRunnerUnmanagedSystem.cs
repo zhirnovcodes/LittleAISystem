@@ -10,6 +10,9 @@ using Unity.Transforms;
 public partial struct ActionRunnerUnmanagedSystem : ISystem
 {
     // Component lookups
+    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
+    private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
+
     private ComponentLookup<LocalTransform> TransformLookup;
     private BufferLookup<BiteItem> BiteLookup;
     private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
@@ -20,7 +23,6 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
     private ComponentLookup<ReproductionComponent> ReproductionLookup;
     private BufferLookup<DNAChainItem> DNAChainLookup;
     private BufferLookup<DNAStorageItem> DNAStorageLookup;
-    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
     private ComponentLookup<MoveLimitationComponent> MoveLimitationLookup;
 
     [BurstCompile]
@@ -31,6 +33,9 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         state.RequireForUpdate<ActionRunnerComponent>();
         state.RequireForUpdate<ActionMapInitializeComponent>();
 
+        MoveControllerOutputLookup = state.GetComponentLookup<MoveControllerOutputComponent>(false);
+        MoveControllerInputLookup= state.GetComponentLookup<MoveControllerInputComponent>(false);
+        
         TransformLookup = state.GetComponentLookup<LocalTransform>(true);
         BiteLookup = state.GetBufferLookup<BiteItem>(true);
         GenetaliaLookup = state.GetComponentLookup<GenetaliaComponent>(true);
@@ -41,7 +46,6 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         ReproductionLookup = state.GetComponentLookup<ReproductionComponent>(true);
         DNAChainLookup = state.GetBufferLookup<DNAChainItem>(true);
         DNAStorageLookup = state.GetBufferLookup<DNAStorageItem>(true);
-        MoveControllerOutputLookup = state.GetComponentLookup<MoveControllerOutputComponent>(true);
         MoveLimitationLookup = state.GetComponentLookup<MoveLimitationComponent>(true);
     }
 
@@ -58,8 +62,14 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         ReproductionLookup.Update(ref state);
         DNAChainLookup.Update(ref state);
         DNAStorageLookup.Update(ref state);
-        MoveControllerOutputLookup.Update(ref state);
         MoveLimitationLookup.Update(ref state);
+
+        MoveControllerInputLookup.Update(ref state);
+        MoveControllerOutputLookup.Update(ref state);
+
+        const int entitiesPerBatch = 250;
+        var batchesCount = (int)(SystemAPI.QueryBuilder().WithAll<ActionRunnerComponent>().Build().CalculateEntityCount() / 
+            entitiesPerBatch);
 
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var buffer = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
@@ -69,6 +79,11 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             ActionsMap = SystemAPI.GetSingleton<ActionChainConfigComponent>(),
             DeltaTime = SystemAPI.Time.DeltaTime,
             Buffer = buffer,
+            BatchesCount = batchesCount,
+
+            MoveControllerOutputLookup = MoveControllerOutputLookup,
+            MoveControllerInputLookup = MoveControllerInputLookup,
+            
             TransformLookup = TransformLookup,
             BiteLookup = BiteLookup,
             GenetaliaLookup = GenetaliaLookup,
@@ -79,7 +94,6 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             ReproductionLookup = ReproductionLookup,
             DNAChainLookup = DNAChainLookup,
             DNAStorageLookup = DNAStorageLookup,
-            MoveControllerOutputLookup = MoveControllerOutputLookup,
             MoveLimitationLookup = MoveLimitationLookup,
         };
 
@@ -100,6 +114,11 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public EntityCommandBuffer Buffer;
 
+    public int BatchesCount;
+
+    public ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
+    public ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
+
     [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
     [ReadOnly] public BufferLookup<BiteItem> BiteLookup;
     [ReadOnly] public ComponentLookup<GenetaliaComponent> GenetaliaLookup;
@@ -110,7 +129,6 @@ public partial struct ActionRunnerJob : IJobEntity
     [ReadOnly] public ComponentLookup<ReproductionComponent> ReproductionLookup;
     [ReadOnly] public BufferLookup<DNAChainItem> DNAChainLookup;
     [ReadOnly] public BufferLookup<DNAStorageItem> DNAStorageLookup;
-    [ReadOnly] public ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
     [ReadOnly] public ComponentLookup<MoveLimitationComponent> MoveLimitationLookup;
 
     // Constants for sub-actions
@@ -144,13 +162,24 @@ public partial struct ActionRunnerJob : IJobEntity
         ref ActionRandomComponent randomComponent,
         ref DynamicBuffer<ActionChainItem> chain)
     {
-        timer.DeltaTime = DeltaTime;
+        timer.DeltaTime += DeltaTime;
         timer.TimeElapsed += DeltaTime;
 
         if (runner.Action == ActionTypes.None)
         {
             SetActionIdle(ref runner);
             EnableState(entity, in runner, ref randomComponent);
+        }
+
+
+        bool shouldUpdate = timer.FramesElapsed % (float)BatchesCount == entity.Index % (float)BatchesCount ||
+            timer.FramesElapsed == 0;
+
+        timer.FramesElapsed++;
+
+        if (shouldUpdate == false)
+        {
+            return;
         }
 
         var status = runner.IsCancellationRequested ? SubActionStatus.Cancel :
@@ -175,6 +204,8 @@ public partial struct ActionRunnerJob : IJobEntity
                 EnableState(entity, in runner, ref randomComponent);
                 break;
         }
+
+        timer.DeltaTime = 0;
     }
 
     // =========================================================================
@@ -366,7 +397,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
 
-        MoveControllerExtensions.Enable(Buffer, entity);
+        MoveControllerInputLookup.Enable(entity);
 
         var koef = 0.6f;
         var speed = movingSpeed.GetWalkingSpeed();
@@ -374,12 +405,13 @@ public partial struct ActionRunnerJob : IJobEntity
         speed *= koef;
         rotationSpeed *= koef;
 
-        MoveControllerExtensions.SetTarget(Buffer, entity, targetPosition, 0, lookDirection, 0.01f, speed, rotationSpeed);
+        MoveControllerInputLookup.SetTarget(entity, targetPosition, 0, lookDirection, 0.01f, speed, rotationSpeed);
+
     }
 
     private void Disable_Idle(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(Buffer, entity);
+        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
     }
 
     private SubActionResult Update_Idle(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -408,7 +440,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Enable_MoveTo(Entity entity, Entity target, ref Random random)
     {
-        MoveControllerExtensions.Enable(Buffer, entity);
+        MoveControllerInputLookup.Enable( entity);
 
         if (!MovingSpeedLookup.HasComponent(entity))
         {
@@ -416,12 +448,12 @@ public partial struct ActionRunnerJob : IJobEntity
         }
 
         var movingSpeed = MovingSpeedLookup[entity];
-        MoveControllerExtensions.SetTarget(Buffer, entity, target, MoveTo_MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveControllerInputLookup.SetTarget(entity, target, MoveTo_MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
     }
 
     private void Disable_MoveTo(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(Buffer, entity);
+        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
     }
 
     private SubActionResult Update_MoveTo(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -467,8 +499,8 @@ public partial struct ActionRunnerJob : IJobEntity
         var escapePosition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
         var lookDirection = math.normalize(escapePosition - entityPosition);
 
-        MoveControllerExtensions.SetTarget(Buffer, entity, escapePosition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
-        MoveControllerExtensions.ResetOutput(Buffer, entity);
+        MoveControllerInputLookup.SetTarget(entity, escapePosition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+        MoveControllerOutputLookup.ResetOutput( entity);
     }
 
     private void Enable_RunFrom(Entity entity, Entity target, ref Random random)
@@ -484,13 +516,13 @@ public partial struct ActionRunnerJob : IJobEntity
             return;
         }
 
-        MoveControllerExtensions.Enable(Buffer, entity);
+        MoveControllerInputLookup.Enable(entity);
         SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
     }
 
     private void Disable_RunFrom(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(Buffer, entity);
+        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
     }
 
     private SubActionResult Update_RunFrom(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -539,12 +571,12 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Enable_RotateTowards(Entity entity, Entity target, ref Random random)
     {
-        MoveControllerExtensions.Enable(Buffer, entity);
+        MoveControllerInputLookup.Enable(entity);
     }
 
     private void Disable_RotateTowards(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(Buffer, entity);
+        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
     }
 
     private SubActionResult Update_RotateTowards(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -585,7 +617,7 @@ public partial struct ActionRunnerJob : IJobEntity
         var targetTransform = TransformLookup[target];
         var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
 
-        MoveControllerExtensions.SetTarget(Buffer, entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
+        MoveControllerInputLookup.SetTarget(entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }
@@ -658,12 +690,12 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Enable_MoveInto(Entity entity, Entity target, ref Random random)
     {
-        MoveControllerExtensions.Enable(Buffer, entity);
+        MoveControllerInputLookup.Enable(entity);
     }
 
     private void Disable_MoveInto(Entity entity, Entity target)
     {
-        MoveControllerExtensions.Disable(Buffer, entity);
+        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
     }
 
     private SubActionResult Update_MoveInto(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -702,7 +734,8 @@ public partial struct ActionRunnerJob : IJobEntity
         }
 
         var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
-        MoveControllerExtensions.SetTarget(Buffer, entity, targetTransform.Position, 0, lookDirection, 0.01f, MovingSpeedLookup[entity].GetCrawlingSpeed(), 0f);
+
+        MoveControllerInputLookup.SetTarget(entity, targetTransform.Position, 0, lookDirection, 0.01f, MovingSpeedLookup[entity].GetCrawlingSpeed(), 0f);
 
         return SubActionResult.Running();
     }

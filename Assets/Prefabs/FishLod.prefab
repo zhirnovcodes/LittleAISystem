@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4886887662801368075}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: ViewScaled
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41,7 +41,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2219655066120371707}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: ViewRotated
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -73,7 +73,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4844829660819810676}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Lod2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -105,7 +105,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1225441813456903594}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Lod0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -137,7 +137,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2061173786581805832}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Lod1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -171,7 +171,7 @@ GameObject:
   - component: {fileID: 5095811585541572114}
   - component: {fileID: 3867943008719259243}
   - component: {fileID: 3407320428449734157}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -255,7 +255,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4572686611214174189}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: ViewRotated
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -287,7 +287,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3417598788242203026}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: ViewScaled
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -321,7 +321,7 @@ GameObject:
   - component: {fileID: 8555897558953476043}
   - component: {fileID: 8883072082856835066}
   - component: {fileID: 4560521625164069252}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -407,7 +407,7 @@ GameObject:
   - component: {fileID: 6391474807089905800}
   - component: {fileID: 1971061537422319636}
   - component: {fileID: 3471961670937220019}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -494,7 +494,7 @@ GameObject:
   - component: {fileID: 8061670187676942536}
   - component: {fileID: 8331797628933566830}
   - component: {fileID: 6088069285441106309}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: FishLod
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -605,7 +605,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6729770219170583700}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: ViewRotated
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -637,7 +637,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2277953959186731677}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: ViewScaled
   m_TagString: Untagged
   m_Icon: {fileID: 0}

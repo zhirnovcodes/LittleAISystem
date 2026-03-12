@@ -26,7 +26,7 @@ public partial struct NeedBasedSystem : ISystem
 
         // Second job: Calculate need-based decisions
         var calculationJob = new NeedBasedCalculationJob();
-        state.Dependency = calculationJob.Schedule/*Parallel*/(state.Dependency);
+        state.Dependency = calculationJob.ScheduleParallel(state.Dependency);
     }
 
     [BurstCompile]

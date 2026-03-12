@@ -37,6 +37,8 @@ public partial struct VisionJob : IJobEntity
     public float DeltaTime;
     [ReadOnly] public PhysicsWorldSingleton PhysicsWorld;
 
+    const int MaxVisionItems = 16;
+
     void Execute(ref VisionComponent vision, DynamicBuffer<VisibleItem> visibleBuffer, 
         in LocalTransform transform, Entity entity)
     {
@@ -58,6 +60,13 @@ public partial struct VisionJob : IJobEntity
             // Create a list to store all hits
             var hits = new NativeList<ColliderCastHit>(Allocator.Temp);
 
+            var collisionFilter = new CollisionFilter
+            {
+                BelongsTo = (uint) Layers.Vision,              // This query belongs to all layers (or specify if needed)
+                CollidesWith = (uint)Layers.Animal, // Only collide with the Fish layer
+                GroupIndex = 0
+            };
+
             // Perform sphere cast to get all entities within range
             var collisionWorld = PhysicsWorld.PhysicsWorld.CollisionWorld;
             collisionWorld.SphereCastAll(
@@ -65,11 +74,11 @@ public partial struct VisionJob : IJobEntity
                 maxDistance, 
                 float3.zero, 
                 0f, 
-                ref hits, 
-                CollisionFilter.Default);
+                ref hits,
+                collisionFilter);
 
             // Add all detected entities to the visible buffer
-            for (int i = 0; i < hits.Length; i++)
+            for (int i = 0; i < math.min( hits.Length, MaxVisionItems); i++)
             {
                 var hit = hits[i];
                 var hitEntity = PhysicsWorld.PhysicsWorld.Bodies[hit.RigidBodyIndex].Entity;

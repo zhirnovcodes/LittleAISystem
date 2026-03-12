@@ -1,7 +1,7 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
-public struct MoveControllerInputComponent : IComponentData, IEnableableComponent
+public struct MoveControllerInputComponent : IComponentData
 {
     public Entity TargetEntity;
     public float Speed;

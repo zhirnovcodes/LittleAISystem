@@ -84,7 +84,7 @@ public partial struct NeedsActionChainSystem : ISystem
                 runner.IsCancellationRequested = true;
             }
             // Check if we should add to action chain
-            else if (needBasedOutput.StatsWeight >= needsConfig.AddThreshold)
+            else if (needBasedOutput.StatsWeight >= needsConfig.AddThreshold + currentWeight)
             {
                 // Add to end of action chain
                 actionChain.Add(new ActionChainItem

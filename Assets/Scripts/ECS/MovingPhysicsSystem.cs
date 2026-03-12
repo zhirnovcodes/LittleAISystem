@@ -42,6 +42,11 @@ public partial struct MovingPhysicsSystem : ISystem
             in PhysicsMass mass,
             in MoveControllerInputComponent input)
         {
+            if (input.Speed + input.RotationSpeed <= 0)
+            {
+                return;
+            }
+
             var currentTransform = transform;
 
             var targetScale = input.TargetScale;

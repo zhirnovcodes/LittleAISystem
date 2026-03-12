@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8833946102982955030}
   - component: {fileID: 8341644799886283418}
   - component: {fileID: 6542776784514800125}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FishFood
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -32,7 +32,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.1, y: 0.1, z: 0.1}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1637861780094388999}
@@ -159,7 +159,7 @@ GameObject:
   - component: {fileID: 1637861780094388999}
   - component: {fileID: 5403363119819339496}
   - component: {fileID: 6190585704104830575}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}

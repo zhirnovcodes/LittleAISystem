@@ -4,4 +4,5 @@ public struct SubActionTimeComponent : IComponentData
 {
     public float DeltaTime;
     public float TimeElapsed;
+    public int FramesElapsed;
 }

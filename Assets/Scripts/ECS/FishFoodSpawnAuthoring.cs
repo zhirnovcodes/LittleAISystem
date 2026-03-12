@@ -23,8 +23,9 @@ public class FishFoodSpawnAuthoring : MonoBehaviour
                 Prefab = prefab,
                 SpawnInterval = authoring.SpawnInterval,
                 Position = authoring.transform.position,
-                Scale = authoring.transform.localScale,
-                Random = new Unity.Mathematics.Random(authoring.Seed)
+                SpawnScaleRange = authoring.transform.localScale,
+                Random = new Unity.Mathematics.Random(authoring.Seed),
+                FoodScale = authoring.Prefab.transform.localScale.x
             });
         }
     }

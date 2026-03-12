@@ -189,7 +189,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!54 &238449540
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -247,7 +247,7 @@ Transform:
   m_GameObject: {fileID: 238449539}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 4.5}
+  m_LocalPosition: {x: 0, y: 0.21000062, z: 4.5}
   m_LocalScale: {x: 20.42, y: 20.42, z: 20.42}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -334,8 +334,8 @@ MonoBehaviour:
     x: 0.02
     y: 0.03
   RandomSeed: 1234
-  OneTimeSpawn: 10
-  MaxCount: 1000
+  OneTimeSpawn: 1000
+  MaxCount: 10000
   Parents:
   - {fileID: 1268306806}
   - {fileID: 882793482}
@@ -349,7 +349,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 15.45, y: 4.05, z: 4.05}
+  m_LocalScale: {x: 50, y: 4.05, z: 50}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1268306807}
@@ -572,7 +572,7 @@ MonoBehaviour:
   HasVision: 1
   Vision:
     MaxDistance: 9.44
-    Interval: 2.33
+    Interval: 4
   HasMoveLimitation: 1
   MoveLimitation:
     Central:
@@ -610,7 +610,7 @@ GameObject:
   - component: {fileID: 1047753097}
   - component: {fileID: 1047753096}
   - component: {fileID: 1047753095}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
