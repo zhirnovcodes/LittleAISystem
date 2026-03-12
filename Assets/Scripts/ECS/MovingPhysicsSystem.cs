@@ -153,7 +153,7 @@ public partial struct MovingPhysicsSystem : ISystem
             float3 axis = cross / crossLen;
 
             float angleRad = math.acos(dot);
-            float maxStepRad = math.radians(rotationSpeed) * deltaTime;
+            float maxStepRad = math.radians(rotationSpeed*2f) * deltaTime;
             float angularSpeed = math.min(angleRad, maxStepRad) / deltaTime;
 
             // World-space angular velocity

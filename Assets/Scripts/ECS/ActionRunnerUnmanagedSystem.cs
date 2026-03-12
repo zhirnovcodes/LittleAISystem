@@ -367,7 +367,14 @@ public partial struct ActionRunnerJob : IJobEntity
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
 
         MoveControllerExtensions.Enable(Buffer, entity);
-        MoveControllerExtensions.SetTarget(Buffer, entity, targetPosition, 0, lookDirection, 0.01f, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+
+        var koef = 0.6f;
+        var speed = movingSpeed.GetWalkingSpeed();
+        var rotationSpeed = movingSpeed.GetWalkingRotationSpeed();
+        speed *= koef;
+        rotationSpeed *= koef;
+
+        MoveControllerExtensions.SetTarget(Buffer, entity, targetPosition, 0, lookDirection, 0.01f, speed, rotationSpeed);
     }
 
     private void Disable_Idle(Entity entity, Entity target)
@@ -377,7 +384,9 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private SubActionResult Update_Idle(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
     {
-        if (timer.IsTimeout(Idle_IdleTime))
+        var time = random.NextFloat(Idle_IdleTime / 2f, Idle_IdleTime);
+
+        if (timer.IsTimeout(time))
         {
             return SubActionResult.Success();
         }
