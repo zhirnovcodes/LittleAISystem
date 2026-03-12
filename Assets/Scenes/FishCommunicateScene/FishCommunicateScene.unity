@@ -180,7 +180,6 @@ GameObject:
   - component: {fileID: 450879524}
   - component: {fileID: 450879523}
   - component: {fileID: 450879522}
-  - component: {fileID: 450879521}
   - component: {fileID: 450879520}
   - component: {fileID: 450879519}
   - component: {fileID: 450879518}
@@ -188,6 +187,7 @@ GameObject:
   - component: {fileID: 450879527}
   - component: {fileID: 450879528}
   - component: {fileID: 450879529}
+  - component: {fileID: 450879530}
   m_Layer: 0
   m_Name: FishFemale
   m_TagString: Untagged
@@ -569,19 +569,6 @@ MonoBehaviour:
         z: 0
         w: 0
   WithStatsChangeBuffer: 1
---- !u!114 &450879521
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 450879515}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0209a636d165fa24dae0323c7231ddbe, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  BaseConditions: 25
 --- !u!114 &450879522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -729,6 +716,82 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   IsMale: 0
   GestationTime: 10
+--- !u!114 &450879530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 450879515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79d00dfe05c172941890770f485cb443, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Flags: 25
+  HasReproduction: 1
+  Reproduction:
+    IsMale: 0
+    GestationTime: 10
+  HasSpeed: 1
+  Speed:
+    MaxSpeed: 1
+    MaxRotationSpeed: 1
+  HasStatsIncrease: 1
+  StatsIncrease:
+    AnimalStats:
+      Stats:
+        c0:
+          x: 0
+          y: 0
+          z: 0
+          w: 0
+        c1:
+          x: 0
+          y: 0
+          z: 0
+          w: 0
+  HasActionChain: 0
+  HasAdvertiser: 0
+  Advertisers: []
+  HasAging: 1
+  Aging:
+    MinSize: 0
+    MaxSize: 0
+  HasNeedsBased: 0
+  NeedsBased:
+    CancelThreshold: 0
+    AddThreshold: 0
+  HasStats: 1
+  Stats:
+    Stats:
+      Stats:
+        c0:
+          x: 12.4
+          y: 20.8
+          z: 23.6
+          w: 16.9
+        c1:
+          x: 18.4
+          y: 17.5
+          z: 0
+          w: 0
+  HasStatAttenuation: 0
+  StatAttenuations: []
+  HasVision: 0
+  Vision:
+    MaxDistance: 0
+    Interval: 0
+  HasMoveLimitation: 0
+  MoveLimitation:
+    Central:
+      x: 0
+      y: 0
+      z: 0
+    Scale:
+      x: 0
+      y: 0
+      z: 0
 --- !u!1001 &642174201
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -828,6 +891,54 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 642174201}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &665414851
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 665414853}
+  - component: {fileID: 665414852}
+  m_Layer: 0
+  m_Name: PrefabLibrary
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &665414852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 665414851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dff902bb448dc32438235eeb8f4ede0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  PrefabEntries:
+  - Flag: 25
+    Prefab: {fileID: 8778109812505074581, guid: 8a718ff3d727db6409c7225a9e9f4c1d,
+      type: 3}
+--- !u!4 &665414853
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 665414851}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1539400237
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -940,7 +1051,6 @@ GameObject:
   - component: {fileID: 1815018777}
   - component: {fileID: 1815018776}
   - component: {fileID: 1815018775}
-  - component: {fileID: 1815018774}
   - component: {fileID: 1815018773}
   - component: {fileID: 1815018772}
   - component: {fileID: 1815018771}
@@ -948,6 +1058,7 @@ GameObject:
   - component: {fileID: 1815018780}
   - component: {fileID: 1815018781}
   - component: {fileID: 1815018782}
+  - component: {fileID: 1815018783}
   m_Layer: 0
   m_Name: FishMale
   m_TagString: Untagged
@@ -1329,19 +1440,6 @@ MonoBehaviour:
         z: 0
         w: 0
   WithStatsChangeBuffer: 1
---- !u!114 &1815018774
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1815018768}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0209a636d165fa24dae0323c7231ddbe, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  BaseConditions: 25
 --- !u!114 &1815018775
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1489,6 +1587,82 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   IsMale: 1
   GestationTime: 10
+--- !u!114 &1815018783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1815018768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79d00dfe05c172941890770f485cb443, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Flags: 25
+  HasReproduction: 1
+  Reproduction:
+    IsMale: 0
+    GestationTime: 10
+  HasSpeed: 1
+  Speed:
+    MaxSpeed: 1
+    MaxRotationSpeed: 1
+  HasStatsIncrease: 1
+  StatsIncrease:
+    AnimalStats:
+      Stats:
+        c0:
+          x: 0
+          y: 0
+          z: 0
+          w: 0
+        c1:
+          x: 0
+          y: 0
+          z: 0
+          w: 0
+  HasActionChain: 0
+  HasAdvertiser: 0
+  Advertisers: []
+  HasAging: 1
+  Aging:
+    MinSize: 0
+    MaxSize: 0
+  HasNeedsBased: 0
+  NeedsBased:
+    CancelThreshold: 0
+    AddThreshold: 0
+  HasStats: 1
+  Stats:
+    Stats:
+      Stats:
+        c0:
+          x: 12.4
+          y: 20.8
+          z: 23.6
+          w: 16.9
+        c1:
+          x: 18.4
+          y: 17.5
+          z: 0
+          w: 0
+  HasStatAttenuation: 0
+  StatAttenuations: []
+  HasVision: 0
+  Vision:
+    MaxDistance: 0
+    Interval: 0
+  HasMoveLimitation: 0
+  MoveLimitation:
+    Central:
+      x: 0
+      y: 0
+      z: 0
+    Scale:
+      x: 0
+      y: 0
+      z: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1496,3 +1670,4 @@ SceneRoots:
   - {fileID: 1815018779}
   - {fileID: 450879526}
   - {fileID: 361999301}
+  - {fileID: 665414853}

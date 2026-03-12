@@ -33,7 +33,7 @@ public partial struct FishSpawnSystem : ISystem
             ECB = ecb,
             PrefabLibrary = prefabLibrary,
             ParentDNALookup = SystemAPI.GetBufferLookup<DNAChainItem>(true),
-            ParentFlagsLookup = SystemAPI.GetComponentLookup<ParentDNAComponent>(true)
+            ParentFlagsLookup = SystemAPI.GetComponentLookup<ConditionFlagsComponent>(true)
         };
 
         state.Dependency = spawnJob.Schedule(state.Dependency);
@@ -47,7 +47,7 @@ public partial struct FishSpawnSystem : ISystem
         public EntityCommandBuffer ECB;
         [ReadOnly] public DynamicBuffer<PrefabLibraryItem> PrefabLibrary;
         [ReadOnly] public BufferLookup<DNAChainItem> ParentDNALookup;
-        [ReadOnly] public ComponentLookup<ParentDNAComponent> ParentFlagsLookup;
+        [ReadOnly] public ComponentLookup<ConditionFlagsComponent> ParentFlagsLookup;
 
         public void Execute(Entity entity, ref FishSpawnComponent spawnComponent, in DynamicBuffer<WorldOriginItem> originDNA)
         {
@@ -94,11 +94,11 @@ public partial struct FishSpawnSystem : ISystem
                     ConditionFlags flags = ConditionFlags.None;
                     if (ParentFlagsLookup.HasComponent(motherEntity))
                     {
-                        flags = ParentFlagsLookup[motherEntity].Flags;
+                        flags = ParentFlagsLookup[motherEntity].Conditions;
                     }
                     else if (ParentFlagsLookup.HasComponent(fatherEntity))
                     {
-                        flags = ParentFlagsLookup[fatherEntity].Flags;
+                        flags = ParentFlagsLookup[fatherEntity].Conditions;
                     }
 
                     // Get prefab from library

@@ -2,6 +2,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [BurstCompile]
@@ -46,6 +47,7 @@ public partial struct ReproductionSystem : ISystem
         public void Execute(
             Entity entity,
             ref ReproductionComponent reproduction,
+            in LocalTransform transform,
             in ConditionFlagsComponent flags,
             in DynamicBuffer<DNAChainItem> motherDNA,
             ref DynamicBuffer<DNAStorageItem> dnaStorage)
@@ -58,13 +60,14 @@ public partial struct ReproductionSystem : ISystem
 
             if (reproduction.TimeElapsed >= reproduction.GestationTime)
             {
-                Labor(entity, ref reproduction, in flags, in motherDNA, ref dnaStorage);
+                Labor(entity, ref reproduction, in transform, in flags, in motherDNA, ref dnaStorage);
             }
         }
 
         private void Labor(
             Entity mother,
             ref ReproductionComponent reproduction,
+            in LocalTransform transform,
             in ConditionFlagsComponent motherFlags,
             in DynamicBuffer<DNAChainItem> motherDNA,
             ref DynamicBuffer<DNAStorageItem> dnaStorage)
@@ -108,7 +111,14 @@ public partial struct ReproductionSystem : ISystem
                 prefab,
                 ref random,
                 ECB);
-            
+
+            ECB.SetComponent(offspring, new LocalTransform
+            {
+                Position = transform.Position + new float3(1,0,0),
+                Scale = 1,
+                Rotation = quaternion.identity
+            });
+
             // Clean up
             fatherDNAList.Dispose();
             motherDNAList.Dispose();

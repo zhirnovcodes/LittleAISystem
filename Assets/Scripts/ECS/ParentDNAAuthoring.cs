@@ -77,9 +77,9 @@ public class ParentDNAAuthoring : MonoBehaviour
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
             
-            AddComponent(entity, new ParentDNAComponent
+            AddComponent(entity, new ConditionFlagsComponent
             {
-                Flags = authoring.Flags
+                Conditions = authoring.Flags
             });
             
             var dnaBuffer = AddBuffer<DNAChainItem>(entity);
