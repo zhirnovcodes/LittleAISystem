@@ -12,10 +12,11 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
     // Component lookups
     private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
     private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
+    private BufferLookup<StatsChangeItem> StatChangeLookup;
+    private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
 
     private ComponentLookup<LocalTransform> TransformLookup;
     private BufferLookup<BiteItem> BiteLookup;
-    private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
@@ -35,10 +36,11 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
 
         MoveControllerOutputLookup = state.GetComponentLookup<MoveControllerOutputComponent>(false);
         MoveControllerInputLookup= state.GetComponentLookup<MoveControllerInputComponent>(false);
-        
+        StatChangeLookup = state.GetBufferLookup<StatsChangeItem>(false);
+        GenetaliaLookup = state.GetComponentLookup<GenetaliaComponent>(false);
+
         TransformLookup = state.GetComponentLookup<LocalTransform>(true);
         BiteLookup = state.GetBufferLookup<BiteItem>(true);
-        GenetaliaLookup = state.GetComponentLookup<GenetaliaComponent>(true);
         AnimalStatsLookup = state.GetComponentLookup<AnimalStatsComponent>(true);
         StatsIncreaseLookup = state.GetComponentLookup<StatsIncreaseComponent>(true);
         MovingSpeedLookup = state.GetComponentLookup<MovingSpeedComponent>(true);
@@ -66,6 +68,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
 
         MoveControllerInputLookup.Update(ref state);
         MoveControllerOutputLookup.Update(ref state);
+        StatChangeLookup.Update(ref state);
 
         const int entitiesPerBatch = 250;
         var batchesCount = (int)(SystemAPI.QueryBuilder().WithAll<ActionRunnerComponent>().Build().CalculateEntityCount() / 
@@ -83,7 +86,8 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
 
             MoveControllerOutputLookup = MoveControllerOutputLookup,
             MoveControllerInputLookup = MoveControllerInputLookup,
-            
+            StatChangeLookup = StatChangeLookup,
+
             TransformLookup = TransformLookup,
             BiteLookup = BiteLookup,
             GenetaliaLookup = GenetaliaLookup,
@@ -118,6 +122,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
     public ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
+    public BufferLookup<StatsChangeItem> StatChangeLookup;
 
     [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
     [ReadOnly] public BufferLookup<BiteItem> BiteLookup;
@@ -795,10 +800,13 @@ public partial struct ActionRunnerJob : IJobEntity
 
         var statsChange = new AnimalStatsBuilder().WithEnergy(energyGain).Build();
 
-        Buffer.AppendToBuffer(entity, new StatsChangeItem
+        if (StatChangeLookup.TryGetBuffer(entity, out var buffer))
         {
-            StatsChange = statsChange
-        });
+            buffer.Add(new StatsChangeItem
+            {
+                StatsChange = statsChange
+            });
+        }
 
         return SubActionResult.Running();
     }
@@ -934,10 +942,13 @@ public partial struct ActionRunnerJob : IJobEntity
 
         var statsChange = new AnimalStatsBuilder().WithSocial(socialGain).Build();
 
-        Buffer.AppendToBuffer(entity, new StatsChangeItem
+        if (StatChangeLookup.TryGetBuffer(entity, out var buffer))
         {
-            StatsChange = statsChange
-        });
+            buffer.Add(new StatsChangeItem
+            {
+                StatsChange = statsChange
+            });
+        }
 
         if (!AnimalStatsLookup.HasComponent(entity))
         {

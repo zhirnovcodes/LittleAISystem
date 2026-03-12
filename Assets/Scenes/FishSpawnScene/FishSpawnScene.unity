@@ -334,8 +334,8 @@ MonoBehaviour:
     x: 0.02
     y: 0.03
   RandomSeed: 1234
-  OneTimeSpawn: 1000
-  MaxCount: 10000
+  OneTimeSpawn: 10
+  MaxCount: 1000
   Parents:
   - {fileID: 1268306806}
   - {fileID: 882793482}
@@ -348,7 +348,7 @@ Transform:
   m_GameObject: {fileID: 681186319}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -5, z: 0}
   m_LocalScale: {x: 50, y: 4.05, z: 50}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -409,7 +409,7 @@ MonoBehaviour:
           z: 0
           w: 0
   HasActionChain: 1
-  HasAdvertiser: 0
+  HasAdvertiser: 1
   Advertisers:
   - AdvertisedValue:
       Stats:
@@ -757,7 +757,7 @@ MonoBehaviour:
           z: 0
           w: 0
   HasActionChain: 1
-  HasAdvertiser: 0
+  HasAdvertiser: 1
   Advertisers:
   - AdvertisedValue:
       Stats:
@@ -1086,7 +1086,7 @@ MonoBehaviour:
     x: -0
     y: -0.1
     z: -0
-  m_SolverIterationCount: 4
+  m_SolverIterationCount: 1
   m_EnableSolverStabilizationHeuristic: 0
   m_MultiThreaded: 1
   m_CollisionTolerance: 0.01
