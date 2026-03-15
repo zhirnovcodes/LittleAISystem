@@ -9,61 +9,27 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct ActionRunnerUnmanagedSystem : ISystem
 {
-    // Component lookups
-    private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
-    private BufferLookup<StatsChangeItem> StatChangeLookup;
-    private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
-
-    private ComponentLookup<LocalTransform> TransformLookup;
-    private BufferLookup<BiteItem> BiteLookup;
-    private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
-    private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
-    private ComponentLookup<ReproductionComponent> ReproductionLookup;
-    private BufferLookup<DNAChainItem> DNAChainLookup;
-    private BufferLookup<DNAStorageItem> DNAStorageLookup;
-    private ComponentLookup<MoveLimitationComponent> MoveLimitationLookup;
+    private EntityQuery actionRunnerQuery;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        actionRunnerQuery = SystemAPI.QueryBuilder()
+            .WithAll<ActionRunnerComponent, SubActionTimeComponent, ActionRandomComponent, ActionChainItem>()
+            .Build();
+
         state.RequireForUpdate<ActionChainConfigComponent>();
-        state.RequireForUpdate<ActionChainItem>();
-        state.RequireForUpdate<ActionRunnerComponent>();
         state.RequireForUpdate<ActionMapInitializeComponent>();
-
-        InitializeLookups(state);
-    }
-
-    private void InitializeLookups(SystemState state)
-    {
-        MoveControllerInputLookup = state.GetComponentLookup<MoveControllerInputComponent>(false);
-        StatChangeLookup = state.GetBufferLookup<StatsChangeItem>(false);
-        GenetaliaLookup = state.GetComponentLookup<GenetaliaComponent>(false);
-
-        TransformLookup = state.GetComponentLookup<LocalTransform>(true);
-        BiteLookup = state.GetBufferLookup<BiteItem>(true);
-        AnimalStatsLookup = state.GetComponentLookup<AnimalStatsComponent>(true);
-        StatsIncreaseLookup = state.GetComponentLookup<StatsIncreaseComponent>(true);
-        MovingSpeedLookup = state.GetComponentLookup<MovingSpeedComponent>(true);
-        SleepingPlaceLookup = state.GetComponentLookup<SleepingPlaceComponent>(true);
-        ReproductionLookup = state.GetComponentLookup<ReproductionComponent>(true);
-        DNAChainLookup = state.GetBufferLookup<DNAChainItem>(true);
-        DNAStorageLookup = state.GetBufferLookup<DNAStorageItem>(true);
-        MoveLimitationLookup = state.GetComponentLookup<MoveLimitationComponent>(true);
+        state.RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
+        state.RequireForUpdate(actionRunnerQuery);
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        RefreshLookups(state);
-
         const int entitiesPerBatch = 1000;
-        var batchesCount = (int)(SystemAPI.QueryBuilder().
-            WithAll<ActionRunnerComponent>()
-            .Build().
-            CalculateEntityCount() / entitiesPerBatch);
+        var actionRunnerCount = actionRunnerQuery.CalculateEntityCount();
+        var batchesCount = math.max(1, (actionRunnerCount + entitiesPerBatch - 1) / entitiesPerBatch);
 
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var buffer = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
@@ -75,41 +41,24 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             Buffer = buffer,
             BatchesCount = batchesCount,
 
-            MoveControllerInputLookup = MoveControllerInputLookup,
-            StatChangeLookup = StatChangeLookup,
+            // Get lookups directly here - this registers dependencies correctly
+            TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true),
+            BiteLookup = SystemAPI.GetBufferLookup<BiteItem>(true),
+            GenetaliaLookup = SystemAPI.GetComponentLookup<GenetaliaComponent>(false),
+            AnimalStatsLookup = SystemAPI.GetComponentLookup<AnimalStatsComponent>(true),
+            StatsIncreaseLookup = SystemAPI.GetComponentLookup<StatsIncreaseComponent>(true),
+            MovingSpeedLookup = SystemAPI.GetComponentLookup<MovingSpeedComponent>(true),
+            SleepingPlaceLookup = SystemAPI.GetComponentLookup<SleepingPlaceComponent>(true),
+            ReproductionLookup = SystemAPI.GetComponentLookup<ReproductionComponent>(true),
+            DNAChainLookup = SystemAPI.GetBufferLookup<DNAChainItem>(true),
+            DNAStorageLookup = SystemAPI.GetBufferLookup<DNAStorageItem>(true),
+            MoveLimitationLookup = SystemAPI.GetComponentLookup<MoveLimitationComponent>(true),
 
-            TransformLookup = TransformLookup,
-            BiteLookup = BiteLookup,
-            GenetaliaLookup = GenetaliaLookup,
-            AnimalStatsLookup = AnimalStatsLookup,
-            StatsIncreaseLookup = StatsIncreaseLookup,
-            MovingSpeedLookup = MovingSpeedLookup,
-            SleepingPlaceLookup = SleepingPlaceLookup,
-            ReproductionLookup = ReproductionLookup,
-            DNAChainLookup = DNAChainLookup,
-            DNAStorageLookup = DNAStorageLookup,
-            MoveLimitationLookup = MoveLimitationLookup,
+            MoveControllerInputLookup = SystemAPI.GetComponentLookup<MoveControllerInputComponent>(false),
+            StatChangeLookup = SystemAPI.GetBufferLookup<StatsChangeItem>(false),
         };
 
         state.Dependency = job.Schedule(state.Dependency);
-    }
-
-    private void RefreshLookups(SystemState state)
-    {
-        TransformLookup.Update(ref state);
-        BiteLookup.Update(ref state);
-        GenetaliaLookup.Update(ref state);
-        AnimalStatsLookup.Update(ref state);
-        StatsIncreaseLookup.Update(ref state);
-        MovingSpeedLookup.Update(ref state);
-        SleepingPlaceLookup.Update(ref state);
-        ReproductionLookup.Update(ref state);
-        DNAChainLookup.Update(ref state);
-        DNAStorageLookup.Update(ref state);
-        MoveLimitationLookup.Update(ref state);
-
-        MoveControllerInputLookup.Update(ref state);
-        StatChangeLookup.Update(ref state);
     }
 
     [BurstCompile]
