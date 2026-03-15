@@ -52,21 +52,6 @@ public static class MoveControllerExtensions
     }
 
     /// <summary>
-    /// Resets the output using direct lookup access (faster than ECB)
-    /// </summary>
-    public static void ResetOutput(
-        this ref ComponentLookup<MoveControllerOutputComponent> outputLookup,
-        Entity entity)
-    {
-        outputLookup[entity] = new MoveControllerOutputComponent
-        {
-            HasArrived = false,
-            IsLookingAt = false,
-            IsFailed = false
-        };
-    }
-
-    /// <summary>
     /// Resets the input using direct lookup access (faster than ECB)
     /// </summary>
     public static void ResetInput(
@@ -86,7 +71,7 @@ public static class MoveControllerExtensions
     }
 
     // =========================================================================
-    // Enable/Disable (still require ECB for SetComponentEnabled)
+    // Enable helpers
     // =========================================================================
 
     /// <summary>
@@ -96,33 +81,6 @@ public static class MoveControllerExtensions
         this ref ComponentLookup<MoveControllerInputComponent> inputLookup,
         Entity entity)
     {
-        inputLookup[entity] = new MoveControllerInputComponent
-        {
-            TargetEntity = Entity.Null,
-            TargetPosition = float.MaxValue * new float3(1, 1, 1),
-            LookDirection = float3.zero,
-            TargetScale = 0,
-            Speed = 0,
-            RotationSpeed = 0,
-            Distance = 0
-        };
-    }
-
-    /// <summary>
-    /// Disables the MoveControllerInputComponent, resets output, and sets speeds to 0
-    /// </summary>
-    public static void Disable(
-        this ref ComponentLookup<MoveControllerInputComponent> inputLookup,
-        ref ComponentLookup<MoveControllerOutputComponent> outputLookup,
-        Entity entity)
-    {
-        outputLookup[entity] = new MoveControllerOutputComponent
-        {
-            HasArrived = false,
-            IsLookingAt = false,
-            IsFailed = false
-        };
-
         inputLookup[entity] = new MoveControllerInputComponent
         {
             TargetEntity = Entity.Null,
@@ -192,19 +150,6 @@ public static class MoveControllerExtensions
     }
 
     /// <summary>
-    /// [Legacy] Resets the output using ECB (slower - deferred execution)
-    /// </summary>
-    public static void ResetOutput(EntityCommandBuffer buffer, Entity entity)
-    {
-        buffer.SetComponent(entity, new MoveControllerOutputComponent
-        {
-            HasArrived = false,
-            IsLookingAt = false,
-            IsFailed = false
-        });
-    }
-
-    /// <summary>
     /// [Legacy] Resets the input using ECB (slower - deferred execution)
     /// </summary>
     public static void ResetInput(EntityCommandBuffer buffer, Entity entity)
@@ -220,13 +165,4 @@ public static class MoveControllerExtensions
         });
     }
 
-    /// <summary>
-    /// [Legacy] Disables the MoveControllerInputComponent and resets output using ECB
-    /// </summary>
-    public static void Disable(EntityCommandBuffer buffer, Entity entity)
-    {
-        //buffer.SetComponentEnabled<MoveControllerInputComponent>(entity, false);
-        ResetOutput(buffer, entity);
-        ResetInput(buffer, entity);
-    }
 }

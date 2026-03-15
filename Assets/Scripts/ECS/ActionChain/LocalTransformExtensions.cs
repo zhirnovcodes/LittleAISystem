@@ -66,6 +66,12 @@ public static class LocalTransformExtensions
         return transform.IsTargetDistanceReached(other.Position, other.Scale, distance, delta);
     }
 
+    public static bool IsArrivedAndLooking(this LocalTransform transform, LocalTransform other, float distance, float delta = 0.01f)
+    {
+        return transform.IsTargetDistanceReached(other, distance, delta) &&
+            transform.IsLookingTowards(other, delta);
+    }
+
     public static bool IsDistanceGreaterThan(this LocalTransform transform, float3 position, float scale, float distance)
     {
         float distanceThreshold = (transform.Scale + scale) * 0.5f + distance;

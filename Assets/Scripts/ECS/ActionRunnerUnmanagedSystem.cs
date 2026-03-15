@@ -10,7 +10,6 @@ using Unity.Transforms;
 public partial struct ActionRunnerUnmanagedSystem : ISystem
 {
     // Component lookups
-    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
     private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
     private BufferLookup<StatsChangeItem> StatChangeLookup;
     private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
@@ -34,8 +33,12 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         state.RequireForUpdate<ActionRunnerComponent>();
         state.RequireForUpdate<ActionMapInitializeComponent>();
 
-        MoveControllerOutputLookup = state.GetComponentLookup<MoveControllerOutputComponent>(false);
-        MoveControllerInputLookup= state.GetComponentLookup<MoveControllerInputComponent>(false);
+        InitializeLookups(state);
+    }
+
+    private void InitializeLookups(SystemState state)
+    {
+        MoveControllerInputLookup = state.GetComponentLookup<MoveControllerInputComponent>(false);
         StatChangeLookup = state.GetBufferLookup<StatsChangeItem>(false);
         GenetaliaLookup = state.GetComponentLookup<GenetaliaComponent>(false);
 
@@ -54,25 +57,13 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        TransformLookup.Update(ref state);
-        BiteLookup.Update(ref state);
-        GenetaliaLookup.Update(ref state);
-        AnimalStatsLookup.Update(ref state);
-        StatsIncreaseLookup.Update(ref state);
-        MovingSpeedLookup.Update(ref state);
-        SleepingPlaceLookup.Update(ref state);
-        ReproductionLookup.Update(ref state);
-        DNAChainLookup.Update(ref state);
-        DNAStorageLookup.Update(ref state);
-        MoveLimitationLookup.Update(ref state);
+        RefreshLookups(state);
 
-        MoveControllerInputLookup.Update(ref state);
-        MoveControllerOutputLookup.Update(ref state);
-        StatChangeLookup.Update(ref state);
-
-        const int entitiesPerBatch = 250;
-        var batchesCount = (int)(SystemAPI.QueryBuilder().WithAll<ActionRunnerComponent>().Build().CalculateEntityCount() / 
-            entitiesPerBatch);
+        const int entitiesPerBatch = 1000;
+        var batchesCount = (int)(SystemAPI.QueryBuilder().
+            WithAll<ActionRunnerComponent>()
+            .Build().
+            CalculateEntityCount() / entitiesPerBatch);
 
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var buffer = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
@@ -84,7 +75,6 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             Buffer = buffer,
             BatchesCount = batchesCount,
 
-            MoveControllerOutputLookup = MoveControllerOutputLookup,
             MoveControllerInputLookup = MoveControllerInputLookup,
             StatChangeLookup = StatChangeLookup,
 
@@ -104,6 +94,24 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         state.Dependency = job.Schedule(state.Dependency);
     }
 
+    private void RefreshLookups(SystemState state)
+    {
+        TransformLookup.Update(ref state);
+        BiteLookup.Update(ref state);
+        GenetaliaLookup.Update(ref state);
+        AnimalStatsLookup.Update(ref state);
+        StatsIncreaseLookup.Update(ref state);
+        MovingSpeedLookup.Update(ref state);
+        SleepingPlaceLookup.Update(ref state);
+        ReproductionLookup.Update(ref state);
+        DNAChainLookup.Update(ref state);
+        DNAStorageLookup.Update(ref state);
+        MoveLimitationLookup.Update(ref state);
+
+        MoveControllerInputLookup.Update(ref state);
+        StatChangeLookup.Update(ref state);
+    }
+
     [BurstCompile]
     public void OnDestroy(ref SystemState state)
     {
@@ -120,7 +128,6 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public int BatchesCount;
 
-    public ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
     public ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
     public BufferLookup<StatsChangeItem> StatChangeLookup;
 
@@ -416,7 +423,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Disable_Idle(Entity entity, Entity target)
     {
-        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     private SubActionResult Update_Idle(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -428,9 +435,10 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Success();
         }
 
-        if (MoveControllerOutputLookup.TryGetComponent(entity, out var moveOutput))
+        if (TransformLookup.TryGetComponent(entity, out var entityTransform) &&
+            MoveControllerInputLookup.TryGetComponent(entity, out var moveInput))
         {
-            if (moveOutput.HasArrived)
+            if (entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
             {
                 return SubActionResult.Success();
             }
@@ -458,7 +466,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Disable_MoveTo(Entity entity, Entity target)
     {
-        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     private SubActionResult Update_MoveTo(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -473,19 +481,20 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(1);
         }
 
-        if (!MoveControllerOutputLookup.HasComponent(entity))
+        if (!TransformLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(2);
         }
 
-        var moveOutput = MoveControllerOutputLookup[entity];
-
-        if (moveOutput.IsFailed)
+        if (!TransformLookup.HasComponent(target))
         {
             return SubActionResult.Fail(3);
         }
 
-        if (moveOutput.HasArrived && moveOutput.IsLookingAt)
+        var entityTransform = TransformLookup[entity];
+        var targetTransform = TransformLookup[target];
+
+        if (entityTransform.IsArrivedAndLooking(targetTransform, MoveTo_MaxDistance))
         {
             return SubActionResult.Success();
         }
@@ -505,7 +514,6 @@ public partial struct ActionRunnerJob : IJobEntity
         var lookDirection = math.normalize(escapePosition - entityPosition);
 
         MoveControllerInputLookup.SetTarget(entity, escapePosition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
-        MoveControllerOutputLookup.ResetOutput( entity);
     }
 
     private void Enable_RunFrom(Entity entity, Entity target, ref Random random)
@@ -527,7 +535,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Disable_RunFrom(Entity entity, Entity target)
     {
-        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     private SubActionResult Update_RunFrom(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -555,14 +563,14 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(2);
         }
 
-        if (!MoveControllerOutputLookup.HasComponent(entity))
+        if (!MoveControllerInputLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(3);
         }
 
-        var moveOutput = MoveControllerOutputLookup[entity];
+        var moveInput = MoveControllerInputLookup[entity];
 
-        if (moveOutput.HasArrived)
+        if (entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
         {
             SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
         }
@@ -581,7 +589,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Disable_RotateTowards(Entity entity, Entity target)
     {
-        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     private SubActionResult Update_RotateTowards(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -606,21 +614,14 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(3);
         }
 
-        if (!MoveControllerOutputLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(4);
-        }
-
-        var moveOutput = MoveControllerOutputLookup[entity];
-
-        if (moveOutput.IsLookingAt)
-        {
-            return SubActionResult.Success();
-        }
-
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
         var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
+
+        if (entityTransform.Rotation.IsLookingTowards(lookDirection, 0.01f))
+        {
+            return SubActionResult.Success();
+        }
 
         MoveControllerInputLookup.SetTarget(entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
@@ -700,7 +701,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Disable_MoveInto(Entity entity, Entity target)
     {
-        MoveControllerInputLookup.Disable(ref MoveControllerOutputLookup, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     private SubActionResult Update_MoveInto(Entity entity, Entity target, in SubActionTimeComponent timer, ref Random random)
@@ -723,11 +724,6 @@ public partial struct ActionRunnerJob : IJobEntity
         if (!MovingSpeedLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(3);
-        }
-
-        if (!MoveControllerOutputLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(4);
         }
 
         var entityTransform = TransformLookup[entity];

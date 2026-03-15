@@ -7,23 +7,20 @@ public class LayDownState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     private const float FailTime = 5f;
     private const float Distance = 0.01f;
 
-    public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
+    public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
-        MoveControllerOutputLookup = moveControllerOutputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
-        MoveControllerOutputLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
@@ -35,7 +32,7 @@ public class LayDownState : ISubActionState
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
         // Disable using extension method
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.ResetInput(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -62,12 +59,6 @@ public class LayDownState : ISubActionState
         if (!MovingSpeedLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(3);
-        }
-
-        // if entity does not have MoveControllerOutputComponent - return fail with code 4
-        if (!MoveControllerOutputLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(4);
         }
 
         var entityTransform = TransformLookup[entity];

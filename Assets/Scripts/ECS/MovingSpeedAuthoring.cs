@@ -18,7 +18,6 @@ public class MovingSpeedAuthoring : MonoBehaviour
             });
 
             AddComponent(entity, new MoveControllerInputComponent());
-            AddComponent(entity, new MoveControllerOutputComponent());
         }
     }
 }

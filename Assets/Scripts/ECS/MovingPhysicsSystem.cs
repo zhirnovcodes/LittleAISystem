@@ -38,7 +38,6 @@ public partial struct MovingPhysicsSystem : ISystem
         public void Execute(
             in LocalTransform transform,
             ref PhysicsVelocity velocity,
-            ref MoveControllerOutputComponent output,
             in PhysicsMass mass,
             in MoveControllerInputComponent input)
         {
@@ -57,7 +56,6 @@ public partial struct MovingPhysicsSystem : ISystem
             {
                 if (TransformLookup.TryGetComponent(input.TargetEntity, out var targetTransform) == false)
                 {
-                    output.IsFailed = true;
                     return;
                 }
 
@@ -71,9 +69,6 @@ public partial struct MovingPhysicsSystem : ISystem
 
             bool isLookingAt = currentTransform.Rotation.IsLookingTowards(
                 lookDirection, 0.01f);
-
-            output.HasArrived = hasArrived;
-            output.IsLookingAt = isLookingAt;
 
 
             if (hasArrived)

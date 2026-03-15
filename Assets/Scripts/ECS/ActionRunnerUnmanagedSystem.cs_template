@@ -1,0 +1,219 @@
+using LittleAI.Enums;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+[BurstCompile]
+public partial struct ActionRunnerUnmanagedSystem : ISystem
+{
+    // Component lookups
+    {_define system component lookups_}
+
+    [BurstCompile]
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<ActionChainConfigComponent>();
+        state.RequireForUpdate<ActionChainItem>();
+        state.RequireForUpdate<ActionRunnerComponent>();
+        state.RequireForUpdate<ActionMapInitializeComponent>();
+        state.RequireForUpdate<ActionChainUnmanagedTag>();
+
+        InitializeLookups(state);
+    }
+
+    private void InitializeLookups(SystemState state)
+    {
+        {_initialize lookups_}
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        RefreshLookups(state);
+
+        const int entitiesPerBatch = 1000;
+        var batchesCount = (int)(SystemAPI.QueryBuilder().WithAll<ActionRunnerComponent>().Build().CalculateEntityCount() /
+            entitiesPerBatch);
+
+        var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
+        var buffer = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
+
+        var job = new ActionRunnerJob
+        {
+            ActionsMap = SystemAPI.GetSingleton<ActionChainConfigComponent>(),
+            DeltaTime = SystemAPI.Time.DeltaTime,
+            Buffer = buffer,
+            BatchesCount = batchesCount,
+
+            {_pass lookups_}
+        };
+
+        state.Dependency = job.Schedule(state.Dependency);
+    }
+
+    private void RefreshLookups(SystemState state)
+    {
+        {_refresh lookups_}
+    }
+}
+
+[BurstCompile]
+public partial struct ActionRunnerJob : IJobEntity
+{
+    public ActionChainConfigComponent ActionsMap;
+    public float DeltaTime;
+
+    public EntityCommandBuffer Buffer;
+
+    public int BatchesCount;
+
+    {_define job lookups_}
+
+    public void Execute(
+        Entity entity,
+        ref ActionRunnerComponent runner,
+        ref SubActionTimeComponent timer,
+        ref ActionRandomComponent randomComponent,
+        ref DynamicBuffer<ActionChainItem> chain)
+    {
+        timer.DeltaTime += DeltaTime;
+        timer.TimeElapsed += DeltaTime;
+
+        if (runner.Action == ActionTypes.None)
+        {
+            SetActionIdle(ref runner);
+            EnableState(entity, in runner, ref randomComponent);
+        }
+
+
+        bool shouldUpdate = timer.FramesElapsed % (float)BatchesCount == entity.Index % (float)BatchesCount ||
+            timer.FramesElapsed == 0;
+
+        timer.FramesElapsed++;
+
+        if (shouldUpdate == false)
+        {
+            return;
+        }
+
+        var status = runner.IsCancellationRequested ? SubActionStatus.Cancel :
+            UpdateState(entity, in runner, ref randomComponent, in timer).Status;
+
+        switch (status)
+        {
+            case SubActionStatus.Running:
+                break;
+            case SubActionStatus.Success:
+                DisableState(entity, in runner);
+                SetNextSubAction(ref runner, ref chain);
+                timer.TimeElapsed = 0;
+                EnableState(entity, in runner, ref randomComponent);
+                break;
+            case SubActionStatus.Fail:
+            case SubActionStatus.Cancel:
+                DisableState(entity, in runner);
+                runner.IsCancellationRequested = false;
+                SetNextAction(ref runner, ref chain);
+                timer.TimeElapsed = 0;
+                EnableState(entity, in runner, ref randomComponent);
+                break;
+        }
+
+        timer.DeltaTime = 0;
+    }
+
+    // =========================================================================
+    // Action flow control
+    // =========================================================================
+
+    private void SetActionIdle(ref ActionRunnerComponent runner)
+    {
+        runner.Action = ActionTypes.Idle;
+        runner.CurrentSubActionIndex = 0;
+        runner.Target = Entity.Null;
+    }
+
+    private void SetNextSubAction(ref ActionRunnerComponent runner, ref DynamicBuffer<ActionChainItem> chain)
+    {
+        runner.CurrentSubActionIndex++;
+
+        if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction))
+        {
+            return;
+        }
+
+        SetNextAction(ref runner, ref chain);
+    }
+
+    private void SetNextAction(ref ActionRunnerComponent runner, ref DynamicBuffer<ActionChainItem> chain)
+    {
+        if (chain.IsEmpty)
+        {
+            SetActionIdle(ref runner);
+            return;
+        }
+        var nextAction = chain[0];
+
+        chain.RemoveAt(0);
+
+        runner.Action = nextAction.Action;
+        runner.CurrentSubActionIndex = 0;
+        runner.Target = nextAction.Target;
+    }
+
+    // =========================================================================
+    // DisableState
+    // =========================================================================
+
+    private void DisableState(Entity entity, in ActionRunnerComponent runner)
+    {
+        if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction) == false)
+        {
+            return;
+        }
+
+        switch (subaction)
+        {
+            {_switch disable state_}
+        }
+    }
+
+    // =========================================================================
+    // EnableState
+    // =========================================================================
+
+    private void EnableState(Entity entity, in ActionRunnerComponent runner, ref ActionRandomComponent randomComponent)
+    {
+        if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction) == false)
+        {
+            return;
+        }
+
+        switch (subaction)
+        {
+            {_switch enable state_}
+        }
+    }
+
+    // =========================================================================
+    // UpdateState
+    // =========================================================================
+
+    private SubActionResult UpdateState(Entity entity, in ActionRunnerComponent runner, ref ActionRandomComponent randomComponent, in SubActionTimeComponent timer)
+    {
+        if (ActionsMap.TryGetSubAction(runner.Action, runner.CurrentSubActionIndex, out var subaction) == false)
+        {
+            return SubActionResult.Fail(-1);
+        }
+
+        switch (subaction)
+        {
+            {_switch update state_}
+        }
+    }
+
+    {_subactions_}
+}

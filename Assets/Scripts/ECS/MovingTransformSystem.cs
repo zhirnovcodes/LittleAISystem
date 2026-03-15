@@ -29,7 +29,6 @@ public partial struct MovingTransformJob : IJobEntity
 
     public void Execute(
         ref LocalTransform transform,
-        ref MoveControllerOutputComponent output,
         in MoveControllerInputComponent input)
     {
         var currentTransform = transform;
@@ -39,10 +38,6 @@ public partial struct MovingTransformJob : IJobEntity
         
         // Check if looking at target direction
         bool isLookingAt = currentTransform.Rotation.IsLookingTowards(input.LookDirection, 0.01f);
-        
-        // Update output component
-        output.HasArrived = hasArrived;
-        output.IsLookingAt = isLookingAt;
         
         // If both conditions are met, we're done
         if (hasArrived && isLookingAt)

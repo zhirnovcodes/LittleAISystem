@@ -7,7 +7,6 @@ using Unity.Transforms;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(NeedBasedSystem))]
-[UpdateAfter(typeof(ActionRunnerUnmanagedSystem))]
 public partial struct NeedsActionChainSystem : ISystem
 {
     [BurstCompile]

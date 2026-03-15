@@ -7,22 +7,19 @@ public class RotateTowards : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     private const float FailTime = 10f;
 
-    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
+    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
         MovingSpeedLookup = movingSpeedLookup;
-        MoveControllerOutputLookup = moveControllerOutputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
         MovingSpeedLookup.Update(system);
-        MoveControllerOutputLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
@@ -34,7 +31,7 @@ public class RotateTowards : ISubActionState
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
         // Disable using extension method
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.ResetInput(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -63,24 +60,14 @@ public class RotateTowards : ISubActionState
             return SubActionResult.Fail(3);
         }
 
-        // if entity does not have MoveControllerOutputComponent - return fail with code 4
-        if (!MoveControllerOutputLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(4);
-        }
-
-        var moveOutput = MoveControllerOutputLookup[entity];
-
-        // Check if looking at target
-        if (moveOutput.IsLookingAt)
-        {
-            return SubActionResult.Success();
-        }
-
-        // Update target for rotation only (target position = entity position)
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
         var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
+
+        if (entityTransform.Rotation.IsLookingTowards(lookDirection, 0.01f))
+        {
+            return SubActionResult.Success();
+        }
 
         MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 

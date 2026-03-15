@@ -6,23 +6,20 @@ using Unity.Transforms;
 public class TestMoveTo : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
-    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
     private Random RandomGenerator;
 
     private const float MoveSpeed = 5.0f;
     private const float RotationSpeed = 180.0f;
 
-    public TestMoveTo(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
+    public TestMoveTo(ComponentLookup<LocalTransform> transformLookup)
     {
         TransformLookup = transformLookup;
-        MoveControllerOutputLookup = moveControllerOutputLookup;
         RandomGenerator = Random.CreateFromIndex((uint)System.DateTime.Now.Ticks);
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
-        MoveControllerOutputLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
@@ -34,7 +31,7 @@ public class TestMoveTo : ISubActionState
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
         // Disable using extension method
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.ResetInput(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -43,12 +40,6 @@ public class TestMoveTo : ISubActionState
         if (!TransformLookup.HasComponent(entity) || !TransformLookup.HasComponent(target))
         {
             return SubActionResult.Fail(1);
-        }
-
-        // if entity does not have MoveControllerOutputComponent - return fail with code 2
-        if (!MoveControllerOutputLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(2);
         }
 
         var entityTransform = TransformLookup[entity];

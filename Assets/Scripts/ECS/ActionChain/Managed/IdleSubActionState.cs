@@ -5,26 +5,26 @@ using Unity.Transforms;
 public class IdleSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveControllerInputComponent> InputComponent;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<MoveControllerOutputComponent> OutputComponent;
     private ComponentLookup<MoveLimitationComponent> LimitationComponent;
 
     private const float IdleTime = 20f;
     private const float WanderRadius = 10f;
 
-    public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> outputLookup, ComponentLookup<MoveLimitationComponent> limitationComponent)
+    public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerInputComponent> inputLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveLimitationComponent> limitationComponent)
     {
         TransformLookup = transformLookup;
+        InputComponent = inputLookup;
         MovingSpeedLookup = movingSpeedLookup;
-        OutputComponent = outputLookup;
         LimitationComponent = limitationComponent;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        InputComponent.Update(system);
         MovingSpeedLookup.Update(system);
-        OutputComponent.Update(system);
         LimitationComponent.Update(system);
     }
 
@@ -61,7 +61,7 @@ public class IdleSubActionState : ISubActionState
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.ResetInput(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -71,12 +71,11 @@ public class IdleSubActionState : ISubActionState
             return SubActionResult.Success();
         }
 
-        if (OutputComponent.TryGetComponent(entity, out var moveOutput))
+        if (TransformLookup.TryGetComponent(entity, out var entityTransform) &&
+            InputComponent.TryGetComponent(entity, out var moveInput) &&
+            entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
         {
-            if (moveOutput.HasArrived)
-            {
-                return SubActionResult.Success();
-            }
+            return SubActionResult.Success();
         }
 
         return SubActionResult.Running();

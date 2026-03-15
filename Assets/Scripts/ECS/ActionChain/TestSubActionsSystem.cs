@@ -18,18 +18,18 @@ public partial class TestSubActionsSystem : SystemBase
         var statsIncreaseLookup = GetComponentLookup<StatsIncreaseComponent>(true);
         var movingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
-        var moveControllerOutputLookup = GetComponentLookup<MoveControllerOutputComponent>(true);
+        var moveControllerInputLookup = GetComponentLookup<MoveControllerInputComponent>(true);
         var limitationLookup = GetComponentLookup<MoveLimitationComponent>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
         {
-            new IdleSubActionState(transformLookup, movingSpeedLookup, moveControllerOutputLookup, limitationLookup),
-            new WalkToSubActionState( movingSpeedLookup, moveControllerOutputLookup),
-            new RunFrom(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
-            new RotateTowards(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
+            new IdleSubActionState(transformLookup, moveControllerInputLookup, movingSpeedLookup, limitationLookup),
+            new WalkToSubActionState(transformLookup, movingSpeedLookup),
+            new RunFrom(transformLookup, moveControllerInputLookup, movingSpeedLookup),
+            new RotateTowards(transformLookup, movingSpeedLookup),
             new EatSubActionState(transformLookup, biteLookup, animalStatsLookup, statsIncreaseLookup),
-            new LayDownState(transformLookup, movingSpeedLookup, moveControllerOutputLookup),
+            new LayDownState(transformLookup, movingSpeedLookup),
             new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup)
         };
     }

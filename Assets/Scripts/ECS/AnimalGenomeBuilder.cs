@@ -110,11 +110,8 @@ public struct AnimalGenomeBuilder
     {
         CommandBuffer.AddComponent(Entity, (MovingSpeedComponent)data);
         
-        // Add MoveControllerInputComponent (disabled by default)
+        // Add MoveControllerInputComponent
         CommandBuffer.AddComponent(Entity, new MoveControllerInputComponent());
-        
-        // Add MoveControllerOutputComponent
-        CommandBuffer.AddComponent(Entity, new MoveControllerOutputComponent());
     }
     
     private void WithAging(GenomeData data)

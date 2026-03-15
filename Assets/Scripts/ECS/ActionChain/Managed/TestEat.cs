@@ -30,7 +30,7 @@ public class TestEat : ISubActionState
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
         // Disable using extension method
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.ResetInput(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)

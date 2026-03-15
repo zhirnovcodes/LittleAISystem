@@ -6,23 +6,23 @@ using Unity.Transforms;
 public class RunFrom : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<MoveControllerOutputComponent> MoveControllerOutputLookup;
 
     private const float SafeDistance = 10f;
 
-    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveControllerOutputComponent> moveControllerOutputLookup)
+    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerInputComponent> moveControllerInputLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
+        MoveControllerInputLookup = moveControllerInputLookup;
         MovingSpeedLookup = movingSpeedLookup;
-        MoveControllerOutputLookup = moveControllerOutputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MoveControllerInputLookup.Update(system);
         MovingSpeedLookup.Update(system);
-        MoveControllerOutputLookup.Update(system);
     }
 
     private void SetRandomEscapeTarget(EntityCommandBuffer buffer, Entity entity, float3 entityPosition, float3 targetPosition, ref Random random)
@@ -34,7 +34,6 @@ public class RunFrom : ISubActionState
         var lookDirection = math.normalize(escapePoition - entityPosition);
 
         MoveControllerExtensions.SetTarget(buffer, entity, escapePoition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
-        MoveControllerExtensions.ResetOutput(buffer, entity);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
@@ -61,7 +60,7 @@ public class RunFrom : ISubActionState
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
         // Disable using extension method
-        MoveControllerExtensions.Disable(buffer, entity);
+        MoveControllerExtensions.ResetInput(buffer, entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -93,16 +92,15 @@ public class RunFrom : ISubActionState
             return SubActionResult.Fail(2);
         }
 
-        // if entity does not have MoveControllerOutputComponent - return fail with code 3
-        if (!MoveControllerOutputLookup.HasComponent(entity))
+        if (!MoveControllerInputLookup.HasComponent(entity))
         {
             return SubActionResult.Fail(3);
         }
 
-        var moveOutput = MoveControllerOutputLookup[entity];
+        var moveInput = MoveControllerInputLookup[entity];
 
         // If arrived at current target, set new random target
-        if (moveOutput.HasArrived)
+        if (entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
         {
             SetRandomEscapeTarget(buffer, entity, entityTransform.Position, targetTransform.Position, ref random);
         }
