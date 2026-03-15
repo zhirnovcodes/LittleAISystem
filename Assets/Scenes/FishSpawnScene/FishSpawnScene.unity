@@ -335,7 +335,7 @@ MonoBehaviour:
     y: 0.03
   RandomSeed: 1234
   OneTimeSpawn: 10
-  MaxCount: 1000
+  MaxCount: 5000
   Parents:
   - {fileID: 1268306806}
   - {fileID: 882793482}
