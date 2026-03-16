@@ -9,31 +9,24 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct ActionRunnerUnmanagedSystem : ISystem
 {
-    // Component lookups
-    {_define system component lookups_}
+    private EntityQuery actionRunnerQuery;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        actionRunnerQuery = SystemAPI.QueryBuilder()
+            .WithAll<ActionRunnerComponent, SubActionTimeComponent, ActionRandomComponent, ActionChainItem>()
+            .Build();
+
         state.RequireForUpdate<ActionChainConfigComponent>();
-        state.RequireForUpdate<ActionChainItem>();
-        state.RequireForUpdate<ActionRunnerComponent>();
         state.RequireForUpdate<ActionMapInitializeComponent>();
-        state.RequireForUpdate<ActionChainUnmanagedTag>();
-
-        InitializeLookups(state);
-    }
-
-    private void InitializeLookups(SystemState state)
-    {
-        {_initialize lookups_}
+        state.RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
+        state.RequireForUpdate(actionRunnerQuery);
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        RefreshLookups(state);
-
         const int entitiesPerBatch = 1000;
         var batchesCount = (int)(SystemAPI.QueryBuilder().WithAll<ActionRunnerComponent>().Build().CalculateEntityCount() /
             entitiesPerBatch);
@@ -52,11 +45,6 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
         };
 
         state.Dependency = job.Schedule(state.Dependency);
-    }
-
-    private void RefreshLookups(SystemState state)
-    {
-        {_refresh lookups_}
     }
 }
 
