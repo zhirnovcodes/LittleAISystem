@@ -19,6 +19,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             .Build();
 
         state.RequireForUpdate<ActionChainConfigComponent>();
+        state.RequireForUpdate<ActionChainUnmanagedTag>();
         state.RequireForUpdate<ActionMapInitializeComponent>();
         state.RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
         state.RequireForUpdate(actionRunnerQuery);

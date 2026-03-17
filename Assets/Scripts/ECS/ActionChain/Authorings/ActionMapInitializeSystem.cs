@@ -1,4 +1,4 @@
-﻿using LittleAI.Enums;
+using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
@@ -41,6 +41,14 @@ public partial struct ActionMapInitializeSystem : ISystem
         var configComponent = new ActionChainConfigComponent { BlobReference = chainSettings };
 
         commandBuffer.AddComponent(entity, configComponent);
+        if (component.IsUsingManagedCode)
+        {
+            commandBuffer.AddComponent<ActionChainManagedTag>(entity);
+        }
+        else
+        {
+            commandBuffer.AddComponent<ActionChainUnmanagedTag>(entity);
+        }
 
         commandBuffer.Playback(state.EntityManager);
         commandBuffer.Dispose();

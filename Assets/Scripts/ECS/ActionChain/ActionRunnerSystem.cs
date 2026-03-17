@@ -1,9 +1,10 @@
 using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
-/*
 
-[UpdateInGroup(typeof(SimulationSystemGroup))]
+
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+[UpdateAfter(typeof(ActionRunnerUnmanagedSystem))]
 public partial class ActionRunnerSystem : SystemBase
 {
     private ActionChainConfigComponent ActionsMap;
@@ -13,6 +14,7 @@ public partial class ActionRunnerSystem : SystemBase
     protected override void OnCreate()
     {
         RequireForUpdate<ActionChainConfigComponent>();
+        RequireForUpdate<ActionChainManagedTag>();
         RequireForUpdate<ActionChainItem>();
         RequireForUpdate<ActionRunnerComponent>();
         RequireForUpdate<ActionMapInitializeComponent>();
@@ -176,4 +178,3 @@ public partial class ActionRunnerSystem : SystemBase
     }
     #endregion
 }
-*/

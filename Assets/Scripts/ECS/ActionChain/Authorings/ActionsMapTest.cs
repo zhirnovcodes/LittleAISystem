@@ -1,4 +1,4 @@
-﻿using LittleAI.Enums;
+using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Transforms;
@@ -43,7 +43,8 @@ public class ActionsMapTest : ActionMapBase
             var entity = GetEntity(TransformUsageFlags.None);
             AddComponent(entity, new ActionMapInitializeComponent
             {
-                Map = authoring
+                Map = authoring,
+                IsUsingManagedCode = true
             });
         }
     }

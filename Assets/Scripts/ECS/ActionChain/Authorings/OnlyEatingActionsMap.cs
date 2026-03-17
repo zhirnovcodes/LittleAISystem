@@ -5,6 +5,8 @@ using Unity.Transforms;
 
 public class OnlyEatingActionsMap : ActionMapBase
 {
+    public bool IsUsingManagedCode = false;
+
     public override Dictionary<SubActionTypes, ISubActionState> ConstructSubActionsStates(SystemBase system)
     {
         var transformLookup = system.GetComponentLookup<LocalTransform>(true);
@@ -57,7 +59,8 @@ public class OnlyEatingActionsMap : ActionMapBase
             var entity = GetEntity(TransformUsageFlags.None);
             AddComponent(entity, new ActionMapInitializeComponent
             {
-                Map = authoring
+                Map = authoring,
+                IsUsingManagedCode = authoring.IsUsingManagedCode
             });
         }
     }

@@ -335,7 +335,7 @@ MonoBehaviour:
     y: 0.03
   RandomSeed: 1234
   OneTimeSpawn: 10
-  MaxCount: 1000
+  MaxCount: 100
   Parents:
   - {fileID: 1268306806}
   - {fileID: 882793482}
@@ -990,6 +990,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2caa372700f3de48b24cfb2ff089790, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsUsingManagedCode: 0
 --- !u!1 &1999879274
 GameObject:
   m_ObjectHideFlags: 0
