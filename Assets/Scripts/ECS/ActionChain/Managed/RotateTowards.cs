@@ -6,30 +6,34 @@ using Unity.Transforms;
 public class RotateTowards : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
+    public RotateTowards(
+        ComponentLookup<LocalTransform> transformLookup,
+        ComponentLookup<MoveControllerInputComponent> moveControllerInputLookup,
+        ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
+        MoveControllerInputLookup = moveControllerInputLookup;
         MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MoveControllerInputLookup.Update(system);
         MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Enable MoveController
-        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerInputLookup.Enable(entity);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Disable using extension method
-        MoveControllerExtensions.ResetInput(buffer, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -67,7 +71,7 @@ public class RotateTowards : ISubActionState
             return SubActionResult.Success();
         }
 
-        MoveControllerExtensions.SetTarget(buffer, entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
+        MoveControllerInputLookup.SetTarget(entity, entityTransform.Position, 0, lookDirection, 0f, 0f, MovingSpeedLookup[entity].GetWalkingRotationSpeed());
 
         return SubActionResult.Running();
     }

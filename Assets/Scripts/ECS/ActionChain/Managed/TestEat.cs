@@ -6,27 +6,28 @@ using Unity.Transforms;
 public class TestEat : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
 
-    public TestEat(ComponentLookup<LocalTransform> transformLookup)
+    public TestEat(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerInputComponent> moveControllerInputLookup)
     {
         TransformLookup = transformLookup;
+        MoveControllerInputLookup = moveControllerInputLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MoveControllerInputLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Enable MoveController
-        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerInputLookup.Enable(entity);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Disable using extension method
-        MoveControllerExtensions.ResetInput(buffer, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -42,7 +43,7 @@ public class TestEat : ISubActionState
 
         // Update target for rotation only (target position = entity position for rotation only)
         var rotation = math.normalize(targetTransform.Position - entityTransform.Position);
-        MoveControllerExtensions.SetTarget(buffer, entity,
+        MoveControllerInputLookup.SetTarget(entity,
             targetTransform.Position, targetTransform.Scale, rotation, 0.2f, SubActionConsts.TestEat.MoveSpeed, SubActionConsts.TestEat.RotationSpeed);
 
         // Check if eating duration is complete

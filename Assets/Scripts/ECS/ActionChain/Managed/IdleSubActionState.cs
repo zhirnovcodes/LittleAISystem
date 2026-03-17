@@ -51,13 +51,13 @@ public class IdleSubActionState : ISubActionState
         var speed = movingSpeed.GetWalkingSpeed() * SubActionConsts.Idle.SpeedMultiplier;
         var rotationSpeed = movingSpeed.GetWalkingRotationSpeed() * SubActionConsts.Idle.SpeedMultiplier;
 
-        MoveControllerExtensions.Enable(buffer, entity);
-        MoveControllerExtensions.SetTarget(buffer, entity, targetPosition, 0, lookDirection, 0.01f, speed, rotationSpeed);
+        InputComponent.Enable(entity);
+        InputComponent.SetTarget(entity, targetPosition, 0, lookDirection, 0.01f, speed, rotationSpeed);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        MoveControllerExtensions.ResetInput(buffer, entity);
+        InputComponent.ResetInput(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)

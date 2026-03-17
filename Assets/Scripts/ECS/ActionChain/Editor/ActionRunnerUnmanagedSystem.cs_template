@@ -19,6 +19,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             .Build();
 
         state.RequireForUpdate<ActionChainConfigComponent>();
+        state.RequireForUpdate<ActionChainUnmanagedTag>();
         state.RequireForUpdate<ActionMapInitializeComponent>();
         state.RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
         state.RequireForUpdate(actionRunnerQuery);
@@ -28,8 +29,8 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         const int entitiesPerBatch = 1000;
-        var batchesCount = (int)(SystemAPI.QueryBuilder().WithAll<ActionRunnerComponent>().Build().CalculateEntityCount() /
-            entitiesPerBatch);
+        var actionRunnerCount = actionRunnerQuery.CalculateEntityCount();
+        var batchesCount = math.max(1, (actionRunnerCount + entitiesPerBatch - 1) / entitiesPerBatch);
 
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var buffer = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
@@ -41,10 +42,15 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             Buffer = buffer,
             BatchesCount = batchesCount,
 
-            {_pass lookups_}
+{_pass lookups_}
         };
 
         state.Dependency = job.Schedule(state.Dependency);
+    }
+
+    [BurstCompile]
+    public void OnDestroy(ref SystemState state)
+    {
     }
 }
 
@@ -58,7 +64,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public int BatchesCount;
 
-    {_define job lookups_}
+{_define job lookups_}
 
     public void Execute(
         Entity entity,
@@ -165,7 +171,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
         switch (subaction)
         {
-            {_switch disable state_}
+{_switch disable state_}
         }
     }
 
@@ -182,7 +188,7 @@ public partial struct ActionRunnerJob : IJobEntity
 
         switch (subaction)
         {
-            {_switch enable state_}
+{_switch enable state_}
         }
     }
 
@@ -199,9 +205,9 @@ public partial struct ActionRunnerJob : IJobEntity
 
         switch (subaction)
         {
-            {_switch update state_}
+{_switch update state_}
         }
     }
 
-    {_subactions_}
+{_subactions_}
 }

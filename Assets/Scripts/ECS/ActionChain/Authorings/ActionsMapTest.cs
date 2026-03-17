@@ -25,12 +25,13 @@ public class ActionsMapTest : ActionMapBase
     public override Dictionary<SubActionTypes, ISubActionState> ConstructSubActionsStates(SystemBase system)
     {
         var transformLookup = system.GetComponentLookup<LocalTransform>();
+        var moveControllerInputLookup = system.GetComponentLookup<MoveControllerInputComponent>(false);
 
         var subActionStates = new Dictionary<SubActionTypes, ISubActionState>
         {
             { SubActionTypes.Idle, new TestIdle() },
-            { SubActionTypes.MoveTo, new TestMoveTo(transformLookup) },
-            { SubActionTypes.Eat, new TestEat(transformLookup) }
+            { SubActionTypes.MoveTo, new TestMoveTo(transformLookup, moveControllerInputLookup) },
+            { SubActionTypes.Eat, new TestEat(transformLookup, moveControllerInputLookup) }
         };
 
         return subActionStates;

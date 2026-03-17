@@ -19,18 +19,18 @@ public partial class TestSubActionsSystem : SystemBase
         var statChangeLookup = GetBufferLookup<StatsChangeItem>(false);
         var movingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
-        var moveControllerInputLookup = GetComponentLookup<MoveControllerInputComponent>(true);
+        var moveControllerInputLookup = GetComponentLookup<MoveControllerInputComponent>(false);
         var limitationLookup = GetComponentLookup<MoveLimitationComponent>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
         {
             new IdleSubActionState(transformLookup, moveControllerInputLookup, movingSpeedLookup, limitationLookup),
-            new WalkToSubActionState(transformLookup, movingSpeedLookup),
+            new WalkToSubActionState(transformLookup, moveControllerInputLookup, movingSpeedLookup),
             new RunFrom(transformLookup, moveControllerInputLookup, movingSpeedLookup),
-            new RotateTowards(transformLookup, movingSpeedLookup),
+            new RotateTowards(transformLookup, moveControllerInputLookup, movingSpeedLookup),
             new EatSubActionState(transformLookup, biteLookup, animalStatsLookup, statsIncreaseLookup),
-            new LayDownState(transformLookup, movingSpeedLookup),
+            new LayDownState(transformLookup, moveControllerInputLookup, movingSpeedLookup),
             new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup, statChangeLookup)
         };
     }

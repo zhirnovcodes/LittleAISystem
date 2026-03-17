@@ -23,7 +23,7 @@ public class RunFrom : ISubActionState
         MovingSpeedLookup.Update(system);
     }
 
-    private void SetRandomEscapeTarget(EntityCommandBuffer buffer, Entity entity, float3 entityPosition, float3 targetPosition, ref Random random)
+    private void SetRandomEscapeTarget(Entity entity, float3 entityPosition, float3 targetPosition, ref Random random)
     {
         // Generate new random position
         var movingSpeed = MovingSpeedLookup[entity];
@@ -31,7 +31,7 @@ public class RunFrom : ISubActionState
         var escapePoition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
         var lookDirection = math.normalize(escapePoition - entityPosition);
 
-        MoveControllerExtensions.SetTarget(buffer, entity, escapePoition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+        MoveControllerInputLookup.SetTarget(entity, escapePoition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
@@ -51,14 +51,13 @@ public class RunFrom : ISubActionState
 
 
         // Enable and set initial target
-        MoveControllerExtensions.Enable(buffer, entity);
-        SetRandomEscapeTarget(buffer, entity, entityTransform.Position, targetTransform.Position, ref random);
+        MoveControllerInputLookup.Enable(entity);
+        SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Disable using extension method
-        MoveControllerExtensions.ResetInput(buffer, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -100,7 +99,7 @@ public class RunFrom : ISubActionState
         // If arrived at current target, set new random target
         if (entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
         {
-            SetRandomEscapeTarget(buffer, entity, entityTransform.Position, targetTransform.Position, ref random);
+            SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
         }
 
         return SubActionResult.Running();

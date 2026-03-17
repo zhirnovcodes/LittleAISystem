@@ -6,23 +6,29 @@ using Unity.Transforms;
 public class WalkToSubActionState : ISubActionState
 {
     private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
+    public WalkToSubActionState(
+        ComponentLookup<LocalTransform> transformLookup,
+        ComponentLookup<MoveControllerInputComponent> moveControllerInputLookup,
+        ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
+        MoveControllerInputLookup = moveControllerInputLookup;
         MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
         TransformLookup.Update(system);
+        MoveControllerInputLookup.Update(system);
         MovingSpeedLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        MoveControllerExtensions.Enable(buffer, entity);
+        MoveControllerInputLookup.Enable(entity);
 
         if (!MovingSpeedLookup.HasComponent(entity))
         {
@@ -31,13 +37,12 @@ public class WalkToSubActionState : ISubActionState
 
         var movingSpeed = MovingSpeedLookup[entity];
 
-        MoveControllerExtensions.SetTarget(buffer, entity, target, SubActionConsts.WalkTo.MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveControllerInputLookup.SetTarget(entity, target, SubActionConsts.WalkTo.MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Disable using extension method
-        MoveControllerExtensions.ResetInput(buffer, entity);
+        MoveControllerInputLookup.ResetInput(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
