@@ -16,6 +16,7 @@ public partial class TestSubActionsSystem : SystemBase
         var biteLookup = GetBufferLookup<BiteItem>();
         var animalStatsLookup = GetComponentLookup<AnimalStatsComponent>(true);
         var statsIncreaseLookup = GetComponentLookup<StatsIncreaseComponent>(true);
+        var statChangeLookup = GetBufferLookup<StatsChangeItem>(false);
         var movingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
         var moveControllerInputLookup = GetComponentLookup<MoveControllerInputComponent>(true);
@@ -30,7 +31,7 @@ public partial class TestSubActionsSystem : SystemBase
             new RotateTowards(transformLookup, movingSpeedLookup),
             new EatSubActionState(transformLookup, biteLookup, animalStatsLookup, statsIncreaseLookup),
             new LayDownState(transformLookup, movingSpeedLookup),
-            new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup)
+            new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup, statChangeLookup)
         };
     }
 

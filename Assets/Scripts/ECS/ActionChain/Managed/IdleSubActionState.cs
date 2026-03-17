@@ -9,9 +9,6 @@ public class IdleSubActionState : ISubActionState
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
     private ComponentLookup<MoveLimitationComponent> LimitationComponent;
 
-    private const float IdleTime = 20f;
-    private const float WanderRadius = 10f;
-
     public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerInputComponent> inputLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveLimitationComponent> limitationComponent)
     {
         TransformLookup = transformLookup;
@@ -30,7 +27,6 @@ public class IdleSubActionState : ISubActionState
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Check if entity has required components
         if (!TransformLookup.HasComponent(entity) || !MovingSpeedLookup.HasComponent(entity))
         {
             return;
@@ -39,8 +35,7 @@ public class IdleSubActionState : ISubActionState
         var entityTransform = TransformLookup[entity];
         var movingSpeed = MovingSpeedLookup[entity];
 
-        // Generate random position around entity
-        var radius = random.NextFloat(WanderRadius / 2f, WanderRadius);
+        var radius = random.NextFloat(SubActionConsts.Idle.WanderRadius / 2f, SubActionConsts.Idle.WanderRadius);
         float3 targetPosition;
 
         if (LimitationComponent.TryGetComponent(entity, out var limitation))
@@ -53,10 +48,11 @@ public class IdleSubActionState : ISubActionState
         }
 
         var lookDirection = math.normalize(targetPosition - entityTransform.Position);
+        var speed = movingSpeed.GetWalkingSpeed() * SubActionConsts.Idle.SpeedMultiplier;
+        var rotationSpeed = movingSpeed.GetWalkingRotationSpeed() * SubActionConsts.Idle.SpeedMultiplier;
 
-        // Enable and set random target
         MoveControllerExtensions.Enable(buffer, entity);
-        MoveControllerExtensions.SetTarget(buffer, entity, targetPosition, 0, lookDirection, 0.01f, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveControllerExtensions.SetTarget(buffer, entity, targetPosition, 0, lookDirection, 0.01f, speed, rotationSpeed);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -66,7 +62,8 @@ public class IdleSubActionState : ISubActionState
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        if (timer.IsTimeout(IdleTime))
+        var time = random.NextFloat(SubActionConsts.Idle.IdleTime / 2f, SubActionConsts.Idle.IdleTime);
+        if (timer.IsTimeout(time))
         {
             return SubActionResult.Success();
         }

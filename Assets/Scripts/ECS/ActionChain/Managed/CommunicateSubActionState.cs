@@ -7,18 +7,18 @@ public class CommunicateSubActionState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
+    private BufferLookup<StatsChangeItem> StatChangeLookup;
     private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
     private ComponentLookup<ReproductionComponent> ReproductionLookup;
     private BufferLookup<DNAChainItem> DNAChainLookup;
     private BufferLookup<DNAStorageItem> DNAStorageLookup;
-
-    private const float MaxDistance = 0.3f;
 
     public CommunicateSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         ComponentLookup<GenetaliaComponent> genetaliaLookup,
         ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup,
+        BufferLookup<StatsChangeItem> statChangeLookup,
         BufferLookup<DNAChainItem> dnaChainLookup,
         BufferLookup<DNAStorageItem> dnaStorageLookup,
         ComponentLookup<ReproductionComponent> reproductionLookup)
@@ -26,6 +26,7 @@ public class CommunicateSubActionState : ISubActionState
         TransformLookup = transformLookup;
         AnimalStatsLookup = animalStatsLookup;
         StatsIncreaseLookup = statsIncreaseLookup;
+        StatChangeLookup = statChangeLookup;
         GenetaliaLookup = genetaliaLookup;
         DNAChainLookup = dnaChainLookup;
         DNAStorageLookup = dnaStorageLookup;
@@ -37,6 +38,7 @@ public class CommunicateSubActionState : ISubActionState
         TransformLookup.Update(system);
         AnimalStatsLookup.Update(system);
         StatsIncreaseLookup.Update(system);
+        StatChangeLookup.Update(system);
         GenetaliaLookup.Update(system);
         DNAChainLookup.Update(system);
         DNAStorageLookup.Update(system);
@@ -83,7 +85,7 @@ public class CommunicateSubActionState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // Check if target is reached
-        if (entityTransform.IsTargetDistanceReached(targetTransform, MaxDistance) == false)
+        if (entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.Communicate.MaxDistance) == false)
         {
             return SubActionResult.Fail(2);
         }
@@ -100,10 +102,13 @@ public class CommunicateSubActionState : ISubActionState
 
         var statsChange = new AnimalStatsBuilder().WithSocial(socialGain).Build();
 
-        buffer.AppendToBuffer(entity, new StatsChangeItem
+        if (StatChangeLookup.TryGetBuffer(entity, out var changeBuffer))
         {
-            StatsChange = statsChange
-        });
+            changeBuffer.Add(new StatsChangeItem
+            {
+                StatsChange = statsChange
+            });
+        }
 
         // Check if entity has stats component
         if (!AnimalStatsLookup.HasComponent(entity))

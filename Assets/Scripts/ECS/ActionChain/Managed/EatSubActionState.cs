@@ -9,9 +9,6 @@ public class EatSubActionState : ISubActionState
     private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
     private BufferLookup<BiteItem> BiteLookup;
 
-    private const float FailTime = 20f;
-    private const float MaxDistance = 0.2f;
-
     public EatSubActionState(ComponentLookup<LocalTransform> transformLookup, BufferLookup<BiteItem> biteLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup)
     {
         TransformLookup = transformLookup;
@@ -53,13 +50,13 @@ public class EatSubActionState : ISubActionState
         }
 
         // if time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(SubActionConsts.Eat.FailTime))
         {
             return SubActionResult.Fail(2);
         }
 
         // if distance between transforms > MaxDistance - fail with error code 3
-        if (entityTransform.IsTargetDistanceReached(targetTransform, MaxDistance) == false)
+        if (entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.Eat.MaxDistance) == false)
         {
             return SubActionResult.Fail(3);
         }

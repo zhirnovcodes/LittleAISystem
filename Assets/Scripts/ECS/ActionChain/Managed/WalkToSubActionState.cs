@@ -8,9 +8,6 @@ public class WalkToSubActionState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    private const float MaxDistance = 0.2f;
-    private const float FailTime = 30f;
-
     public WalkToSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
@@ -25,13 +22,16 @@ public class WalkToSubActionState : ISubActionState
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Enable MoveController
         MoveControllerExtensions.Enable(buffer, entity);
 
-        // Update target position
+        if (!MovingSpeedLookup.HasComponent(entity))
+        {
+            return;
+        }
+
         var movingSpeed = MovingSpeedLookup[entity];
 
-        MoveControllerExtensions.SetTarget(buffer, entity, target, MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveControllerExtensions.SetTarget(buffer, entity, target, SubActionConsts.WalkTo.MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
@@ -42,7 +42,7 @@ public class WalkToSubActionState : ISubActionState
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(SubActionConsts.WalkTo.FailTime))
         {
             return SubActionResult.Fail(0);
         }
@@ -64,7 +64,7 @@ public class WalkToSubActionState : ISubActionState
 
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
-        if (entityTransform.IsArrivedAndLooking(targetTransform, MaxDistance))
+        if (entityTransform.IsArrivedAndLooking(targetTransform, SubActionConsts.WalkTo.MaxDistance))
         {
             return SubActionResult.Success();
         }

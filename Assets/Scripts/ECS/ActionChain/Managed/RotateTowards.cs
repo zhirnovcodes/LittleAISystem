@@ -8,8 +8,6 @@ public class RotateTowards : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    private const float FailTime = 10f;
-
     public RotateTowards(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
@@ -49,7 +47,7 @@ public class RotateTowards : ISubActionState
         }
 
         // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(SubActionConsts.RotateTowards.FailTime))
         {
             return SubActionResult.Fail(2);
         }

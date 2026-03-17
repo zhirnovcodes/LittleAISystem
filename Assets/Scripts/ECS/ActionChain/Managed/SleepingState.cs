@@ -7,15 +7,18 @@ public class SleepingState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    private BufferLookup<StatsChangeItem> StatChangeLookup;
 
-    private const float FailTime = 100f;
-    private const float MaxDistance = 0.01f;
-
-    public SleepingState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup)
+    public SleepingState(
+        ComponentLookup<LocalTransform> transformLookup,
+        ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup,
+        ComponentLookup<AnimalStatsComponent> animalStatsLookup,
+        BufferLookup<StatsChangeItem> statChangeLookup)
     {
         TransformLookup = transformLookup;
         SleepingPlaceLookup = sleepingPlaceLookup;
         AnimalStatsLookup = animalStatsLookup;
+        StatChangeLookup = statChangeLookup;
     }
 
     public void Refresh(SystemBase system)
@@ -23,6 +26,7 @@ public class SleepingState : ISubActionState
         TransformLookup.Update(system);
         SleepingPlaceLookup.Update(system);
         AnimalStatsLookup.Update(system);
+        StatChangeLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
@@ -50,7 +54,7 @@ public class SleepingState : ISubActionState
         }
 
         // if time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(SubActionConsts.Sleeping.FailTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -59,7 +63,7 @@ public class SleepingState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // if distance between transforms > MaxDistance - fail with error code 3
-        if (!entityTransform.IsTargetDistanceReached(targetTransform, MaxDistance))
+        if (!entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.Sleeping.MaxDistance))
         {
             return SubActionResult.Fail(3);
         }
@@ -85,10 +89,13 @@ public class SleepingState : ISubActionState
 
         var statsChange = new AnimalStatsBuilder().WithEnergy(energyGain).Build();
 
-        buffer.AppendToBuffer(entity, new StatsChangeItem
+        if (StatChangeLookup.TryGetBuffer(entity, out var changeBuffer))
         {
-            StatsChange = statsChange
-        });
+            changeBuffer.Add(new StatsChangeItem
+            {
+                StatsChange = statsChange
+            });
+        }
 
         return SubActionResult.Running();
     }

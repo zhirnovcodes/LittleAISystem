@@ -44,7 +44,6 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             // Get lookups directly here - this registers dependencies correctly
             TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true),
             BiteLookup = SystemAPI.GetBufferLookup<BiteItem>(true),
-            GenetaliaLookup = SystemAPI.GetComponentLookup<GenetaliaComponent>(false),
             AnimalStatsLookup = SystemAPI.GetComponentLookup<AnimalStatsComponent>(true),
             StatsIncreaseLookup = SystemAPI.GetComponentLookup<StatsIncreaseComponent>(true),
             MovingSpeedLookup = SystemAPI.GetComponentLookup<MovingSpeedComponent>(true),
@@ -54,6 +53,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             DNAStorageLookup = SystemAPI.GetBufferLookup<DNAStorageItem>(true),
             MoveLimitationLookup = SystemAPI.GetComponentLookup<MoveLimitationComponent>(true),
 
+            GenetaliaLookup = SystemAPI.GetComponentLookup<GenetaliaComponent>(false),
             MoveControllerInputLookup = SystemAPI.GetComponentLookup<MoveControllerInputComponent>(false),
             StatChangeLookup = SystemAPI.GetBufferLookup<StatsChangeItem>(false),
         };

@@ -1,4 +1,4 @@
-﻿using LittleAI.Enums;
+using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Transforms;
@@ -14,6 +14,7 @@ public class OnlyEatingActionsMap : ActionMapBase
 
         var animalStatsLookup = system.GetComponentLookup<AnimalStatsComponent>(true);
         var statsIncreaseLookup = system.GetComponentLookup<StatsIncreaseComponent>(true);
+        var statChangeLookup = system.GetBufferLookup<StatsChangeItem>(false);
         var movingSpeedLookup = system.GetComponentLookup<MovingSpeedComponent>(true);
         var reproductionLookup = system.GetComponentLookup<ReproductionComponent>(true);
         var dnaChainLookup = system.GetBufferLookup<DNAChainItem>(true);
@@ -30,9 +31,9 @@ public class OnlyEatingActionsMap : ActionMapBase
             { SubActionTypes.RotateTowards, new RotateTowards(transformLookup, movingSpeedLookup) },
             { SubActionTypes.Eat, new EatSubActionState(transformLookup, biteLookup, animalStatsLookup, statsIncreaseLookup) },
             { SubActionTypes.MoveInto, new LayDownState(transformLookup, movingSpeedLookup) },
-            { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup) },
+            { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup, statChangeLookup) },
             { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(transformLookup, animalStatsLookup, genetaliaLookup) },
-            { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, genetaliaLookup, statsIncreaseLookup, dnaChainLookup, dnaStorageLookup, reproductionLookup) }
+            { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, genetaliaLookup, statsIncreaseLookup, statChangeLookup, dnaChainLookup, dnaStorageLookup, reproductionLookup) }
         };
 
         return subActions;

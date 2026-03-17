@@ -9,8 +9,6 @@ public class RunFrom : ISubActionState
     private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    private const float SafeDistance = 10f;
-
     public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerInputComponent> moveControllerInputLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
@@ -29,7 +27,7 @@ public class RunFrom : ISubActionState
     {
         // Generate new random position
         var movingSpeed = MovingSpeedLookup[entity];
-        var safeDistance = new float2(1, 1.5f) * SafeDistance;
+        var safeDistance = new float2(1, 1.5f) * SubActionConsts.RunFrom.SafeDistance;
         var escapePoition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
         var lookDirection = math.normalize(escapePoition - entityPosition);
 
@@ -81,7 +79,7 @@ public class RunFrom : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // If distance >= SafeDistance - success
-        if (entityTransform.IsDistanceGreaterThan(targetTransform, SafeDistance))
+        if (entityTransform.IsDistanceGreaterThan(targetTransform, SubActionConsts.RunFrom.SafeDistance))
         {
             return SubActionResult.Success();
         }

@@ -8,9 +8,6 @@ public class LayDownState : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    private const float FailTime = 5f;
-    private const float Distance = 0.01f;
-
     public LayDownState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
         TransformLookup = transformLookup;
@@ -50,7 +47,7 @@ public class LayDownState : ISubActionState
         }
 
         // If time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(SubActionConsts.LayDown.FailTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -65,7 +62,7 @@ public class LayDownState : ISubActionState
         var targetTransform = TransformLookup[target];
 
         // After distance < Distance - returns success
-        if (entityTransform.IsTargetPositionReached(targetTransform.Position, Distance))
+        if (entityTransform.IsTargetPositionReached(targetTransform.Position, SubActionConsts.LayDown.Distance))
         {
             return SubActionResult.Success();
         }

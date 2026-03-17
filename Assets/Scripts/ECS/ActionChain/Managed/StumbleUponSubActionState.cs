@@ -8,10 +8,6 @@ public class StumbleUponSubActionState : ISubActionState
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
 
-    private const float FailTime = 2f;
-    private const float MaxDistance = 0.3f;
-    private const float Delta = 1f;
-
     public StumbleUponSubActionState(
         ComponentLookup<LocalTransform> transformLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
@@ -65,7 +61,7 @@ public class StumbleUponSubActionState : ISubActionState
         }
 
         // if time elapsed > FailTime, fail state, error code = 2
-        if (timer.IsTimeout(FailTime))
+        if (timer.IsTimeout(SubActionConsts.StumbleUpon.FailTime))
         {
             return SubActionResult.Fail(2);
         }
@@ -73,13 +69,13 @@ public class StumbleUponSubActionState : ISubActionState
         var entityTransform = TransformLookup[entity];
         var targetTransform = TransformLookup[target];
         // Check if target is not reached
-        if (entityTransform.IsTargetDistanceReached(targetTransform, MaxDistance) == false)
+        if (entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.StumbleUpon.MaxDistance) == false)
         {
             return SubActionResult.Running();
         }
 
         // Check if looking towards target
-        if (entityTransform.IsLookingTowards(targetTransform, Delta) == false)
+        if (entityTransform.IsLookingTowards(targetTransform, SubActionConsts.StumbleUpon.Delta) == false)
         {
             return SubActionResult.Running();
         }*/

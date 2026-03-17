@@ -8,9 +8,6 @@ public class TestMoveTo : ISubActionState
     private ComponentLookup<LocalTransform> TransformLookup;
     private Random RandomGenerator;
 
-    private const float MoveSpeed = 5.0f;
-    private const float RotationSpeed = 180.0f;
-
     public TestMoveTo(ComponentLookup<LocalTransform> transformLookup)
     {
         TransformLookup = transformLookup;
@@ -54,7 +51,7 @@ public class TestMoveTo : ISubActionState
         // Update target position
         var rotation = math.normalize(targetTransform.Position - entityTransform.Position);
         MoveControllerExtensions.SetTarget(buffer, entity, 
-            targetTransform.Position, targetTransform.Scale, rotation, 0.2f, MoveSpeed, RotationSpeed);
+            targetTransform.Position, targetTransform.Scale, rotation, 0.2f, SubActionConsts.TestMoveTo.MoveSpeed, SubActionConsts.TestMoveTo.RotationSpeed);
 
         return SubActionResult.Running();
     }
