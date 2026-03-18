@@ -676,6 +676,7 @@ GameObject:
   - component: {fileID: 8061670187676942536}
   - component: {fileID: 8331797628933566830}
   - component: {fileID: 6088069285441106309}
+  - component: {fileID: 822998515206875258}
   m_Layer: 7
   m_Name: FishLod
   m_TagString: Untagged
@@ -783,6 +784,21 @@ LODGroup:
     renderers:
     - renderer: {fileID: 4560521625164069252}
   m_Enabled: 1
+--- !u!114 &822998515206875258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8778109812505074581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17293485bca0c424db7bf0eabfbef315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SafetyChecks:
+  - ActorConditions: 4
+    SafetyRecession: 50
 --- !u!1 &8910433126554117574
 GameObject:
   m_ObjectHideFlags: 0

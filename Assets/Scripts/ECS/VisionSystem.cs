@@ -37,7 +37,7 @@ public partial struct VisionJob : IJobEntity
     public float DeltaTime;
     [ReadOnly] public PhysicsWorldSingleton PhysicsWorld;
 
-    const int MaxVisionItems = 16;
+    const int MaxVisionItems = 32;
 
     void Execute(ref VisionComponent vision, DynamicBuffer<VisibleItem> visibleBuffer, 
         in LocalTransform transform, Entity entity)
