@@ -82,11 +82,10 @@ public partial struct MovingPhysicsSystem : ISystem
 
             if (isLookingAt)
             {
-                velocity.Angular = float3.zero;
+                velocity.Angular += float3.zero;
             }
             else
             {
-
                 velocity.Angular = GetAngularVelocity(lookDirection, transform.Rotation, mass, input.RotationSpeed, DeltaTime);
             }
         }
@@ -153,7 +152,7 @@ public partial struct MovingPhysicsSystem : ISystem
             float3 axis = cross / crossLen;
 
             float angleRad = math.acos(dot);
-            float maxStepRad = math.radians(rotationSpeed*2f) * deltaTime;
+            float maxStepRad = math.radians(rotationSpeed) * deltaTime;
             float angularSpeed = math.min(angleRad, maxStepRad) / deltaTime;
 
             // World-space angular velocity
