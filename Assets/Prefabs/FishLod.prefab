@@ -798,7 +798,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SafetyChecks:
   - ActorConditions: 5
-    SafetyRecession: 50
+    SafetyRecession: 80
 --- !u!1 &8910433126554117574
 GameObject:
   m_ObjectHideFlags: 0

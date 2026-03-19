@@ -60,6 +60,12 @@ public struct AnimalStats
         return Stats.GetWeight();
     }
 
+    public AnimalStats Clamp(float minValue, float maxValue)
+    {
+        Stats = Stats.Clamp(minValue, maxValue);
+        return this;
+    }
+
     // Implicit conversion from float4x4
     public static implicit operator AnimalStats(float4x4 data)
     {

@@ -667,7 +667,7 @@ MonoBehaviour:
           y: 0
           z: 0
           w: 0
-    ActorConditions: 1
+    ActorConditions: 25
     ActionType: 6
 --- !u!114 &1759377222399547762
 MonoBehaviour:
