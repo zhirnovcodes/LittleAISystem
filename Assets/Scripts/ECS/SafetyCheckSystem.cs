@@ -23,8 +23,7 @@ public partial struct SafetyCheckSystem : ISystem
             ConditionFlagsLookup = conditionFlagsLookup
         };
 
-        //job.ScheduleParallel();
-        job.Schedule();
+        job.ScheduleParallel();
     }
 
     [BurstCompile]

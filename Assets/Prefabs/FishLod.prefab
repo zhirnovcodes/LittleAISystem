@@ -797,7 +797,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SafetyChecks:
-  - ActorConditions: 4
+  - ActorConditions: 5
     SafetyRecession: 50
 --- !u!1 &8910433126554117574
 GameObject:
