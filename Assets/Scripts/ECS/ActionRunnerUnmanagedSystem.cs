@@ -623,7 +623,7 @@ public partial struct ActionRunnerJob : IJobEntity
         var escapePoition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
         var lookDirection = math.normalize(escapePoition - entityPosition);
 
-        InputComponent.SetTarget(entity, escapePoition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+        InputComponent.SetTarget(entity, escapePoition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed()*1.5f, movingSpeed.GetRunningRotationSpeed());
     }
 
     public void Enable_RunFrom(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)

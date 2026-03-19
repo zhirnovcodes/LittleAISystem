@@ -32,7 +32,7 @@ public partial struct ConditionFlagsTestSystem : ISystem
         var actorConditions = ConditionFlags.IsAnimal | ConditionFlags.IsHerbivore;
         var expectedConditions = ConditionFlags.None;
         
-        bool result = actorConditions.IsConditionMet(expectedConditions);
+        bool result = actorConditions.IsAllConditionMet(expectedConditions);
         
         AssertTrue(result, "TestCase1");
         Debug.Log($"Test Case 1: Expected true, Got {result} - {(result ? "PASSED" : "FAILED")}");
@@ -45,7 +45,7 @@ public partial struct ConditionFlagsTestSystem : ISystem
         var actorConditions = ConditionFlags.IsAnimal | ConditionFlags.IsHerbivore;
         var expectedConditions = ConditionFlags.IsAnimal;
         
-        bool result = actorConditions.IsConditionMet(expectedConditions);
+        bool result = actorConditions.IsAllConditionMet(expectedConditions);
         
         AssertTrue(result, "TestCase2");
         Debug.Log($"Test Case 2: Expected true, Got {result} - {(result ? "PASSED" : "FAILED")}");
@@ -58,7 +58,7 @@ public partial struct ConditionFlagsTestSystem : ISystem
         var actorConditions = ConditionFlags.IsAnimal | ConditionFlags.IsHerbivore | ConditionFlags.IsPlant;
         var expectedConditions = ConditionFlags.IsAnimal | ConditionFlags.IsHerbivore;
         
-        bool result = actorConditions.IsConditionMet(expectedConditions);
+        bool result = actorConditions.IsAllConditionMet(expectedConditions);
         
         AssertTrue(result, "TestCase3");
         Debug.Log($"Test Case 3: Expected true, Got {result} - {(result ? "PASSED" : "FAILED")}");
@@ -71,7 +71,7 @@ public partial struct ConditionFlagsTestSystem : ISystem
         var actorConditions = ConditionFlags.IsAnimal | ConditionFlags.IsHerbivore;
         var expectedConditions = ConditionFlags.IsPredator;
         
-        bool result = actorConditions.IsConditionMet(expectedConditions);
+        bool result = actorConditions.IsAllConditionMet(expectedConditions);
         
         AssertFalse(result, "TestCase4");
         Debug.Log($"Test Case 4: Expected false, Got {result} - {(!result ? "PASSED" : "FAILED")}");
@@ -84,7 +84,7 @@ public partial struct ConditionFlagsTestSystem : ISystem
         var actorConditions = ConditionFlags.IsAnimal | ConditionFlags.IsHerbivore;
         var expectedConditions = ConditionFlags.IsAnimal | ConditionFlags.IsPredator;
         
-        bool result = actorConditions.IsConditionMet(expectedConditions);
+        bool result = actorConditions.IsAllConditionMet(expectedConditions);
         
         AssertFalse(result, "TestCase5");
         Debug.Log($"Test Case 5: Expected false, Got {result} - {(!result ? "PASSED" : "FAILED")}");
@@ -97,7 +97,7 @@ public partial struct ConditionFlagsTestSystem : ISystem
         var actorConditions = ConditionFlags.IsAnimal | ConditionFlags.IsHerbivore | ConditionFlags.IsPlant | ConditionFlags.IsPredator;
         var expectedConditions = ConditionFlags.IsAnimal | ConditionFlags.IsHerbivore | ConditionFlags.IsPlant | ConditionFlags.IsPredator;
         
-        bool result = actorConditions.IsConditionMet(expectedConditions);
+        bool result = actorConditions.IsAllConditionMet(expectedConditions);
         
         AssertTrue(result, "TestCase6");
         Debug.Log($"Test Case 6: Expected true, Got {result} - {(result ? "PASSED" : "FAILED")}");

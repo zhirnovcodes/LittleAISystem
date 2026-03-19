@@ -7,7 +7,7 @@ public static class ConditionFlagsExtensions
     /// <param name="actorConditions">The conditions the actor has</param>
     /// <param name="expectedConditions">The conditions required</param>
     /// <returns>True if all expected conditions are met</returns>
-    public static bool IsConditionMet(this ConditionFlags actorConditions, ConditionFlags expectedConditions)
+    public static bool IsAllConditionMet(this ConditionFlags actorConditions, ConditionFlags expectedConditions)
     {
         // If no conditions are expected, always return true
         if (expectedConditions == ConditionFlags.None)
@@ -15,6 +15,23 @@ public static class ConditionFlagsExtensions
 
         // Check if all expected flags are present in actor conditions
         return (actorConditions & expectedConditions) == expectedConditions;
+    }
+
+    /// <summary>
+    /// Checks if the actor's conditions meet any of the expected conditions.
+    /// Returns true if AT LEAST ONE expected condition is present in the actor's conditions.
+    /// </summary>
+    /// <param name="actorConditions">The conditions the actor has</param>
+    /// <param name="expectedConditions">The conditions to match against</param>
+    /// <returns>True if at least one expected condition is met</returns>
+    public static bool IsOneOfConditionsMet(this ConditionFlags actorConditions, ConditionFlags expectedConditions)
+    {
+        // If no conditions are expected, always return true
+        if (expectedConditions == ConditionFlags.None)
+            return true;
+
+        // Check if any expected flags are present in actor conditions
+        return (actorConditions & expectedConditions) != ConditionFlags.None;
     }
 }
 

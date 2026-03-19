@@ -733,7 +733,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79d00dfe05c172941890770f485cb443, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Flags: 21
+  Flags: 5
   HasReproduction: 1
   Reproduction:
     IsMale: 0

@@ -26,32 +26,32 @@ public struct AnimalStats
     // Setters
     public void SetEnergy(float value)
     {
-        Stats.c0.x = math.clamp(value, 0f, 100f);
+        Stats.c0.x = math.clamp(value, -100f, 100f);
     }
 
     public void SetFullness(float value)
     {
-        Stats.c0.y = math.clamp(value, 0f, 100f);
+        Stats.c0.y = math.clamp(value, -100f, 100f);
     }
 
     public void SetToilet(float value)
     {
-        Stats.c0.z = math.clamp(value, 0f, 100f);
+        Stats.c0.z = math.clamp(value, -100f, 100f);
     }
 
     public void SetSocial(float value)
     {
-        Stats.c0.w = math.clamp(value, 0f, 100f);
+        Stats.c0.w = math.clamp(value, -100f, 100f);
     }
 
     public void SetSafety(float value)
     {
-        Stats.c1.x = math.clamp(value, 0f, 100f);
+        Stats.c1.x = math.clamp(value, -100f, 100f);
     }
 
     public void SetHealth(float value)
     {
-        Stats.c1.y = math.clamp(value, 0f, 100f);
+        Stats.c1.y = math.clamp(value, -100f, 100f);
     }
 
     // Method to get total weight (sum of all stats)
@@ -73,14 +73,14 @@ public struct AnimalStats
     public static AnimalStats operator +(AnimalStats a, AnimalStats b)
     {
         a.Stats += b.Stats;
-        a.Stats = a.Stats.Clamp(0, 100f);
+        //a.Stats = a.Stats.Clamp(-100, 100f);
         return a;
     }
 
     public static AnimalStats operator -(AnimalStats a, AnimalStats b)
     {
         a.Stats -= b.Stats;
-        a.Stats = a.Stats.Clamp(0, 100f);
+        //a.Stats = a.Stats.Clamp(-100, 100f);
         return a;
     }
 }

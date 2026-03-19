@@ -358,22 +358,22 @@ MonoBehaviour:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: Infinity
-      outSlope: 0.11424548
-      tangentMode: 5
-      weightedMode: 1
-      inWeight: 0
-      outWeight: 0.089247316
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 1
-      outSlope: 1
+      time: 0.0014934903
+      value: 0.99991477
+      inSlope: -0.036311343
+      outSlope: -0.036311343
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
+      outWeight: 0.11494706
+    - serializedVersion: 3
+      time: 0.895874
+      value: -0.0036621094
+      inSlope: -3.1704242
+      outSlope: -3.1704242
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.027934365
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -502,22 +502,22 @@ MonoBehaviour:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 0
+      time: 0.00548172
+      value: 1.0007935
       inSlope: 0
-      outSlope: 1
+      outSlope: 0
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 1
-      outSlope: 0
+      time: 100
+      value: -0.00035858154
+      inSlope: -0.09927165
+      outSlope: -0.09927165
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.037356555
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -807,8 +807,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SafetyChecks:
-  - ActorConditions: 4
-    SafetyRecession: 50
+  - ActorConditions: 5
+    SafetyRecession: 80
 --- !u!1001 &642174201
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1255,8 +1255,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 0
+      time: 0.003288269
+      value: 1.008606
       inSlope: Infinity
       outSlope: 0.11424548
       tangentMode: 5
@@ -1264,13 +1264,13 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0.089247316
     - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 1
-      outSlope: 1
+      time: 0.99780273
+      value: 0.008628845
+      inSlope: -145.0643
+      outSlope: -145.0643
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.0010981599
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -1399,22 +1399,22 @@ MonoBehaviour:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 0
+      time: 0.012062073
+      value: 1.0054932
       inSlope: 0
-      outSlope: 1
+      outSlope: 0
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 1
-      outSlope: 0
+      time: 100
+      value: 0
+      inSlope: -0.2510412
+      outSlope: -0.2510412
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.06395254
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -1705,7 +1705,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SafetyChecks:
   - ActorConditions: 5
-    SafetyRecession: 50
+    SafetyRecession: 80
 --- !u!1001 &2315356810211703561
 PrefabInstance:
   m_ObjectHideFlags: 0

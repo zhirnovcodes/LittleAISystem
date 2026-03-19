@@ -23,7 +23,8 @@ public partial struct SafetyCheckSystem : ISystem
             ConditionFlagsLookup = conditionFlagsLookup
         };
 
-        job.ScheduleParallel();
+        //job.ScheduleParallel();
+        job.Schedule();
     }
 
     [BurstCompile]
@@ -53,7 +54,7 @@ public partial struct SafetyCheckSystem : ISystem
                     var safetyCheck = safetyChecks[j];
 
                     // If the visible entity matches the actor conditions
-                    if (visibleConditions.IsConditionMet(safetyCheck.ActorConditions))
+                    if (visibleConditions.IsAllConditionMet(safetyCheck.ActorConditions))
                     {
                         // Create a stats change item with negative safety
                         var change = new AnimalStats();

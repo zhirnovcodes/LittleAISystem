@@ -55,7 +55,7 @@ public partial struct NeedBasedSystem : ISystem
                 for (int j = 0; j < statAdvertisers.Length; j++)
                 {
                     var advertiser = statAdvertisers[j];
-                    if (!selfConditions.Conditions.IsConditionMet(advertiser.ActorConditions))
+                    if (!selfConditions.Conditions.IsAllConditionMet(advertiser.ActorConditions))
                         continue;
 
                     needBasedInputs.Add(new NeedBasedInputItem
