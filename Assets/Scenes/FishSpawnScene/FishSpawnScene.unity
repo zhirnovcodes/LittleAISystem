@@ -157,6 +157,7 @@ MonoBehaviour:
     x: 0.1
     y: 0.2
   Seed: 1345
+  ShouldSpawn: 1
 --- !u!4 &164103814
 Transform:
   m_ObjectHideFlags: 0
@@ -334,8 +335,8 @@ MonoBehaviour:
     x: 0.02
     y: 0.03
   RandomSeed: 1234
-  OneTimeSpawn: 10
-  MaxCount: 1000
+  OneTimeSpawn: 1000
+  MaxCount: 5000
   Parents:
   - {fileID: 1268306806}
   - {fileID: 882793482}
@@ -349,7 +350,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -5, z: 0}
-  m_LocalScale: {x: 50, y: 4.05, z: 50}
+  m_LocalScale: {x: 50, y: 10, z: 50}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1268306807}
@@ -514,12 +515,12 @@ MonoBehaviour:
       Needs:
         points:
           x: 0
-          y: 1
+          y: 1.0055542
           z: 1
           w: 0
         tangents:
-          x: 0
-          y: -21.995668
+          x: -1.21523
+          y: -0.5502918
       Distance:
         points:
           x: 0
@@ -527,19 +528,19 @@ MonoBehaviour:
           z: 100
           w: 0
         tangents:
-          x: 0
+          x: -0.010872473
           y: -0.009055928
   - StatType: 4
     Attenuation:
       Needs:
         points:
           x: 0
-          y: 1
+          y: 1.003128
           z: 1
-          w: 0.0033524353
+          w: 0.0049393494
         tangents:
-          x: 0
-          y: -1.3343955
+          x: 1.715953
+          y: -0.19319437
       Distance:
         points:
           x: 0
@@ -571,8 +572,8 @@ MonoBehaviour:
           y: -0.009055928
   HasVision: 1
   Vision:
-    MaxDistance: 9.44
-    Interval: 0.4
+    MaxDistance: 4
+    Interval: 1
   HasMoveLimitation: 1
   MoveLimitation:
     Central:
@@ -581,7 +582,7 @@ MonoBehaviour:
       z: 0
     Scale:
       x: 50
-      y: 5
+      y: 10
       z: 50
 --- !u!4 &882793483
 Transform:
@@ -861,13 +862,13 @@ MonoBehaviour:
     Attenuation:
       Needs:
         points:
-          x: 0
-          y: 1
+          x: 0.002193451
+          y: 1.0032959
           z: 1
           w: 0
         tangents:
-          x: 0
-          y: -12.160179
+          x: -0.800188
+          y: -0.7030199
       Distance:
         points:
           x: 0
@@ -875,7 +876,7 @@ MonoBehaviour:
           z: 100
           w: 0
         tangents:
-          x: 0
+          x: -0.020492213
           y: -0.009055928
   - StatType: 4
     Attenuation:
@@ -884,10 +885,10 @@ MonoBehaviour:
           x: 0
           y: 1
           z: 0.99671054
-          w: 0
+          w: 0.0015869141
         tangents:
           x: 0
-          y: -0.2583002
+          y: 0.12857617
       Distance:
         points:
           x: 0
@@ -919,8 +920,8 @@ MonoBehaviour:
           y: -0.009055928
   HasVision: 1
   Vision:
-    MaxDistance: 10
-    Interval: 0.2
+    MaxDistance: 5
+    Interval: 0.5
   HasMoveLimitation: 1
   MoveLimitation:
     Central:
@@ -929,7 +930,7 @@ MonoBehaviour:
       z: 0
     Scale:
       x: 50
-      y: 5
+      y: 10
       z: 50
 --- !u!4 &1268306807
 Transform:
@@ -1153,7 +1154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Grid: {fileID: 1999879275}
   GridSize: {x: 200, y: 1, z: 200}
-  Chance: 0.5
+  Chance: 0.608
   RandomSeed: 1
   Prefab: {fileID: 605776994893110603, guid: 18d032be4b2eaf04684b7258c5703e10, type: 3}
 --- !u!1 &2059034220

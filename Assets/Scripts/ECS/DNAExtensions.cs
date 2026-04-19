@@ -3,7 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 
 public static class DNAExtensions
-{
+{ 
     /// <summary>
     /// Checks if two DNA chains are compatible by verifying that each item is present in both chains
     /// (checking by GenomeType and GenomeData.Index)

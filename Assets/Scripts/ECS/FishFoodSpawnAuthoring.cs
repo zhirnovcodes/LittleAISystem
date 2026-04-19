@@ -9,11 +9,17 @@ public class FishFoodSpawnAuthoring : MonoBehaviour
     [Header("Spawn Interval (Min, Max)")]
     public float2 SpawnInterval = new float2(5f, 10f);
     public uint Seed = 1345;
+    public bool ShouldSpawn = true;
 
     class Baker : Baker<FishFoodSpawnAuthoring>
     {
         public override void Bake(FishFoodSpawnAuthoring authoring)
         {
+            if (authoring.ShouldSpawn == false)
+            {
+                return;
+            }
+
             var entity = GetEntity(TransformUsageFlags.None);
 
             var prefab = GetEntity(authoring.Prefab, TransformUsageFlags.None);
