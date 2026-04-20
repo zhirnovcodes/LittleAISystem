@@ -1,161 +1,154 @@
 using System;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.Physics;
-using Unity.Physics.Systems;
-using Unity.Transforms;
+using LittlePhysics;
 
-[UpdateInGroup(typeof(PhysicsSystemGroup))]
-[UpdateAfter(typeof(PhysicsSimulationGroup))]
+public struct WeightedVisionItem : IEquatable<WeightedVisionItem>, IComparable<WeightedVisionItem>
+{
+    public uint TargetIndex;
+    public float Weight;
+
+    public bool Equals(WeightedVisionItem other) => TargetIndex == other.TargetIndex;
+
+    public int CompareTo(WeightedVisionItem other) => other.Weight.CompareTo(Weight);
+}
+
+[BurstCompile]
+[UpdateInGroup(typeof(LittlePhysicsUserSystemGroup))]
 public partial struct VisionSystem : ISystem
 {
+    public LittleHashMap<WeightedVisionItem> WeightedItems;
+
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
+        state.RequireForUpdate<PhysicsSingleton>();
         state.RequireForUpdate<VisionComponent>();
-        state.RequireForUpdate<PhysicsWorldSingleton>();
+    }
+
+    public void OnDestroy(ref SystemState state)
+    {
+        if (WeightedItems.IsCreated) WeightedItems.Dispose();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var deltaTime = SystemAPI.Time.DeltaTime;
-        var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
+        var singleton = SystemAPI.GetSingleton<PhysicsSingleton>();
+        if (!singleton.BodiesList.IsCreated || !singleton.Collisions.Collisions.IsCreated)
+            return;
 
-        new VisionJob
+        if (!WeightedItems.IsCreated)
         {
-            DeltaTime = deltaTime,
-            PhysicsWorld = physicsWorld,
+            ref var lod = ref singleton.Settings.BlobRef.Value.LodData;
+            WeightedItems = new LittleHashMap<WeightedVisionItem>(
+                lod.MaxEntityCount,
+                lod.MaxCollisionsPerEntity,
+                Allocator.Persistent);
+        }
+
+        int bodyCount = singleton.Settings.BlobRef.Value.LodData.MaxEntityCount;
+        var combinedDep = JobHandle.CombineDependencies(state.Dependency, singleton.PhysicsJobHandle);
+
+        var clearDep = new ClearWeightedItemsJob
+        {
+            WeightedItems = WeightedItems
+        }.Schedule(combinedDep);
+
+        state.Dependency = new VisionJob
+        {
+            Collisions = singleton.Collisions.Collisions,
+            BodiesList = singleton.BodiesList,
+            BodiesCount = singleton.BodiesCount,
+            WeightedItems = WeightedItems,
+            VisionLookup = SystemAPI.GetComponentLookup<VisionComponent>(true),
             SafetyCheckLookup = SystemAPI.GetBufferLookup<SafetyCheckItem>(true),
             ConditionFlagsLookup = SystemAPI.GetComponentLookup<ConditionFlagsComponent>(true),
             StatAdvertiserLookup = SystemAPI.GetBufferLookup<StatAdvertiserItem>(true),
             StatsLookup = SystemAPI.GetComponentLookup<AnimalStatsComponent>(true)
-        }.ScheduleParallel();
+        }.Schedule(bodyCount, 32, clearDep);
+
+        state.Dependency = new FillVisibleBufferJob
+        {
+            WeightedItems = WeightedItems,
+            BodiesList = singleton.BodiesList,
+            BodiesCount = singleton.BodiesCount,
+            VisibleItemLookup = SystemAPI.GetBufferLookup<VisibleItem>()
+        }.Schedule(bodyCount, 32, state.Dependency);
+
+        singleton.PhysicsJobHandle = state.Dependency;
+        SystemAPI.SetSingleton(singleton);
     }
 }
 
 [BurstCompile]
-public partial struct VisionJob : IJobEntity
+public struct ClearWeightedItemsJob : IJob
 {
-    public float DeltaTime;
-    [ReadOnly] public PhysicsWorldSingleton PhysicsWorld;
+    public LittleHashMap<WeightedVisionItem> WeightedItems;
+
+    public void Execute()
+    {
+        WeightedItems.Clear();
+    }
+}
+
+[BurstCompile]
+public struct VisionJob : IJobParallelFor
+{
+    [ReadOnly] public LittleHashMap<CollisionData> Collisions;
+    [ReadOnly] public NativeArray<PhysicsBodyData> BodiesList;
+    [ReadOnly] public NativeReference<uint> BodiesCount;
+    [NativeDisableContainerSafetyRestriction] public LittleHashMap<WeightedVisionItem> WeightedItems;
+    [ReadOnly] public ComponentLookup<VisionComponent> VisionLookup;
     [ReadOnly] public BufferLookup<SafetyCheckItem> SafetyCheckLookup;
     [ReadOnly] public ComponentLookup<ConditionFlagsComponent> ConditionFlagsLookup;
     [ReadOnly] public BufferLookup<StatAdvertiserItem> StatAdvertiserLookup;
     [ReadOnly] public ComponentLookup<AnimalStatsComponent> StatsLookup;
 
-    const int MaxVisionItems = 16;
-
-    struct WeightedVisionItem : IComparable<WeightedVisionItem>
+    public void Execute(int index)
     {
-        public int HitIndex;
-        public float Weight;
-
-        public int CompareTo(WeightedVisionItem other)
-        {
-            int weightComparison = other.Weight.CompareTo(Weight);
-            if (weightComparison != 0)
-                return weightComparison;
-
-            return HitIndex.CompareTo(other.HitIndex);
-        }
-    }
-
-    void Execute(ref VisionComponent vision, DynamicBuffer<VisibleItem> visibleBuffer, 
-        in LocalTransform transform, Entity entity)
-    {
-        // Update timer
-        vision.TimeElapsed += DeltaTime;
-
-        // Check if it's time to perform vision check
-        if (vision.TimeElapsed < vision.Interval)
-        {
+        if ((uint)index >= BodiesCount.Value)
             return;
-        }
 
-        vision.TimeElapsed = 0f;
+        var body = BodiesList[index];
 
-        // Clear previous visible items
-        visibleBuffer.Clear();
+        if (!VisionLookup.TryGetComponent(body.Main, out var vision))
+            return;
 
-        // Perform sphere cast
-        var position = transform.Position;
-        var maxDistance = vision.MaxDistance;
-
-        // Create a list to store all hits
-        var hits = new NativeList<ColliderCastHit>(Allocator.Temp);
-        var order = new NativeList<WeightedVisionItem>(Allocator.Temp);
-
-        var collisionFilter = new CollisionFilter
-        {
-            BelongsTo = (uint)Layers.Vision,              // This query belongs to all layers (or specify if needed)
-            CollidesWith = (uint)Layers.Animal, // Only collide with the Fish layer
-            GroupIndex = 0
-        };
-
-        // Perform sphere cast to get all entities within range
-        var collisionWorld = PhysicsWorld.PhysicsWorld.CollisionWorld;
-        collisionWorld.SphereCastAll(
-            position,
-            maxDistance,
-            float3.zero,
-            0f,
-            ref hits,
-            collisionFilter);
-
-        FillOrderList(entity, position, maxDistance, hits, ref order);
-        OrderListByWeightDescending(ref order);
-
-        for (int i = 0; i < math.min( MaxVisionItems, order.Length); i++)
-        {
-            var hit = hits[order[i].HitIndex];
-            var hitEntity = hit.Entity;
-            visibleBuffer.Add(new VisibleItem { Target = hitEntity });
-        }
-
-        hits.Dispose();
-        order.Dispose();
+        FillOrderList(body.Main, body.Position, vision.MaxDistance, index);
     }
 
-    void FillOrderList(
-        Entity entity,
-        float3 selfPosition,
-        float maxDistance,
-        in NativeList<ColliderCastHit> hits,
-        ref NativeList<WeightedVisionItem> order)
+    private void FillOrderList(Entity entity, float3 selfPosition, float maxDistance, int bodyIndex)
     {
-        for (int i = 0; i < hits.Length; i++)
+        var iterator = Collisions.GetSingleIterator(bodyIndex);
+        while (Collisions.Traverse(ref iterator, out var pair))
         {
-            var hit = hits[i];
-            var hitEntity = hit.Entity;
+            var collision = pair.Item2;
+            uint otherIndex = (uint)bodyIndex == collision.Body1 ? collision.Body2 : collision.Body1;
+            var otherBody = BodiesList[(int)otherIndex];
 
-            if (hitEntity == entity)
-                continue;
-
-            order.Add(new WeightedVisionItem
+            float weight = CalculateWeight(entity, selfPosition, maxDistance, otherBody.Main, otherBody.Position);
+            WeightedItems.TryAdd((uint)bodyIndex, new WeightedVisionItem
             {
-                HitIndex = i,
-                Weight = CalculateWeight(entity, selfPosition, maxDistance, hitEntity, hit)
+                TargetIndex = otherIndex,
+                Weight = weight
             });
         }
     }
 
-    float CalculateWeight(
-        Entity entity,
-        float3 selfPosition,
-        float maxDistance,
-        Entity hitEntity,
-        in ColliderCastHit hit)
+    private float CalculateWeight(Entity entity, float3 selfPosition, float maxDistance, Entity hitEntity, float3 hitPosition)
     {
-        float distanceWeight = GetDistanceWeight(selfPosition, maxDistance, hit);
+        float distanceWeight = GetDistanceWeight(selfPosition, maxDistance, hitPosition);
         float safetyWeight = GetSafetyWeight(entity, hitEntity);
         float statNeedWeight = GetStatNeedWeight(entity, hitEntity);
         return safetyWeight * 1000f + statNeedWeight * distanceWeight;
     }
 
-    float GetSafetyWeight(Entity entity, Entity hitEntity)
+    private float GetSafetyWeight(Entity entity, Entity hitEntity)
     {
         if (!SafetyCheckLookup.TryGetBuffer(entity, out var safetyChecks))
             return 0f;
@@ -172,16 +165,16 @@ public partial struct VisionJob : IJobEntity
         return 0f;
     }
 
-    float GetDistanceWeight(float3 selfPosition, float maxDistance, in ColliderCastHit hit)
+    private float GetDistanceWeight(float3 selfPosition, float maxDistance, float3 hitPosition)
     {
         if (maxDistance <= 0f)
             return 0f;
 
-        float distance = math.distance(selfPosition, hit.Position);
+        float distance = math.distance(selfPosition, hitPosition);
         return 1f - math.clamp(distance / maxDistance, 0f, 1f);
     }
 
-    float GetStatNeedWeight(Entity entity, Entity hitEntity)
+    private float GetStatNeedWeight(Entity entity, Entity hitEntity)
     {
         if (!StatsLookup.TryGetComponent(entity, out var actorStatsComponent))
             return 0f;
@@ -209,9 +202,43 @@ public partial struct VisionJob : IJobEntity
 
         return totalWeight;
     }
+}
 
-    void OrderListByWeightDescending(ref NativeList<WeightedVisionItem> order)
+[BurstCompile]
+public struct FillVisibleBufferJob : IJobParallelFor
+{
+    [ReadOnly] public LittleHashMap<WeightedVisionItem> WeightedItems;
+    [ReadOnly] public NativeArray<PhysicsBodyData> BodiesList;
+    [ReadOnly] public NativeReference<uint> BodiesCount;
+    [NativeDisableParallelForRestriction] public BufferLookup<VisibleItem> VisibleItemLookup;
+
+    public void Execute(int index)
     {
-        order.Sort();
+        if ((uint)index >= BodiesCount.Value)
+            return;
+
+        var body = BodiesList[index];
+
+        if (!VisibleItemLookup.TryGetBuffer(body.Main, out var visibleBuffer))
+            return;
+
+        visibleBuffer.Clear();
+
+        float bestWeight = float.MinValue;
+        uint bestTargetIndex = uint.MaxValue;
+
+        var iterator = WeightedItems.GetSingleIterator(index);
+        while (WeightedItems.Traverse(ref iterator, out var pair))
+        {
+            var item = pair.Item2;
+            if (item.Weight > bestWeight)
+            {
+                bestWeight = item.Weight;
+                bestTargetIndex = item.TargetIndex;
+            }
+        }
+
+        if (bestTargetIndex != uint.MaxValue)
+            visibleBuffer.Add(new VisibleItem { Target = BodiesList[(int)bestTargetIndex].Main });
     }
 }

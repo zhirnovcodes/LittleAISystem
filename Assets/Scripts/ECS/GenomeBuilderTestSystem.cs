@@ -208,8 +208,6 @@ public partial struct GenomeBuilderTestSystem : ISystem
         
         var component = state.EntityManager.GetComponentData<VisionComponent>(testEntity);
         AssertApprox(component.MaxDistance, 10.0f, "Vision Component MaxDistance");
-        AssertApprox(component.Interval, 0.5f, "Vision Component Interval");
-        AssertApprox(component.TimeElapsed, 0f, "Vision Component TimeElapsed");
 
         state.EntityManager.DestroyEntity(testEntity);
         Debug.Log("✓ Vision GenomeType test passed");

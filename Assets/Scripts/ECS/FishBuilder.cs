@@ -34,8 +34,6 @@ public struct FishBuilder
         CommandBuffer.AddComponent(Entity, new VisionComponent
         {
             MaxDistance = maxDistance,
-            Interval = interval,
-            TimeElapsed = 0f
         });
 
         // Add visible items buffer
