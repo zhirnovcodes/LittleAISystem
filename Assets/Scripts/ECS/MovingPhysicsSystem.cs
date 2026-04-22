@@ -16,6 +16,7 @@ public partial struct MovingPhysicsSystem : ISystem
     {
         state.RequireForUpdate<PhysicsSingleton>();
         state.RequireForUpdate<MoveControllerInputComponent>();
+        state.RequireForUpdate<LittlePhysicsTimeComponent>();
     }
 
     [BurstCompile]
@@ -28,24 +29,59 @@ public partial struct MovingPhysicsSystem : ISystem
         var transformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
         var combinedDep = JobHandle.CombineDependencies(state.Dependency, singleton.PhysicsJobHandle);
 
-        state.Dependency = new MovingPhysicsJob
+        var time = SystemAPI.GetSingleton<LittlePhysicsTimeComponent>();
+
+        var friction = new AirFrictionJob
+        {
+            PhysicsVelocities = singleton.PhysicsVelocities,
+            DeltaTime = time.DeltaTime,
+        }.Schedule(combinedDep);
+
+        var move = new MovingPhysicsJob
         {
             PhysicsVelocities = singleton.PhysicsVelocities,
             TransformLookup = transformLookup,
-        }.Schedule(combinedDep);
-
-        singleton.PhysicsJobHandle = state.Dependency;
-        SystemAPI.SetSingleton(singleton);
+        }.Schedule(friction);
 
         var inputLookup = SystemAPI.GetComponentLookup<MoveControllerInputComponent>(true);
-        var transformLookup2 = SystemAPI.GetComponentLookup<LocalTransform>(true);
+        var worldTransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true);
 
         state.Dependency = new RotationJob
         {
             InputLookup = inputLookup,
-            TransformLookup = transformLookup2,
-            DeltaTime = SystemAPI.Time.DeltaTime,
-        }.Schedule(state.Dependency);
+            WorldTransformLookup = worldTransformLookup,
+            DeltaTime = time.DeltaTime,
+        }.Schedule(move);
+
+        singleton.PhysicsJobHandle = state.Dependency;
+        SystemAPI.SetSingleton(singleton);
+    }
+
+    [BurstCompile]
+    public partial struct AirFrictionJob : IJobEntity
+    {
+        private const float AirFriction = 100f;
+
+        [NativeDisableParallelForRestriction] public NativeArray<PhysicsVelocityData> PhysicsVelocities;
+        public float DeltaTime;
+
+        public void Execute(in PhysicsBodyUpdateComponent update)
+        {
+
+            if (update.IsEnabled == false)
+            {
+                return;
+            }
+            
+            int index = update.Index;
+            var velocity = PhysicsVelocities[index];
+
+            float speed = math.length(velocity.Linear);
+            float reducedSpeed = math.max(0f, speed - speed * AirFriction * DeltaTime);
+            velocity.Linear = math.normalizesafe(velocity.Linear) * reducedSpeed;
+
+            PhysicsVelocities[index] = velocity;
+        }
     }
 
     [BurstCompile]
@@ -59,10 +95,15 @@ public partial struct MovingPhysicsSystem : ISystem
             in PhysicsBodyUpdateComponent update,
             in MoveControllerInputComponent input)
         {
-            if (input.Speed <= 0)
+            if (update.IsEnabled == false)
+            {
                 return;
+            }
 
-            int index = update.Index;
+            if (input.Speed <= 0)
+            {
+                return;
+            }
 
             var targetPosition = input.TargetPosition;
             var targetScale = input.TargetScale;
@@ -70,21 +111,26 @@ public partial struct MovingPhysicsSystem : ISystem
             if (input.TargetEntity != Entity.Null)
             {
                 if (TransformLookup.TryGetComponent(input.TargetEntity, out var targetTransform) == false)
+                {
                     return;
+                }
 
                 targetScale = targetTransform.Scale;
                 targetPosition = targetTransform.Position;
             }
 
             if (transform.IsTargetDistanceReached(targetPosition, targetScale, input.Distance))
+            {
                 return;
+            }
 
+            int index = update.Index;
             var velocity = PhysicsVelocities[index];
             velocity.Linear += GetLinearVelocity(transform, velocity, targetPosition, targetScale, input.Distance, input.Speed);
             PhysicsVelocities[index] = velocity;
         }
 
-        private float3 GetLinearVelocity(
+        private static float3 GetLinearVelocity(
             in LocalTransform transform,
             in PhysicsVelocityData velocity,
             float3 targetPosition,
@@ -118,36 +164,44 @@ public partial struct MovingPhysicsSystem : ISystem
     public partial struct RotationJob : IJobEntity
     {
         [ReadOnly] public ComponentLookup<MoveControllerInputComponent> InputLookup;
-        [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
+        [ReadOnly] public ComponentLookup<LocalToWorld> WorldTransformLookup;
         public float DeltaTime;
 
-        public void Execute(
-            ref LocalTransform transform,
-            in RotationHandlerComponent rotHandler)
+        public void Execute(ref LocalTransform transform, in RotationHandlerComponent rotHandler)
         {
             if (!InputLookup.TryGetComponent(rotHandler.Parent, out var input))
+            {
                 return;
+            }
 
             if (input.RotationSpeed <= 0)
+            {
                 return;
+            }
 
-            if (!TransformLookup.TryGetComponent(rotHandler.Parent, out var parentTransform))
+            if (!WorldTransformLookup.TryGetComponent(rotHandler.Parent, out var parentWorld))
+            {
                 return;
+            }
 
             var lookDirection = input.LookDirection;
 
             if (input.TargetEntity != Entity.Null)
             {
-                if (!TransformLookup.TryGetComponent(input.TargetEntity, out var targetTransform))
+                if (!WorldTransformLookup.TryGetComponent(input.TargetEntity, out var targetWorld))
+                {
                     return;
+                }
 
-                lookDirection = math.normalize(targetTransform.Position - parentTransform.Position);
+                lookDirection = math.normalize(targetWorld.Position - parentWorld.Position);
             }
 
-            if (transform.Rotation.IsLookingTowards(lookDirection, 0.01f))
+            if (transform.Rotation.IsLookingTowards(lookDirection))
+            {   
                 return;
-
-            transform = transform.RotateTowards(lookDirection, input.RotationSpeed * DeltaTime, 0.01f);
+            }
+            
+            transform = transform.RotateTowards(lookDirection, input.RotationSpeed * DeltaTime);
         }
     }
 }

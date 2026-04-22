@@ -28,6 +28,7 @@ public partial struct VisionSystem : ISystem
     {
         state.RequireForUpdate<PhysicsSingleton>();
         state.RequireForUpdate<VisionComponent>();
+        state.RequireForUpdate<LittlePhysicsTimeComponent>();
     }
 
     public void OnDestroy(ref SystemState state)
@@ -72,12 +73,15 @@ public partial struct VisionSystem : ISystem
             StatsLookup = SystemAPI.GetComponentLookup<AnimalStatsComponent>(true)
         }.Schedule(bodyCount, 32, clearDep);
 
+        var physicsTime = SystemAPI.GetSingleton<LittlePhysicsTimeComponent>();
+
         state.Dependency = new FillVisibleBufferJob
         {
             WeightedItems = WeightedItems,
             BodiesList = singleton.BodiesList,
             BodiesCount = singleton.BodiesCount,
-            VisibleItemLookup = SystemAPI.GetBufferLookup<VisibleItem>()
+            VisibleItemLookup = SystemAPI.GetBufferLookup<VisibleItem>(),
+            ElapsedTime = physicsTime.ElapsedTime
         }.Schedule(bodyCount, 32, state.Dependency);
 
         singleton.PhysicsJobHandle = state.Dependency;
@@ -211,6 +215,9 @@ public struct FillVisibleBufferJob : IJobParallelFor
     [ReadOnly] public NativeArray<PhysicsBodyData> BodiesList;
     [ReadOnly] public NativeReference<uint> BodiesCount;
     [NativeDisableParallelForRestriction] public BufferLookup<VisibleItem> VisibleItemLookup;
+    public double ElapsedTime;
+
+    const double DeleteTime = 0.5;
 
     public void Execute(int index)
     {
@@ -222,7 +229,11 @@ public struct FillVisibleBufferJob : IJobParallelFor
         if (!VisibleItemLookup.TryGetBuffer(body.Main, out var visibleBuffer))
             return;
 
-        visibleBuffer.Clear();
+        for (int i = visibleBuffer.Length - 1; i >= 0; i--)
+        {
+            if (ElapsedTime - visibleBuffer[i].TimeAdded >= DeleteTime)
+                visibleBuffer.RemoveAt(i);
+        }
 
         float bestWeight = float.MinValue;
         uint bestTargetIndex = uint.MaxValue;
@@ -238,7 +249,17 @@ public struct FillVisibleBufferJob : IJobParallelFor
             }
         }
 
-        if (bestTargetIndex != uint.MaxValue)
-            visibleBuffer.Add(new VisibleItem { Target = BodiesList[(int)bestTargetIndex].Main });
+        if (bestTargetIndex == uint.MaxValue)
+            return;
+
+        var bestTarget = BodiesList[(int)bestTargetIndex].Main;
+
+        for (int i = 0; i < visibleBuffer.Length; i++)
+        {
+            if (visibleBuffer[i].Target == bestTarget)
+                return;
+        }
+
+        visibleBuffer.Add(new VisibleItem { Target = bestTarget, TimeAdded = ElapsedTime });
     }
 }
