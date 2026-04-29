@@ -53,21 +53,23 @@ public partial struct MoveLinearSystem : ISystem
             if (!update.IsEnabled || input.Speed <= 0f || input.Target == Entity.Null)
                 return;
 
-            var position = BodiesList[update.Index].Position;
-            output.Position = position;
-
             if (!UpdateLookup.TryGetComponent(input.Target, out var targetUpdate))
                 return;
                 
             if (!targetUpdate.IsEnabled)
                 return;
 
-            var targetPosition = BodiesList[targetUpdate.Index].Position;
-            output.TargetPosition = targetPosition;
+            var selfBody = BodiesList[update.Index];
+            var targetBody = BodiesList[targetUpdate.Index];
+
+            output.Position = selfBody.Position;
+            output.Scale = selfBody.Scale;
+            output.TargetPosition = targetBody.Position;
+            output.TargetScale = targetBody.Scale;
 
             int index = update.Index;
             var velocity = PhysicsVelocities[index];
-            velocity.Linear += GetLinearVelocity(position, velocity, targetPosition, input.MaxDistance, input.Speed);
+            velocity.Linear += GetLinearVelocity(selfBody.Position, velocity, targetBody.Position, selfBody.Scale, targetBody.Scale, input.MaxDistance, input.Speed);
             PhysicsVelocities[index] = velocity;
         }
 
@@ -75,12 +77,15 @@ public partial struct MoveLinearSystem : ISystem
             float3 position,
             in PhysicsVelocityData velocity,
             float3 targetPosition,
+            float selfScale,
+            float targetScale,
             float maxDistance,
             float speed)
         {
+            float threshold = (selfScale + targetScale) * 0.5f + maxDistance;
             float distance = math.distance(position, targetPosition);
 
-            if (distance <= maxDistance)
+            if (distance <= threshold)
                 return float3.zero;
 
             float3 toTarget = math.normalizesafe(targetPosition - position);

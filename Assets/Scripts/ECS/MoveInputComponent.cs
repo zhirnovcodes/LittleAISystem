@@ -16,4 +16,6 @@ public struct MoveOutputComponent : IComponentData
     public float3 TargetPosition;
     public float3 Position;
     public quaternion Rotation;
+    public float Scale;
+    public float TargetScale;
 }

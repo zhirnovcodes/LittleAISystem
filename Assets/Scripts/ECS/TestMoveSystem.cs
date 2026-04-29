@@ -46,6 +46,7 @@ public partial struct TestMoveSystem : ISystem
             var target = targets[testMove.CurrentIndex];
             input.SetTarget(target.Target, target.MaxDistance);
             input.Enable(target.Speed, target.RotationSpeed, input.Up);
+            output.Reset();
         }
     }
 }

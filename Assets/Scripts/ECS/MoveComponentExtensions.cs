@@ -5,8 +5,8 @@ public static class MoveComponentExtensions
 {
     public static bool IsTargetReached(this in MoveInputComponent input, in MoveOutputComponent output)
     {
-        float distance = math.distance(output.Position, output.TargetPosition);
-        return distance <= input.MaxDistance;
+        float threshold = (output.Scale + output.TargetScale) * 0.5f + input.MaxDistance;
+        return math.distancesq(output.Position, output.TargetPosition) <= threshold * threshold;
     }
 
     public static bool IsLookingTowards(this in MoveInputComponent input, in MoveOutputComponent output)
