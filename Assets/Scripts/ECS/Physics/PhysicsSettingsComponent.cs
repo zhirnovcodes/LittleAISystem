@@ -27,11 +27,19 @@ namespace LittlePhysics
         public int MaxCollisionsPerEntityX4;
     }
 
+    [System.Serializable]
+    public struct EnvironmentSettings
+    {
+        public float AirFriction;
+        public float PushOutPower;
+    }
+
     public struct PhysicsSettingsBlobAsset
     {
         public int MaxEntitiesCount;
         public LodPhysicsData LodData;
         public BlobArray<int> LayersMaps;
+        public EnvironmentSettings EnvironmentSettings;
 
         public int GetSumEntitiesXCells() => LodData.MaxDynamicsInCells * LodData.MaxCellPerEntity;
         public int GetSumEntitiesXCollisions() => LodData.MaxEntityCount * LodData.MaxCollisionsPerEntity;
@@ -58,5 +66,6 @@ namespace LittlePhysics
         public int MaxEntitiesCount;
         public LodPhysicsData LodData;
         public CollisionCheckSettings CheckSettings;
+        public EnvironmentSettings EnvironmentSettings;
     }
 }

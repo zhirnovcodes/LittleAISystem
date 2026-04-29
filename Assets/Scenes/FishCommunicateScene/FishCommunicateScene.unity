@@ -1123,7 +1123,7 @@ MonoBehaviour:
     DistanceRange:
       x: 0
       y: 0
-    MaxEntityCount: 10
+    MaxEntityCount: 100
     MaxDynamicsInCells: 8
     MaxTriggersInCells: 8
     MaxStaticInCells: 0

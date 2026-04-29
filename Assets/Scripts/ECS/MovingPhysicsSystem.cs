@@ -43,13 +43,12 @@ public partial struct MovingPhysicsSystem : ISystem
             TransformLookup = transformLookup,
         }.Schedule(friction);
 
-        var inputLookup = SystemAPI.GetComponentLookup<MoveControllerInputComponent>(true);
-        var worldTransformLookup = SystemAPI.GetComponentLookup<LocalToWorld>(true);
+        var targetTransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true);
 
         state.Dependency = new RotationJob
         {
-            InputLookup = inputLookup,
-            WorldTransformLookup = worldTransformLookup,
+            TargetTransformLookup = targetTransformLookup,
+            PhysicsVelocities = singleton.PhysicsVelocities,
             DeltaTime = time.DeltaTime,
         }.Schedule(move);
 
@@ -60,7 +59,7 @@ public partial struct MovingPhysicsSystem : ISystem
     [BurstCompile]
     public partial struct AirFrictionJob : IJobEntity
     {
-        private const float AirFriction = 100f;
+        private const float AirFriction = 1f;
 
         [NativeDisableParallelForRestriction] public NativeArray<PhysicsVelocityData> PhysicsVelocities;
         public float DeltaTime;
@@ -76,9 +75,13 @@ public partial struct MovingPhysicsSystem : ISystem
             int index = update.Index;
             var velocity = PhysicsVelocities[index];
 
-            float speed = math.length(velocity.Linear);
-            float reducedSpeed = math.max(0f, speed - speed * AirFriction * DeltaTime);
-            velocity.Linear = math.normalizesafe(velocity.Linear) * reducedSpeed;
+            float linSpeed = math.length(velocity.Linear);
+            float reducedLinSpeed = math.max(0f, linSpeed - linSpeed * AirFriction * DeltaTime);
+            velocity.Linear = math.normalizesafe(velocity.Linear) * reducedLinSpeed;
+
+            float angSpeed = math.length(velocity.Angular);
+            float reducedAngSpeed = math.max(0f, angSpeed - angSpeed * AirFriction * DeltaTime);
+            velocity.Angular = math.normalizesafe(velocity.Angular) * reducedAngSpeed;
 
             PhysicsVelocities[index] = velocity;
         }
@@ -163,45 +166,75 @@ public partial struct MovingPhysicsSystem : ISystem
     [BurstCompile]
     public partial struct RotationJob : IJobEntity
     {
-        [ReadOnly] public ComponentLookup<MoveControllerInputComponent> InputLookup;
-        [ReadOnly] public ComponentLookup<LocalToWorld> WorldTransformLookup;
+        [ReadOnly] public ComponentLookup<LocalTransform> TargetTransformLookup;
+        [NativeDisableParallelForRestriction] public NativeArray<PhysicsVelocityData> PhysicsVelocities;
         public float DeltaTime;
 
-        public void Execute(ref LocalTransform transform, in RotationHandlerComponent rotHandler)
+        public void Execute(
+            in LocalTransform transform,
+            in PhysicsBodyUpdateComponent update,
+            in MoveControllerInputComponent input)
         {
-            if (!InputLookup.TryGetComponent(rotHandler.Parent, out var input))
-            {
+            if (input.RotationSpeed <= 0 || update.IsEnabled == false)
                 return;
-            }
-
-            if (input.RotationSpeed <= 0)
-            {
-                return;
-            }
-
-            if (!WorldTransformLookup.TryGetComponent(rotHandler.Parent, out var parentWorld))
-            {
-                return;
-            }
 
             var lookDirection = input.LookDirection;
 
             if (input.TargetEntity != Entity.Null)
             {
-                if (!WorldTransformLookup.TryGetComponent(input.TargetEntity, out var targetWorld))
-                {
+                if (!TargetTransformLookup.TryGetComponent(input.TargetEntity, out var targetTransform))
                     return;
-                }
 
-                lookDirection = math.normalize(targetWorld.Position - parentWorld.Position);
+                lookDirection = math.normalize(targetTransform.Position - transform.Position);
             }
 
-            if (transform.Rotation.IsLookingTowards(lookDirection))
-            {   
+            float3 forward = math.forward(transform.Rotation);
+            float dot = math.clamp(math.dot(forward, lookDirection), -1f, 1f);
+
+            if (dot > 0.9999f)
                 return;
+
+            float3 cross = math.cross(forward, lookDirection);
+            float crossLen = math.length(cross);
+
+            if (crossLen < 0.0001f)
+            {
+                cross = math.cross(forward, math.mul(transform.Rotation, math.up()));
+                crossLen = math.length(cross);
             }
-            
-            transform = transform.RotateTowards(lookDirection, input.RotationSpeed * DeltaTime);
+
+            float3 axis = cross / crossLen;
+            float angleRad = math.acos(dot);
+            float rotSpeedRad = math.radians(input.RotationSpeed);
+
+            // max angular speed that won't overshoot the remaining angle this step
+            float maxSpeed = angleRad / DeltaTime;
+
+            var velocity = PhysicsVelocities[update.Index];
+            float existingSpeed = math.dot(velocity.Angular, axis);
+
+            bool isCruising = existingSpeed >= rotSpeedRad * 0.9999f;
+
+            if (isCruising)
+            {
+                // already at target speed - only correct if we'd overshoot
+                if (existingSpeed > maxSpeed)
+                {
+                    velocity.Angular += axis * (maxSpeed - existingSpeed);
+                    PhysicsVelocities[update.Index] = velocity;
+                }
+            }
+            else
+            {
+                // accelerate, then clamp to not overshoot
+                float newSpeed = math.min(existingSpeed + rotSpeedRad, maxSpeed);
+                float speedToAdd = math.max(0f, newSpeed - existingSpeed);
+                if (speedToAdd > 0f)
+                {
+                    velocity.Angular += axis * speedToAdd;
+                    PhysicsVelocities[update.Index] = velocity;
+                }
+            }
         }
     }
 }
