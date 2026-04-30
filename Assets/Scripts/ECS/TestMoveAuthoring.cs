@@ -9,6 +9,7 @@ public class TestMoveAuthoring : MonoBehaviour
     public class TargetEntry
     {
         public GameObject Target;
+        public Vector3 TargetPosition;
         public float Speed;
         public float RotationSpeed;
         public float MaxDistance;
@@ -30,7 +31,8 @@ public class TestMoveAuthoring : MonoBehaviour
             {
                 buffer.Add(new TestMoveTargetItem
                 {
-                    Target = GetEntity(entry.Target, TransformUsageFlags.Dynamic),
+                    Target = entry.Target != null ? GetEntity(entry.Target, TransformUsageFlags.Dynamic) : Unity.Entities.Entity.Null,
+                    TargetPosition = entry.TargetPosition,
                     Speed = entry.Speed,
                     RotationSpeed = entry.RotationSpeed,
                     MaxDistance = entry.MaxDistance,

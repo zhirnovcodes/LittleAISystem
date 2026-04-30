@@ -4,6 +4,7 @@ using Unity.Mathematics;
 public struct MoveInputComponent : IComponentData
 {
     public Entity Target;
+    public float3 TargetPosition;
     public float3 Up;
     public float MaxDistance;
     public float Speed;

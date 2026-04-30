@@ -44,8 +44,11 @@ public partial struct TestMoveSystem : ISystem
             }
 
             var target = targets[testMove.CurrentIndex];
-            input.SetTarget(target.Target, target.MaxDistance);
-            input.Enable(target.Speed, target.RotationSpeed, new Unity.Mathematics.float3(0,1,0));
+            if (target.Target != Entity.Null)
+                input.SetTarget(target.Target, target.MaxDistance);
+            else
+                input.SetTarget(target.TargetPosition, target.MaxDistance);
+            input.Enable(target.Speed, target.RotationSpeed, new Unity.Mathematics.float3(0, 1, 0));
             output.Reset();
         }
     }

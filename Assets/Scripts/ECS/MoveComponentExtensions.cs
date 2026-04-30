@@ -19,11 +19,17 @@ public static class MoveComponentExtensions
         return math.acos(dot) <= input.RotationDelta;
     }
 
+    public static bool IsTargetSet(this in MoveInputComponent input)
+    {
+        return input.Target != Entity.Null || input.TargetPosition.x < float.MaxValue;
+    }
+
     public static void Reset(this ref MoveInputComponent input)
     {
         input.Speed = 0f;
         input.RotationSpeed = 0f;
         input.Target = Entity.Null;
+        input.TargetPosition = new float3(float.MaxValue);
     }
 
     public static void Reset(this ref MoveOutputComponent output)
@@ -43,6 +49,13 @@ public static class MoveComponentExtensions
     public static void SetTarget(this ref MoveInputComponent input, Entity target, float maxDistance)
     {
         input.Target = target;
+        input.MaxDistance = maxDistance;
+    }
+
+    public static void SetTarget(this ref MoveInputComponent input, float3 targetPosition, float maxDistance)
+    {
+        input.Target = Entity.Null;
+        input.TargetPosition = targetPosition;
         input.MaxDistance = maxDistance;
     }
 }

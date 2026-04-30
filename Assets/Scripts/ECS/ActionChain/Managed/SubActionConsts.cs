@@ -5,6 +5,7 @@ public static class SubActionConsts
         public const float IdleTime = 20f;
         public const float WanderRadius = 10f;
         public const float SpeedMultiplier = 0.6f;
+        public const float MoveDelta = 0.01f;
     }
 
     public static class WalkTo

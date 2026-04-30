@@ -27,7 +27,7 @@ public partial struct MoveLinearSystem : ISystem
 
         var combinedDep = JobHandle.CombineDependencies(state.Dependency, singleton.PhysicsJobHandle);
 
-        state.Dependency = new MoveJob
+        state.Dependency = new MoveLinearJob
         {
             PhysicsVelocities = singleton.PhysicsVelocities,
             BodiesList = singleton.BodiesList,
@@ -39,7 +39,7 @@ public partial struct MoveLinearSystem : ISystem
     }
 
     [BurstCompile]
-    public partial struct MoveJob : IJobEntity
+    public partial struct MoveLinearJob : IJobEntity
     {
         [NativeDisableParallelForRestriction] public NativeArray<PhysicsVelocityData> PhysicsVelocities;
         [ReadOnly] public NativeArray<PhysicsBodyData> BodiesList;
@@ -50,26 +50,45 @@ public partial struct MoveLinearSystem : ISystem
             in MoveInputComponent input,
             ref MoveOutputComponent output)
         {
-            if (!update.IsEnabled || input.Speed <= 0f || input.Target == Entity.Null)
+            if (!update.IsEnabled || !input.IsTargetSet())
                 return;
 
-            if (!UpdateLookup.TryGetComponent(input.Target, out var targetUpdate))
-                return;
-                
-            if (!targetUpdate.IsEnabled)
-                return;
+            float3 targetPosition;
+            float targetScale;
+
+            if (input.Target == Entity.Null)
+            {
+                targetPosition = input.TargetPosition;
+                targetScale = 0f;
+            }
+            else
+            {
+                if (!UpdateLookup.TryGetComponent(input.Target, out var targetUpdate))
+                    return;
+
+                if (!targetUpdate.IsEnabled)
+                    return;
+
+                var targetBody = BodiesList[targetUpdate.Index];
+                targetPosition = targetBody.Position;
+                targetScale = targetBody.Scale;
+            }
 
             var selfBody = BodiesList[update.Index];
-            var targetBody = BodiesList[targetUpdate.Index];
 
             output.Position = selfBody.Position;
             output.Scale = selfBody.Scale;
-            output.TargetPosition = targetBody.Position;
-            output.TargetScale = targetBody.Scale;
+            output.TargetPosition = targetPosition;
+            output.TargetScale = targetScale;
+
+            if (input.Speed <= 0)
+            {
+                return;
+            }
 
             int index = update.Index;
             var velocity = PhysicsVelocities[index];
-            velocity.Linear += GetLinearVelocity(selfBody.Position, velocity, targetBody.Position, selfBody.Scale, targetBody.Scale, input.MaxDistance, input.Speed);
+            velocity.Linear += GetLinearVelocity(selfBody.Position, velocity, targetPosition, selfBody.Scale, targetScale, input.MaxDistance, input.Speed);
             PhysicsVelocities[index] = velocity;
         }
 
