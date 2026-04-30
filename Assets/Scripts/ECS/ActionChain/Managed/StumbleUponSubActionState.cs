@@ -1,124 +1,111 @@
 using Unity.Entities;
-using Unity.Transforms;
 using Unity.Mathematics;
 
 public class StumbleUponSubActionState : ISubActionState
 {
-    private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveInputComponent> MoveInputLookup;
+    private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
 
     public StumbleUponSubActionState(
-        ComponentLookup<LocalTransform> transformLookup,
+        ComponentLookup<MoveInputComponent> moveInputLookup,
+        ComponentLookup<MoveOutputComponent> moveOutputLookup,
+        ComponentLookup<MovingSpeedComponent> movingSpeedLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         ComponentLookup<GenetaliaComponent> genetaliaLookup)
     {
-        TransformLookup = transformLookup;
+        MoveInputLookup = moveInputLookup;
+        MoveOutputLookup = moveOutputLookup;
+        MovingSpeedLookup = movingSpeedLookup;
         AnimalStatsLookup = animalStatsLookup;
         GenetaliaLookup = genetaliaLookup;
     }
 
     public void Refresh(SystemBase system)
     {
-        TransformLookup.Update(system);
+        MoveInputLookup.Update(system);
+        MoveOutputLookup.Update(system);
+        MovingSpeedLookup.Update(system);
         AnimalStatsLookup.Update(system);
         GenetaliaLookup.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        if (GenetaliaLookup.HasComponent(entity))
+        if (GenetaliaLookup.TryGetComponent(entity, out var genitalia))
         {
-            var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = true;
             buffer.SetComponent(entity, genitalia);
         }
+
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
+
+        MoveInputLookup.Enable(entity, 0f, movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.StumbleUpon.MaxDistance);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Disable genitalia component
-        if (GenetaliaLookup.HasComponent(entity))
+        if (GenetaliaLookup.TryGetComponent(entity, out var genitalia))
         {
-            var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = false;
             buffer.SetComponent(entity, genitalia);
         }
+
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // if actor entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(entity, out _))
         {
             return SubActionResult.Fail(0);
         }
 
-        // if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MoveOutputLookup.TryGetComponent(target, out _))
         {
             return SubActionResult.Fail(1);
         }
 
-        // if time elapsed > FailTime, fail state, error code = 2
         if (timer.IsTimeout(SubActionConsts.StumbleUpon.FailTime))
         {
             return SubActionResult.Fail(2);
         }
-        /*
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-        // Check if target is not reached
-        if (entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.StumbleUpon.MaxDistance) == false)
-        {
-            return SubActionResult.Running();
-        }
 
-        // Check if looking towards target
-        if (entityTransform.IsLookingTowards(targetTransform, SubActionConsts.StumbleUpon.Delta) == false)
-        {
-            return SubActionResult.Running();
-        }*/
-
-        // Check if entity has genitalia and enable it
-        if (!GenetaliaLookup.HasComponent(entity))
+        if (!GenetaliaLookup.TryGetComponent(entity, out var genitalia))
         {
             return SubActionResult.Fail(3);
         }
 
-        var genitalia = GenetaliaLookup[entity];
-
-        // If Social >= 100, fail (already satisfied)
-        if (AnimalStatsLookup.HasComponent(entity))
+        if (AnimalStatsLookup.TryGetComponent(entity, out var animalStats))
         {
-            var animalStats = AnimalStatsLookup[entity];
             if (animalStats.Stats.Social >= 100f)
             {
                 return SubActionResult.Fail(4);
             }
         }
 
-        // Check if target has genitalia and is opposite sex
-        if (!GenetaliaLookup.HasComponent(target))
+        if (!GenetaliaLookup.TryGetComponent(target, out var targetGenitalia))
         {
             return SubActionResult.Fail(5);
         }
 
-        var targetGenitalia = GenetaliaLookup[target];
-        
-        // Check if opposite sex (male with female or female with male)
         if (genitalia.IsMale != targetGenitalia.IsMale)
         {
-            // Check if target's genitalia is enabled
             if (targetGenitalia.IsEnabled)
             {
                 return SubActionResult.Success();
             }
-            
+
             return SubActionResult.Running();
         }
 
         return SubActionResult.Fail(6);
     }
 }
-

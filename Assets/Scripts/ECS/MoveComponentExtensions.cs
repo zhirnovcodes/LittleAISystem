@@ -58,4 +58,39 @@ public static class MoveComponentExtensions
         input.TargetPosition = targetPosition;
         input.MaxDistance = maxDistance;
     }
+
+    public static void Enable(this ref ComponentLookup<MoveInputComponent> lookup, Entity entity, float speed, float rotationSpeed, float3 up)
+    {
+        var component = lookup[entity];
+        component.Enable(speed, rotationSpeed, up);
+        lookup[entity] = component;
+    }
+
+    public static void SetTarget(this ref ComponentLookup<MoveInputComponent> lookup, Entity entity, Entity target, float maxDistance)
+    {
+        var component = lookup[entity];
+        component.SetTarget(target, maxDistance);
+        lookup[entity] = component;
+    }
+
+    public static void SetTarget(this ref ComponentLookup<MoveInputComponent> lookup, Entity entity, float3 targetPosition, float maxDistance)
+    {
+        var component = lookup[entity];
+        component.SetTarget(targetPosition, maxDistance);
+        lookup[entity] = component;
+    }
+
+    public static void Reset(this ref ComponentLookup<MoveInputComponent> lookup, Entity entity)
+    {
+        var component = lookup[entity];
+        component.Reset();
+        lookup[entity] = component;
+    }
+
+    public static void Reset(this ref ComponentLookup<MoveOutputComponent> lookup, Entity entity)
+    {
+        var component = lookup[entity];
+        component.Reset();
+        lookup[entity] = component;
+    }
 }

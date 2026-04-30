@@ -1,17 +1,26 @@
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Transforms;
 
 public class EatSubActionState : ISubActionState
 {
-    private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveInputComponent> MoveInputLookup;
+    private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
+    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
     private BufferLookup<BiteItem> BiteLookup;
 
-    public EatSubActionState(ComponentLookup<LocalTransform> transformLookup, BufferLookup<BiteItem> biteLookup, ComponentLookup<AnimalStatsComponent> animalStatsLookup, ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup)
+    public EatSubActionState(
+        ComponentLookup<MoveInputComponent> moveInputLookup,
+        ComponentLookup<MoveOutputComponent> moveOutputLookup,
+        ComponentLookup<MovingSpeedComponent> movingSpeedLookup,
+        BufferLookup<BiteItem> biteLookup,
+        ComponentLookup<AnimalStatsComponent> animalStatsLookup,
+        ComponentLookup<StatsIncreaseComponent> statsIncreaseLookup)
     {
-        TransformLookup = transformLookup;
+        MoveInputLookup = moveInputLookup;
+        MoveOutputLookup = moveOutputLookup;
+        MovingSpeedLookup = movingSpeedLookup;
         AnimalStatsLookup = animalStatsLookup;
         StatsIncreaseLookup = statsIncreaseLookup;
         BiteLookup = biteLookup;
@@ -19,7 +28,9 @@ public class EatSubActionState : ISubActionState
 
     public void Refresh(SystemBase system)
     {
-        TransformLookup.Update(system);
+        MoveInputLookup.Update(system);
+        MoveOutputLookup.Update(system);
+        MovingSpeedLookup.Update(system);
         AnimalStatsLookup.Update(system);
         StatsIncreaseLookup.Update(system);
         BiteLookup.Update(system);
@@ -27,59 +38,58 @@ public class EatSubActionState : ISubActionState
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for eat
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
+
+        MoveInputLookup.Enable(entity, 0f, movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.Eat.MaxDistance * 2f);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for eat
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // if actor entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.TryGetComponent(entity, out var entityTransform))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(0);
         }
 
-        // if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.TryGetComponent(target, out var targetTransform))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
         }
 
-        // if time elapsed > FailTime, fail state, error code = 2
         if (timer.IsTimeout(SubActionConsts.Eat.FailTime))
         {
             return SubActionResult.Fail(2);
         }
 
-        // if distance between transforms > MaxDistance - fail with error code 3
-        if (entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.Eat.MaxDistance) == false)
+        if (!moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Fail(3);
         }
 
-        // if target does not exist in EdibleBody lookup, fail state. code = 4
-        if (BiteLookup.HasBuffer(target) == false)
+        if (!BiteLookup.HasBuffer(target))
         {
             return SubActionResult.Fail(4);
         }
 
-        // if animal does not have AnimalStatsComponent - return fail with code 7
         if (!AnimalStatsLookup.TryGetComponent(entity, out var animalStats))
         {
             return SubActionResult.Fail(7);
         }
 
-        // Check if Fullness >= 100 - returns Success
         if (animalStats.Stats.Fullness >= 100f)
         {
             return SubActionResult.Success();
         }
 
-        // Process eating continuously based on EatingSpeed
         var biteValue = StatsIncreaseLookup[entity].AnimalStats.Fullness * timer.DeltaTime;
 
         buffer.AppendToBuffer(target, new BiteItem

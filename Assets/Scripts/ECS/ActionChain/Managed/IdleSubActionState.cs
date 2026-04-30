@@ -1,39 +1,44 @@
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Transforms;
 
 public class IdleSubActionState : ISubActionState
 {
-    private ComponentLookup<LocalTransform> TransformLookup;
-    private ComponentLookup<MoveControllerInputComponent> InputComponent;
+    private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
+    private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
     private ComponentLookup<MoveLimitationComponent> LimitationComponent;
 
-    public IdleSubActionState(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerInputComponent> inputLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup, ComponentLookup<MoveLimitationComponent> limitationComponent)
+    public IdleSubActionState(
+        ComponentLookup<MoveOutputComponent> moveOutputLookup,
+        ComponentLookup<MoveInputComponent> moveInputLookup,
+        ComponentLookup<MovingSpeedComponent> movingSpeedLookup,
+        ComponentLookup<MoveLimitationComponent> limitationComponent)
     {
-        TransformLookup = transformLookup;
-        InputComponent = inputLookup;
+        MoveOutputLookup = moveOutputLookup;
+        MoveInputLookup = moveInputLookup;
         MovingSpeedLookup = movingSpeedLookup;
         LimitationComponent = limitationComponent;
     }
 
     public void Refresh(SystemBase system)
     {
-        TransformLookup.Update(system);
-        InputComponent.Update(system);
+        MoveOutputLookup.Update(system);
+        MoveInputLookup.Update(system);
         MovingSpeedLookup.Update(system);
         LimitationComponent.Update(system);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        if (!TransformLookup.HasComponent(entity) || !MovingSpeedLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return;
         }
 
-        var entityTransform = TransformLookup[entity];
-        var movingSpeed = MovingSpeedLookup[entity];
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
 
         var radius = random.NextFloat(SubActionConsts.Idle.WanderRadius / 2f, SubActionConsts.Idle.WanderRadius);
         float3 targetPosition;
@@ -44,20 +49,20 @@ public class IdleSubActionState : ISubActionState
         }
         else
         {
-            targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
+            targetPosition = LocalTransformExtensions.GenerateRandomPosition(moveOutput.Position, radius, ref random);
         }
 
-        var lookDirection = math.normalize(targetPosition - entityTransform.Position);
-        var speed = movingSpeed.GetWalkingSpeed() * SubActionConsts.Idle.SpeedMultiplier;
-        var rotationSpeed = movingSpeed.GetWalkingRotationSpeed() * SubActionConsts.Idle.SpeedMultiplier;
+        var speed = movingSpeed.GetWalkingSpeed();
+        var rotationSpeed = movingSpeed.GetWalkingRotationSpeed();
 
-        InputComponent.Enable(entity);
-        InputComponent.SetTarget(entity, targetPosition, 0, lookDirection, 0.01f, speed, rotationSpeed);
+        MoveInputLookup.Enable(entity, speed, rotationSpeed, math.up());
+        MoveInputLookup.SetTarget(entity, targetPosition, SubActionConsts.Idle.MoveDelta);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        InputComponent.ResetInput(entity);
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -68,9 +73,17 @@ public class IdleSubActionState : ISubActionState
             return SubActionResult.Success();
         }
 
-        if (TransformLookup.TryGetComponent(entity, out var entityTransform) &&
-            InputComponent.TryGetComponent(entity, out var moveInput) &&
-            entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
+        {
+            return SubActionResult.Running();
+        }
+
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
+        {
+            return SubActionResult.Running();
+        }
+
+        if (moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Success();
         }
@@ -78,4 +91,3 @@ public class IdleSubActionState : ISubActionState
         return SubActionResult.Running();
     }
 }
-

@@ -532,18 +532,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Targets:
   - Target: {fileID: 1676092614}
+    TargetPosition: {x: 0, y: 0, z: 0}
     Speed: 1
     RotationSpeed: 90
     MaxDistance: 0.1
-  - Target: {fileID: 301340706}
-    Speed: 2
+  - Target: {fileID: 0}
+    TargetPosition: {x: -2.4, y: 1, z: 0}
+    Speed: 5
     RotationSpeed: 180
     MaxDistance: 0.5
   - Target: {fileID: 596440188}
+    TargetPosition: {x: 0, y: 0, z: 0}
     Speed: 1
     RotationSpeed: 90
     MaxDistance: 0.2
   - Target: {fileID: 635865138}
+    TargetPosition: {x: 0, y: 0, z: 0}
+    Speed: 3
+    RotationSpeed: 200
+    MaxDistance: 1
+  - Target: {fileID: 635865138}
+    TargetPosition: {x: 0, y: 0, z: 0}
     Speed: 3
     RotationSpeed: 200
     MaxDistance: 1

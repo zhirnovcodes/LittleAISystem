@@ -17,7 +17,6 @@ public class MovingSpeedAuthoring : MonoBehaviour
                 MaxRotationSpeed = authoring.MaxRotationSpeed
             });
 
-            AddComponent(entity, new MoveControllerInputComponent());
         }
     }
 }

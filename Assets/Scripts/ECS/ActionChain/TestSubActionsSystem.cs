@@ -1,7 +1,6 @@
 using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Transforms;
 using UnityEngine;
 
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -12,26 +11,26 @@ public partial class TestSubActionsSystem : SystemBase
 
     protected override void OnCreate()
     {
-        var transformLookup = GetComponentLookup<LocalTransform>(true);
         var biteLookup = GetBufferLookup<BiteItem>();
         var animalStatsLookup = GetComponentLookup<AnimalStatsComponent>(true);
         var statsIncreaseLookup = GetComponentLookup<StatsIncreaseComponent>(true);
         var statChangeLookup = GetBufferLookup<StatsChangeItem>(false);
         var movingSpeedLookup = GetComponentLookup<MovingSpeedComponent>(true);
         var sleepingPlaceLookup = GetComponentLookup<SleepingPlaceComponent>(true);
-        var moveControllerInputLookup = GetComponentLookup<MoveControllerInputComponent>(false);
+        var moveInputLookup = GetComponentLookup<MoveInputComponent>(false);
+        var moveOutputLookup = GetComponentLookup<MoveOutputComponent>(false);
         var limitationLookup = GetComponentLookup<MoveLimitationComponent>(true);
 
         // Initialize list of ISubActionState
         SubActions = new List<ISubActionState>
         {
-            new IdleSubActionState(transformLookup, moveControllerInputLookup, movingSpeedLookup, limitationLookup),
-            new WalkToSubActionState(transformLookup, moveControllerInputLookup, movingSpeedLookup),
-            new RunFrom(transformLookup, moveControllerInputLookup, movingSpeedLookup),
-            new RotateTowards(transformLookup, moveControllerInputLookup, movingSpeedLookup),
-            new EatSubActionState(transformLookup, biteLookup, animalStatsLookup, statsIncreaseLookup),
-            new LayDownState(transformLookup, moveControllerInputLookup, movingSpeedLookup),
-            new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup, statChangeLookup)
+            new IdleSubActionState(moveOutputLookup, moveInputLookup, movingSpeedLookup, limitationLookup),
+            new WalkToSubActionState(moveInputLookup, moveOutputLookup, movingSpeedLookup),
+            new RunFrom(moveInputLookup, moveOutputLookup, movingSpeedLookup),
+            new RotateTowards(moveInputLookup, moveOutputLookup, movingSpeedLookup),
+            new EatSubActionState(moveInputLookup, moveOutputLookup, movingSpeedLookup, biteLookup, animalStatsLookup, statsIncreaseLookup),
+            new LayDownState(moveInputLookup, moveOutputLookup, movingSpeedLookup),
+            new SleepingState(moveInputLookup, moveOutputLookup, sleepingPlaceLookup, animalStatsLookup, statChangeLookup)
         };
     }
 

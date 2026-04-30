@@ -1,21 +1,23 @@
 using Unity.Entities;
-using Unity.Transforms;
 using Unity.Mathematics;
 
 public class SleepingState : ISubActionState
 {
-    private ComponentLookup<LocalTransform> TransformLookup;
+    private ComponentLookup<MoveInputComponent> MoveInputLookup;
+    private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
     private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
     private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private BufferLookup<StatsChangeItem> StatChangeLookup;
 
     public SleepingState(
-        ComponentLookup<LocalTransform> transformLookup,
+        ComponentLookup<MoveInputComponent> moveInputLookup,
+        ComponentLookup<MoveOutputComponent> moveOutputLookup,
         ComponentLookup<SleepingPlaceComponent> sleepingPlaceLookup,
         ComponentLookup<AnimalStatsComponent> animalStatsLookup,
         BufferLookup<StatsChangeItem> statChangeLookup)
     {
-        TransformLookup = transformLookup;
+        MoveInputLookup = moveInputLookup;
+        MoveOutputLookup = moveOutputLookup;
         SleepingPlaceLookup = sleepingPlaceLookup;
         AnimalStatsLookup = animalStatsLookup;
         StatChangeLookup = statChangeLookup;
@@ -23,7 +25,8 @@ public class SleepingState : ISubActionState
 
     public void Refresh(SystemBase system)
     {
-        TransformLookup.Update(system);
+        MoveInputLookup.Update(system);
+        MoveOutputLookup.Update(system);
         SleepingPlaceLookup.Update(system);
         AnimalStatsLookup.Update(system);
         StatChangeLookup.Update(system);
@@ -31,62 +34,54 @@ public class SleepingState : ISubActionState
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for sleeping
+        MoveInputLookup.Enable(entity, 0f, 0f, math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.Sleeping.MaxDistance);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for sleeping
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // if actor entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(0);
         }
 
-        // if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
         }
 
-        // if time elapsed > FailTime, fail state, error code = 2
         if (timer.IsTimeout(SubActionConsts.Sleeping.FailTime))
         {
             return SubActionResult.Fail(2);
         }
 
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        // if distance between transforms > MaxDistance - fail with error code 3
-        if (!entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.Sleeping.MaxDistance))
+        if (!moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Fail(3);
         }
 
-        // if target does not exist in SleepingPlaceComponent lookup, fail state. code = 4
-        if (!SleepingPlaceLookup.HasComponent(target))
+        if (!SleepingPlaceLookup.TryGetComponent(target, out var sleepingPlace))
         {
             return SubActionResult.Fail(4);
         }
 
-        // if animal does not have AnimalStatsComponent - fail implicitly handled by lookup
+        if (!AnimalStatsLookup.TryGetComponent(entity, out var animalStats))
+        {
+            return SubActionResult.Running();
+        }
 
-        // Check if AnimalStatsComponent.Energy >= 100 - return success
-        var animalStats = AnimalStatsLookup[entity];
         if (animalStats.Stats.Energy >= 100f)
         {
             return SubActionResult.Success();
         }
 
-        // Add to buffer StatsChangeItem EnergyReplanish * DeltaTime
-        var sleepingPlace = SleepingPlaceLookup[target];
         var energyGain = sleepingPlace.EnergyReplanish * timer.DeltaTime;
-
         var statsChange = new AnimalStatsBuilder().WithEnergy(energyGain).Build();
 
         if (StatChangeLookup.TryGetBuffer(entity, out var changeBuffer))
@@ -100,4 +95,3 @@ public class SleepingState : ISubActionState
         return SubActionResult.Running();
     }
 }
-

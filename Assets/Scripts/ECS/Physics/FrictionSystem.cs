@@ -8,7 +8,7 @@ using Unity.Mathematics;
 namespace LittlePhysics
 {
     [BurstCompile]
-    [UpdateInGroup(typeof(LittlePhysicsInternalSystemGroup))]
+    [UpdateInGroup(typeof(LittlePhysicsLateSystemGroup))]
     [UpdateAfter(typeof(SurfaceCollisionSystem))]
     public partial struct FrictionSystem : ISystem
     {

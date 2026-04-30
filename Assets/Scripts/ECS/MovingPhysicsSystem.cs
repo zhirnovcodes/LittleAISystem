@@ -22,6 +22,7 @@ public partial struct MovingPhysicsSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        return;
         var singleton = SystemAPI.GetSingleton<PhysicsSingleton>();
         if (!singleton.PhysicsVelocities.IsCreated || !singleton.BodiesList.IsCreated)
             return;

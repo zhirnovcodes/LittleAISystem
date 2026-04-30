@@ -1,108 +1,95 @@
-using LittleAI.Enums;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Transforms;
 
 public class RunFrom : ISubActionState
 {
-    private ComponentLookup<LocalTransform> TransformLookup;
-    private ComponentLookup<MoveControllerInputComponent> MoveControllerInputLookup;
+    private ComponentLookup<MoveInputComponent> MoveInputLookup;
+    private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
     private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
-    public RunFrom(ComponentLookup<LocalTransform> transformLookup, ComponentLookup<MoveControllerInputComponent> moveControllerInputLookup, ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
+    public RunFrom(
+        ComponentLookup<MoveInputComponent> moveInputLookup,
+        ComponentLookup<MoveOutputComponent> moveOutputLookup,
+        ComponentLookup<MovingSpeedComponent> movingSpeedLookup)
     {
-        TransformLookup = transformLookup;
-        MoveControllerInputLookup = moveControllerInputLookup;
+        MoveInputLookup = moveInputLookup;
+        MoveOutputLookup = moveOutputLookup;
         MovingSpeedLookup = movingSpeedLookup;
     }
 
     public void Refresh(SystemBase system)
     {
-        TransformLookup.Update(system);
-        MoveControllerInputLookup.Update(system);
+        MoveInputLookup.Update(system);
+        MoveOutputLookup.Update(system);
         MovingSpeedLookup.Update(system);
     }
 
     private void SetRandomEscapeTarget(Entity entity, float3 entityPosition, float3 targetPosition, ref Random random)
     {
-        // Generate new random position
-        var movingSpeed = MovingSpeedLookup[entity];
         var safeDistance = new float2(1, 1.5f) * SubActionConsts.RunFrom.SafeDistance;
-        var escapePoition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
-        var lookDirection = math.normalize(escapePoition - entityPosition);
-
-        MoveControllerInputLookup.SetTarget(entity, escapePoition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed());
+        var escapePosition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
+        MoveInputLookup.SetTarget(entity, escapePosition, 0.01f);
     }
 
     public void Enable(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Check if entity does not exist in transform lookup, skip setup
-        if (!TransformLookup.TryGetComponent(entity, out var entityTransform) || 
-            !TransformLookup.TryGetComponent(target, out var targetTransform))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var entityOutput))
         {
             return;
         }
 
-        // if entity does not have MovingSpeedComponent - skip setup
-        if (!MovingSpeedLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(target, out var targetOutput))
         {
             return;
         }
 
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
 
-        // Enable and set initial target
-        MoveControllerInputLookup.Enable(entity);
-        SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
+        MoveInputLookup.Enable(entity, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed(), math.up());
+        SetRandomEscapeTarget(entity, entityOutput.Position, targetOutput.Position, ref random);
     }
 
     public void Disable(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        MoveControllerInputLookup.ResetInput(entity);
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // Check if entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var entityOutput))
         {
             return SubActionResult.Fail(0);
         }
 
-        // Check if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MoveOutputLookup.TryGetComponent(target, out var targetOutput))
         {
             return SubActionResult.Fail(1);
         }
 
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        // If distance >= SafeDistance - success
-        if (entityTransform.IsDistanceGreaterThan(targetTransform, SubActionConsts.RunFrom.SafeDistance))
+        if (math.distance(entityOutput.Position, targetOutput.Position) >= SubActionConsts.RunFrom.SafeDistance)
         {
             return SubActionResult.Success();
         }
 
-        // if entity does not have MovingSpeedComponent - return fail with code 2
-        if (!MovingSpeedLookup.HasComponent(entity))
+        if (!MovingSpeedLookup.TryGetComponent(entity, out _))
         {
             return SubActionResult.Fail(2);
         }
 
-        if (!MoveControllerInputLookup.HasComponent(entity))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(3);
         }
 
-        var moveInput = MoveControllerInputLookup[entity];
-
-        // If arrived at current target, set new random target
-        if (entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
+        if (moveInput.IsTargetReached(entityOutput))
         {
-            SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
+            SetRandomEscapeTarget(entity, entityOutput.Position, targetOutput.Position, ref random);
         }
 
         return SubActionResult.Running();
     }
 }
-

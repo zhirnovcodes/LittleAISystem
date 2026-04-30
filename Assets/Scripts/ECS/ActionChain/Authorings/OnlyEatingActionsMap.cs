@@ -1,7 +1,6 @@
 using LittleAI.Enums;
 using System.Collections.Generic;
 using Unity.Entities;
-using Unity.Transforms;
 
 public class OnlyEatingActionsMap : ActionMapBase
 {
@@ -9,7 +8,6 @@ public class OnlyEatingActionsMap : ActionMapBase
 
     public override Dictionary<SubActionTypes, ISubActionState> ConstructSubActionsStates(SystemBase system)
     {
-        var transformLookup = system.GetComponentLookup<LocalTransform>(true);
         var genetaliaLookup = system.GetComponentLookup<GenetaliaComponent>(true);
         var biteLookup = system.GetBufferLookup<BiteItem>(true);
         var sleepingPlaceLookup = system.GetComponentLookup<SleepingPlaceComponent>(true);
@@ -21,21 +19,22 @@ public class OnlyEatingActionsMap : ActionMapBase
         var reproductionLookup = system.GetComponentLookup<ReproductionComponent>(true);
         var dnaChainLookup = system.GetBufferLookup<DNAChainItem>(true);
         var dnaStorageLookup = system.GetBufferLookup<DNAStorageItem>(true);
-        var moveControllerInputLookup = system.GetComponentLookup<MoveControllerInputComponent>(false);
+        var moveInputLookup = system.GetComponentLookup<MoveInputComponent>(false);
+        var moveOutputLookup = system.GetComponentLookup<MoveOutputComponent>(false);
         var limitationLookup = system.GetComponentLookup<MoveLimitationComponent>(true);
 
         // Initialize list of ISubActionState
         var subActions = new Dictionary<SubActionTypes, ISubActionState>
         {
-            { SubActionTypes.Idle, new IdleSubActionState(transformLookup, moveControllerInputLookup, movingSpeedLookup, limitationLookup) },
-            { SubActionTypes.MoveTo, new WalkToSubActionState(transformLookup, moveControllerInputLookup, movingSpeedLookup) },
-            { SubActionTypes.RunFrom, new RunFrom(transformLookup, moveControllerInputLookup, movingSpeedLookup) },
-            { SubActionTypes.RotateTowards, new RotateTowards(transformLookup, moveControllerInputLookup, movingSpeedLookup) },
-            { SubActionTypes.Eat, new EatSubActionState(transformLookup, biteLookup, animalStatsLookup, statsIncreaseLookup) },
-            { SubActionTypes.MoveInto, new LayDownState(transformLookup, moveControllerInputLookup, movingSpeedLookup) },
-            { SubActionTypes.Sleep, new SleepingState(transformLookup, sleepingPlaceLookup, animalStatsLookup, statChangeLookup) },
-            { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(transformLookup, animalStatsLookup, genetaliaLookup) },
-            { SubActionTypes.Communicate, new CommunicateSubActionState(transformLookup, animalStatsLookup, genetaliaLookup, statsIncreaseLookup, statChangeLookup, dnaChainLookup, dnaStorageLookup, reproductionLookup) }
+            { SubActionTypes.Idle, new IdleSubActionState(moveOutputLookup, moveInputLookup, movingSpeedLookup, limitationLookup) },
+            { SubActionTypes.MoveTo, new WalkToSubActionState(moveInputLookup, moveOutputLookup, movingSpeedLookup) },
+            { SubActionTypes.RunFrom, new RunFrom(moveInputLookup, moveOutputLookup, movingSpeedLookup) },
+            { SubActionTypes.RotateTowards, new RotateTowards(moveInputLookup, moveOutputLookup, movingSpeedLookup) },
+            { SubActionTypes.Eat, new EatSubActionState(moveInputLookup, moveOutputLookup, movingSpeedLookup, biteLookup, animalStatsLookup, statsIncreaseLookup) },
+            { SubActionTypes.MoveInto, new LayDownState(moveInputLookup, moveOutputLookup, movingSpeedLookup) },
+            { SubActionTypes.Sleep, new SleepingState(moveInputLookup, moveOutputLookup, sleepingPlaceLookup, animalStatsLookup, statChangeLookup) },
+            { SubActionTypes.StumbleUpon, new StumbleUponSubActionState(moveInputLookup, moveOutputLookup, movingSpeedLookup, animalStatsLookup, genetaliaLookup) },
+            { SubActionTypes.Communicate, new CommunicateSubActionState(moveInputLookup, moveOutputLookup, movingSpeedLookup, animalStatsLookup, genetaliaLookup, statsIncreaseLookup, statChangeLookup, dnaChainLookup, dnaStorageLookup, reproductionLookup) }
         };
 
         return subActions;
