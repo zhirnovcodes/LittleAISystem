@@ -10,11 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 6355970921796754771}
   - component: {fileID: 6759268985104538566}
-  - component: {fileID: 1242109593274321321}
   - component: {fileID: 2828158335251098255}
   - component: {fileID: 8833946102982955030}
   - component: {fileID: 8341644799886283418}
-  - component: {fileID: 6542776784514800125}
+  - component: {fileID: 7681863523253481634}
   m_Layer: 9
   m_Name: FishFood
   m_TagString: Untagged
@@ -46,27 +45,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7786343652834064770}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!135 &1242109593274321321
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7786343652834064770}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.2
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &2828158335251098255
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,33 +99,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EdibleBody: {fileID: 7875624178503575879}
   Nutrition: 10
---- !u!54 &6542776784514800125
-Rigidbody:
+--- !u!114 &7681863523253481634
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7786343652834064770}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0f0a58a433820e4c901ffe410202959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BodyType: 0
+  ColliderType: 0
+  LocalPosition: {x: 0, y: 0, z: 0}
+  Scale: 1
+  Mass: 1
+  Bounciness: 0.5
+  Friction: 0.5
+  Hardness: 0.5
+  TriggerUpdateInterval: 1
+  StartVeclocity: {x: 0, y: 0, z: 0}
+  ShouldRotateOnCollision: 0
+  Main: {fileID: 0}
 --- !u!1 &7875624178503575879
 GameObject:
   m_ObjectHideFlags: 0

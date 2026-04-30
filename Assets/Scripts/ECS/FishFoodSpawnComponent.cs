@@ -9,5 +9,6 @@ public struct FishFoodSpawnComponent : IComponentData
     public float3 SpawnScaleRange;
     public float FoodScale;
     public float TimeElapsed;
+    public int MaxCount;
     public Random Random;
 }

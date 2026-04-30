@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4301267507990199676}
   - component: {fileID: 8780708606458594600}
   - component: {fileID: 5851687056489066611}
-  - component: {fileID: 4333296050529643625}
+  - component: {fileID: 3095501953509889681}
   m_Layer: 8
   m_Name: Grass
   m_TagString: Untagged
@@ -75,27 +75,30 @@ MonoBehaviour:
           w: 0
     ActorConditions: 1
     ActionType: 4
---- !u!135 &4333296050529643625
-SphereCollider:
+--- !u!114 &3095501953509889681
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 605776994893110603}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0f0a58a433820e4c901ffe410202959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BodyType: 1
+  ColliderType: 0
+  LocalPosition: {x: 0, y: -0.2, z: 0}
+  Scale: 0.2
+  Mass: 1
+  Bounciness: 0.5
+  Friction: 0.5
+  Hardness: 0.5
+  TriggerUpdateInterval: 1
+  StartVeclocity: {x: 0, y: 0, z: 0}
+  ShouldRotateOnCollision: 0
+  Main: {fileID: 0}
 --- !u!1 &1497382037661503908
 GameObject:
   m_ObjectHideFlags: 0

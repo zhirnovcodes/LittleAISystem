@@ -1,4 +1,4 @@
-﻿using Unity.Burst;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -23,14 +23,17 @@ public partial struct FishFoodSpawnSystem : ISystem
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         var ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged);
 
+        var foodQuery = SystemAPI.QueryBuilder().WithAll<EdibleComponent>().Build();
+        var currentFoodCount = foodQuery.CalculateEntityCount();
+
         var spawnJob = new FishFoodSpawnJob
         {
             DeltaTime = deltaTime,
             ECB = ecb,
+            CurrentFoodCount = currentFoodCount,
         };
 
         state.Dependency = spawnJob.Schedule(state.Dependency);
-
     }
 
     [BurstCompile]
@@ -38,12 +41,17 @@ public partial struct FishFoodSpawnSystem : ISystem
     {
         public float DeltaTime;
         public EntityCommandBuffer ECB;
+        public int CurrentFoodCount;
 
         public void Execute(Entity entity, ref FishFoodSpawnComponent spawnComponent)
         {
             spawnComponent.TimeElapsed += DeltaTime;
 
-            // Check if it's time to spawn
+            if (CurrentFoodCount >= spawnComponent.MaxCount)
+            {
+                return;
+            }
+
             float randomInterval = spawnComponent.Random.NextFloat(
                 spawnComponent.SpawnInterval.x,
                 spawnComponent.SpawnInterval.y);
@@ -65,10 +73,7 @@ public partial struct FishFoodSpawnSystem : ISystem
             var foodEntity = ECB.Instantiate(spawnComponent.Prefab);
             ECB.AddComponent(foodEntity, localTransform);
 
-
-            // Reset timer
             spawnComponent.TimeElapsed = 0f;
-
         }
     }
 }

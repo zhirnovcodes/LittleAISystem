@@ -8,6 +8,7 @@ public class FishFoodSpawnAuthoring : MonoBehaviour
 
     [Header("Spawn Interval (Min, Max)")]
     public float2 SpawnInterval = new float2(5f, 10f);
+    public int MaxCount = 100;
     public uint Seed = 1345;
     public bool ShouldSpawn = true;
 
@@ -31,7 +32,8 @@ public class FishFoodSpawnAuthoring : MonoBehaviour
                 Position = authoring.transform.position,
                 SpawnScaleRange = authoring.transform.localScale,
                 Random = new Unity.Mathematics.Random(authoring.Seed),
-                FoodScale = authoring.Prefab.transform.localScale.x
+                FoodScale = authoring.Prefab.transform.localScale.x,
+                MaxCount = authoring.MaxCount
             });
         }
     }
