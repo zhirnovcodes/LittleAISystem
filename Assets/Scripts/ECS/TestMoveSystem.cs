@@ -28,7 +28,7 @@ public partial struct TestMoveSystem : ISystem
             in DynamicBuffer<TestMoveTargetItem> targets)
         {
             bool shouldAdvance = testMove.CurrentIndex == -1
-                || (input.IsTargetReached(output));// && input.IsLookingTowards(output));
+                || (input.IsTargetReached(output) && input.IsLookingTowards(output));
 
             if (!shouldAdvance)
                 return;
@@ -45,7 +45,7 @@ public partial struct TestMoveSystem : ISystem
 
             var target = targets[testMove.CurrentIndex];
             input.SetTarget(target.Target, target.MaxDistance);
-            input.Enable(target.Speed, target.RotationSpeed, input.Up);
+            input.Enable(target.Speed, target.RotationSpeed, new Unity.Mathematics.float3(0,1,0));
             output.Reset();
         }
     }
