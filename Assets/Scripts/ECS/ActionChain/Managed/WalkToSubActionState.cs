@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,7 +6,7 @@ public class WalkToSubActionState : ISubActionState
 {
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
     public WalkToSubActionState(
         ComponentLookup<MoveInputComponent> moveInputLookup,
@@ -61,6 +62,11 @@ public class WalkToSubActionState : ISubActionState
         if (moveOutput.IsTargetDisposed)
         {
             return SubActionResult.Fail(3);
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
         }
 
         if (moveInput.IsTargetReached(moveOutput) && moveInput.IsLookingTowards(moveOutput))

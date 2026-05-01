@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,7 +6,7 @@ public class LayDownState : ISubActionState
 {
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
     public LayDownState(
         ComponentLookup<MoveInputComponent> moveInputLookup,
@@ -31,7 +32,7 @@ public class LayDownState : ISubActionState
             return;
         }
 
-        MoveInputLookup.Enable(entity, 0f, movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.Enable(entity, movingSpeed.GetCrawlingSpeed(), movingSpeed.GetCrawlingRotationSpeed(), math.up());
         MoveInputLookup.SetTarget(entity, target, SubActionConsts.LayDown.Distance);
     }
 
@@ -51,6 +52,11 @@ public class LayDownState : ISubActionState
         if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
         }
 
         if (moveOutput.IsTargetDisposed)

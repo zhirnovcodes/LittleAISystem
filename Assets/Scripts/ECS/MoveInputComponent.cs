@@ -3,6 +3,7 @@ using Unity.Mathematics;
 
 public struct MoveInputComponent : IComponentData
 {
+    public bool IsEnabled;
     public Entity Target;
     public float3 TargetPosition;
     public float3 Up;
@@ -14,6 +15,7 @@ public struct MoveInputComponent : IComponentData
 
 public struct MoveOutputComponent : IComponentData
 {
+    public bool IsEnabled;
     public float3 TargetPosition;
     public float3 Position;
     public quaternion Rotation;

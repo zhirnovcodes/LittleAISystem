@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,8 +6,8 @@ public class IdleSubActionState : ISubActionState
 {
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<MoveLimitationComponent> LimitationComponent;
+    [ReadOnly] private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] private ComponentLookup<MoveLimitationComponent> LimitationComponent;
 
     public IdleSubActionState(
         ComponentLookup<MoveOutputComponent> moveOutputLookup,
@@ -79,6 +80,11 @@ public class IdleSubActionState : ISubActionState
         }
 
         if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
+        {
+            return SubActionResult.Running();
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
         {
             return SubActionResult.Running();
         }

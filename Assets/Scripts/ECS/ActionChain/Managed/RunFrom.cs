@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,7 +6,7 @@ public class RunFrom : ISubActionState
 {
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
     public RunFrom(
         ComponentLookup<MoveInputComponent> moveInputLookup,
@@ -65,12 +66,7 @@ public class RunFrom : ISubActionState
             return SubActionResult.Fail(0);
         }
 
-        if (!MoveOutputLookup.TryGetComponent(target, out var targetOutput))
-        {
-            return SubActionResult.Fail(1);
-        }
-
-        if (math.distance(entityOutput.Position, targetOutput.Position) >= SubActionConsts.RunFrom.SafeDistance)
+        if (math.distance(entityOutput.Position, entityOutput.TargetPosition) >= SubActionConsts.RunFrom.SafeDistance)
         {
             return SubActionResult.Success();
         }
@@ -87,7 +83,12 @@ public class RunFrom : ISubActionState
 
         if (moveInput.IsTargetReached(entityOutput))
         {
-            SetRandomEscapeTarget(entity, entityOutput.Position, targetOutput.Position, ref random);
+            SetRandomEscapeTarget(entity, entityOutput.Position, entityOutput.TargetPosition, ref random);
+        }
+
+        if (moveInput.IsWaiting(entityOutput))
+        {
+            return SubActionResult.Running();
         }
 
         return SubActionResult.Running();

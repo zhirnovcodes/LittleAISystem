@@ -50,7 +50,7 @@ public partial struct MoveLinearSystem : ISystem
             in MoveInputComponent input,
             ref MoveOutputComponent output)
         {
-            if (!update.IsEnabled || !input.IsTargetSet())
+            if (!update.IsEnabled || !input.IsEnabled)
                 return;
 
             float3 targetPosition;
@@ -83,6 +83,7 @@ public partial struct MoveLinearSystem : ISystem
             output.Scale = selfBody.Scale;
             output.TargetPosition = targetPosition;
             output.TargetScale = targetScale;
+            output.IsEnabled = true;
 
             if (input.Speed <= 0)
             {

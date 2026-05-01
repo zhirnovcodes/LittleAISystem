@@ -27,11 +27,14 @@ public partial struct TestMoveSystem : ISystem
             ref TestMoveComponent testMove,
             in DynamicBuffer<TestMoveTargetItem> targets)
         {
+
             bool shouldAdvance = testMove.CurrentIndex == -1
-                || (input.IsTargetReached(output) && input.IsLookingTowards(output));
+                || (input.IsTargetReached(output) && input.IsLookingTowards(output) && !input.IsWaiting(output));
 
             if (!shouldAdvance)
-                return;
+            { 
+                return; 
+            }
 
             testMove.CurrentIndex++;
 

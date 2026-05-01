@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,9 +6,9 @@ public class StumbleUponSubActionState : ISubActionState
 {
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
-    private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
+    [ReadOnly] private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    [ReadOnly] private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
 
     public StumbleUponSubActionState(
         ComponentLookup<MoveInputComponent> moveInputLookup,

@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,8 +6,8 @@ public class SleepingState : ISubActionState
 {
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
-    private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
-    private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    [ReadOnly] private ComponentLookup<SleepingPlaceComponent> SleepingPlaceLookup;
+    [ReadOnly] private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     private BufferLookup<StatsChangeItem> StatChangeLookup;
 
     public SleepingState(
@@ -56,14 +57,19 @@ public class SleepingState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
-        if (moveOutput.IsTargetDisposed)
-        {
-            return SubActionResult.Fail(5);
-        }
-
         if (timer.IsTimeout(SubActionConsts.Sleeping.FailTime))
         {
             return SubActionResult.Fail(2);
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
+        }
+
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(5);
         }
 
         if (!moveInput.IsTargetReached(moveOutput))
@@ -85,7 +91,6 @@ public class SleepingState : ISubActionState
         {
             return SubActionResult.Success();
         }
-
         var energyGain = sleepingPlace.EnergyReplanish * timer.DeltaTime;
         var statsChange = new AnimalStatsBuilder().WithEnergy(energyGain).Build();
 

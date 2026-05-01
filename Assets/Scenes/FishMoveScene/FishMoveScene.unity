@@ -620,7 +620,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxEntitiesCount: 100
-  AirFriction: 1
+  AirFriction: 10
   PushOutPower: 10
   LodData:
     DistanceRange:

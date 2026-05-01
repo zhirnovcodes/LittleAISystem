@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,10 +6,10 @@ public class EatSubActionState : ISubActionState
 {
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
-    private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
-    private BufferLookup<BiteItem> BiteLookup;
+    [ReadOnly] private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    [ReadOnly] private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
+    [ReadOnly] private BufferLookup<BiteItem> BiteLookup;
 
     public EatSubActionState(
         ComponentLookup<MoveInputComponent> moveInputLookup,
@@ -73,6 +74,11 @@ public class EatSubActionState : ISubActionState
         if (timer.IsTimeout(SubActionConsts.Eat.FailTime))
         {
             return SubActionResult.Fail(2);
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
         }
 
         if (!moveInput.IsTargetReached(moveOutput))

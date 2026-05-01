@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using LittleAI.Enums;
+using Unity.Collections;
 using Unity.Entities;
 using UnityEditor;
 
@@ -53,6 +54,10 @@ internal static class ActionRunnerUnmanagedGetInfo
                 if (canonicalLookupsByKey.ContainsKey(lookup.Key) == false)
                 {
                     canonicalLookupsByKey.Add(lookup.Key, lookup.Clone());
+                }
+                else if (lookup.IsWritable)
+                {
+                    canonicalLookupsByKey[lookup.Key].IsWritable = true;
                 }
             }
 
@@ -154,6 +159,7 @@ internal static class ActionRunnerUnmanagedGetInfo
             Name = fieldInfo.Name,
             LookupTypeName = lookupTypeName,
             ElementTypeName = elementType.Name,
+            IsWritable = !fieldInfo.IsDefined(typeof(ReadOnlyAttribute), false),
         };
 
         return true;
@@ -286,11 +292,6 @@ internal static class ActionRunnerUnmanagedGetInfo
             }
         }
 
-        for (int i = 0; i < result.Count; i++)
-        {
-            result[i].IsWritable = IsLookupWritable(result[i], generatedStates);
-        }
-
         return result;
     }
 
@@ -321,28 +322,6 @@ internal static class ActionRunnerUnmanagedGetInfo
             for (int j = 0; j < methods.Count; j++)
             {
                 if (Regex.IsMatch(methods[j], pattern))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static bool IsLookupWritable(LookupInfo lookup, List<GeneratedStateInfo> generatedStates)
-    {
-        var name = Regex.Escape(lookup.Name);
-
-        for (int i = 0; i < generatedStates.Count; i++)
-        {
-            var methods = generatedStates[i].Methods;
-            for (int j = 0; j < methods.Count; j++)
-            {
-                var methodText = methods[j];
-                if (Regex.IsMatch(methodText, $@"\b{name}\.(Enable|ResetInput|SetTarget|Reset)\(") ||
-                    Regex.IsMatch(methodText, $@"\b{name}\.TryGetBuffer\(") ||
-                    Regex.IsMatch(methodText, $@"\b{name}\[[^\]]+\]\s*="))
                 {
                     return true;
                 }

@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,7 +6,7 @@ public class RotateTowards : ISubActionState
 {
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
 
     public RotateTowards(
         ComponentLookup<MoveInputComponent> moveInputLookup,
@@ -61,6 +62,11 @@ public class RotateTowards : ISubActionState
         if (timer.IsTimeout(SubActionConsts.RotateTowards.FailTime))
         {
             return SubActionResult.Fail(2);
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
         }
 
         if (moveInput.IsLookingTowards(moveOutput))

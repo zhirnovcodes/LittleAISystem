@@ -44,7 +44,7 @@ public partial struct MoveRotationSystem : ISystem
             if (!InputLookup.TryGetComponent(handler.Parent, out var input))
                 return;
 
-            if (input.RotationSpeed <= 0f || !input.IsTargetSet())
+            if (input.RotationSpeed <= 0f || !input.IsEnabled)
                 return;
 
             if (!OutputLookup.HasComponent(handler.Parent))

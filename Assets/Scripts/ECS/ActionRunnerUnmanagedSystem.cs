@@ -44,6 +44,7 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
 
             AnimalStatsLookup = SystemAPI.GetComponentLookup<AnimalStatsComponent>(true),
             BiteLookup = SystemAPI.GetBufferLookup<BiteItem>(true),
+            DNAChainLookup = SystemAPI.GetBufferLookup<DNAChainItem>(true),
             DNAStorageLookup = SystemAPI.GetBufferLookup<DNAStorageItem>(true),
             GenetaliaLookup = SystemAPI.GetComponentLookup<GenetaliaComponent>(true),
             LimitationComponent = SystemAPI.GetComponentLookup<MoveLimitationComponent>(true),
@@ -52,9 +53,8 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
             SleepingPlaceLookup = SystemAPI.GetComponentLookup<SleepingPlaceComponent>(true),
             StatsIncreaseLookup = SystemAPI.GetComponentLookup<StatsIncreaseComponent>(true),
 
-            MoveOutputLookup = SystemAPI.GetComponentLookup<MoveOutputComponent>(false),
-            DNAChainLookup = SystemAPI.GetBufferLookup<DNAChainItem>(false),
             MoveInputLookup = SystemAPI.GetComponentLookup<MoveInputComponent>(false),
+            MoveOutputLookup = SystemAPI.GetComponentLookup<MoveOutputComponent>(false),
             StatChangeLookup = SystemAPI.GetBufferLookup<StatsChangeItem>(false),
         };
 
@@ -77,13 +77,13 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public int BatchesCount;
 
-    public BufferLookup<DNAChainItem> DNAChainLookup;
     public ComponentLookup<MoveInputComponent> MoveInputLookup;
-    public BufferLookup<StatsChangeItem> StatChangeLookup;
     public ComponentLookup<MoveOutputComponent> MoveOutputLookup;
+    public BufferLookup<StatsChangeItem> StatChangeLookup;
 
     [ReadOnly] public ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     [ReadOnly] public BufferLookup<BiteItem> BiteLookup;
+    [ReadOnly] public BufferLookup<DNAChainItem> DNAChainLookup;
     [ReadOnly] public BufferLookup<DNAStorageItem> DNAStorageLookup;
     [ReadOnly] public ComponentLookup<GenetaliaComponent> GenetaliaLookup;
     [ReadOnly] public ComponentLookup<MoveLimitationComponent> LimitationComponent;
@@ -403,6 +403,11 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(2);
         }
 
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(3);
+        }
+
         if (moveInput.IsTargetReached(moveOutput) && moveInput.IsLookingTowards(moveOutput))
         {
             return SubActionResult.Success();
@@ -442,6 +447,11 @@ public partial struct ActionRunnerJob : IJobEntity
         if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
+        }
+
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(8);
         }
 
         if (timer.IsTimeout(SubActionConsts.Eat.FailTime))
@@ -513,6 +523,11 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(1);
         }
 
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(4);
+        }
+
         if (timer.IsTimeout(SubActionConsts.LayDown.FailTime))
         {
             return SubActionResult.Fail(2);
@@ -552,6 +567,11 @@ public partial struct ActionRunnerJob : IJobEntity
         if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
+        }
+
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(5);
         }
 
         if (timer.IsTimeout(SubActionConsts.Sleeping.FailTime))
@@ -701,9 +721,14 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public SubActionResult Update_StumbleUpon(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        if (!MoveOutputLookup.TryGetComponent(entity, out _))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(0);
+        }
+
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(7);
         }
 
         if (!MoveOutputLookup.TryGetComponent(target, out _))
@@ -790,6 +815,11 @@ public partial struct ActionRunnerJob : IJobEntity
         if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
+        }
+
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(4);
         }
 
         if (!moveInput.IsTargetReached(moveOutput))

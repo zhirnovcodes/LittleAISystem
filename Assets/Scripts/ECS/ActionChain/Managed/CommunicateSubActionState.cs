@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -5,14 +6,14 @@ public class CommunicateSubActionState : ISubActionState
 {
     private ComponentLookup<MoveInputComponent> MoveInputLookup;
     private ComponentLookup<MoveOutputComponent> MoveOutputLookup;
-    private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
-    private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
-    private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
+    [ReadOnly] private ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
+    [ReadOnly] private ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
+    [ReadOnly] private ComponentLookup<StatsIncreaseComponent> StatsIncreaseLookup;
     private BufferLookup<StatsChangeItem> StatChangeLookup;
-    private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
-    private ComponentLookup<ReproductionComponent> ReproductionLookup;
-    private BufferLookup<DNAChainItem> DNAChainLookup;
-    private BufferLookup<DNAStorageItem> DNAStorageLookup;
+    [ReadOnly] private ComponentLookup<GenetaliaComponent> GenetaliaLookup;
+    [ReadOnly] private ComponentLookup<ReproductionComponent> ReproductionLookup;
+    [ReadOnly] private BufferLookup<DNAChainItem> DNAChainLookup;
+    [ReadOnly] private BufferLookup<DNAStorageItem> DNAStorageLookup;
 
     public CommunicateSubActionState(
         ComponentLookup<MoveInputComponent> moveInputLookup,
