@@ -44,17 +44,17 @@ public partial struct ActionRunnerUnmanagedSystem : ISystem
 
             AnimalStatsLookup = SystemAPI.GetComponentLookup<AnimalStatsComponent>(true),
             BiteLookup = SystemAPI.GetBufferLookup<BiteItem>(true),
-            DNAChainLookup = SystemAPI.GetBufferLookup<DNAChainItem>(true),
             DNAStorageLookup = SystemAPI.GetBufferLookup<DNAStorageItem>(true),
             GenetaliaLookup = SystemAPI.GetComponentLookup<GenetaliaComponent>(true),
-            TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true),
             LimitationComponent = SystemAPI.GetComponentLookup<MoveLimitationComponent>(true),
             MovingSpeedLookup = SystemAPI.GetComponentLookup<MovingSpeedComponent>(true),
             ReproductionLookup = SystemAPI.GetComponentLookup<ReproductionComponent>(true),
             SleepingPlaceLookup = SystemAPI.GetComponentLookup<SleepingPlaceComponent>(true),
             StatsIncreaseLookup = SystemAPI.GetComponentLookup<StatsIncreaseComponent>(true),
 
-            InputComponent = SystemAPI.GetComponentLookup<MoveControllerInputComponent>(false),
+            MoveOutputLookup = SystemAPI.GetComponentLookup<MoveOutputComponent>(false),
+            DNAChainLookup = SystemAPI.GetBufferLookup<DNAChainItem>(false),
+            MoveInputLookup = SystemAPI.GetComponentLookup<MoveInputComponent>(false),
             StatChangeLookup = SystemAPI.GetBufferLookup<StatsChangeItem>(false),
         };
 
@@ -77,15 +77,15 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public int BatchesCount;
 
-    public ComponentLookup<MoveControllerInputComponent> InputComponent;
+    public BufferLookup<DNAChainItem> DNAChainLookup;
+    public ComponentLookup<MoveInputComponent> MoveInputLookup;
     public BufferLookup<StatsChangeItem> StatChangeLookup;
+    public ComponentLookup<MoveOutputComponent> MoveOutputLookup;
 
     [ReadOnly] public ComponentLookup<AnimalStatsComponent> AnimalStatsLookup;
     [ReadOnly] public BufferLookup<BiteItem> BiteLookup;
-    [ReadOnly] public BufferLookup<DNAChainItem> DNAChainLookup;
     [ReadOnly] public BufferLookup<DNAStorageItem> DNAStorageLookup;
     [ReadOnly] public ComponentLookup<GenetaliaComponent> GenetaliaLookup;
-    [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
     [ReadOnly] public ComponentLookup<MoveLimitationComponent> LimitationComponent;
     [ReadOnly] public ComponentLookup<MovingSpeedComponent> MovingSpeedLookup;
     [ReadOnly] public ComponentLookup<ReproductionComponent> ReproductionLookup;
@@ -304,13 +304,15 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public void Enable_Idle(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        if (!TransformLookup.HasComponent(entity) || !MovingSpeedLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return;
         }
 
-        var entityTransform = TransformLookup[entity];
-        var movingSpeed = MovingSpeedLookup[entity];
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
 
         var radius = random.NextFloat(SubActionConsts.Idle.WanderRadius / 2f, SubActionConsts.Idle.WanderRadius);
         float3 targetPosition;
@@ -321,20 +323,20 @@ public partial struct ActionRunnerJob : IJobEntity
         }
         else
         {
-            targetPosition = LocalTransformExtensions.GenerateRandomPosition(entityTransform.Position, radius, ref random);
+            targetPosition = LocalTransformExtensions.GenerateRandomPosition(moveOutput.Position, radius, ref random);
         }
 
-        var lookDirection = math.normalize(targetPosition - entityTransform.Position);
-        var speed = movingSpeed.GetWalkingSpeed() * SubActionConsts.Idle.SpeedMultiplier;
-        var rotationSpeed = movingSpeed.GetWalkingRotationSpeed() * SubActionConsts.Idle.SpeedMultiplier;
+        var speed = movingSpeed.GetWalkingSpeed();
+        var rotationSpeed = movingSpeed.GetWalkingRotationSpeed();
 
-        InputComponent.Enable(entity);
-        InputComponent.SetTarget(entity, targetPosition, 0, lookDirection, 0.01f, speed, rotationSpeed);
+        MoveInputLookup.Enable(entity, speed, rotationSpeed, math.up());
+        MoveInputLookup.SetTarget(entity, targetPosition, SubActionConsts.Idle.MoveDelta);
     }
 
     public void Disable_Idle(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        InputComponent.ResetInput(entity);
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update_Idle(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -345,9 +347,17 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Success();
         }
 
-        if (TransformLookup.TryGetComponent(entity, out var entityTransform) &&
-            InputComponent.TryGetComponent(entity, out var moveInput) &&
-            entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
+        {
+            return SubActionResult.Running();
+        }
+
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
+        {
+            return SubActionResult.Running();
+        }
+
+        if (moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Success();
         }
@@ -361,21 +371,19 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public void Enable_MoveTo(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        InputComponent.Enable(entity);
-
-        if (!MovingSpeedLookup.HasComponent(entity))
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
         {
             return;
         }
 
-        var movingSpeed = MovingSpeedLookup[entity];
-
-        InputComponent.SetTarget(entity, target, SubActionConsts.WalkTo.MaxDistance, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed());
+        MoveInputLookup.Enable(entity, movingSpeed.GetWalkingSpeed(), movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.WalkTo.MaxDistance);
     }
 
     public void Disable_MoveTo(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        InputComponent.ResetInput(entity);
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update_MoveTo(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
@@ -385,24 +393,17 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(0);
         }
 
-        if (!MovingSpeedLookup.HasComponent(entity))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(1);
         }
 
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(2);
         }
 
-        if (!TransformLookup.HasComponent(target))
-        {
-            return SubActionResult.Fail(3);
-        }
-
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-        if (entityTransform.IsArrivedAndLooking(targetTransform, SubActionConsts.WalkTo.MaxDistance))
+        if (moveInput.IsTargetReached(moveOutput) && moveInput.IsLookingTowards(moveOutput))
         {
             return SubActionResult.Success();
         }
@@ -416,59 +417,58 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public void Enable_Eat(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for eat
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
+
+        MoveInputLookup.Enable(entity, 0f, movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.Eat.MaxDistance * 2f);
     }
 
     public void Disable_Eat(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for eat
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update_Eat(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // if actor entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.TryGetComponent(entity, out var entityTransform))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(0);
         }
 
-        // if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.TryGetComponent(target, out var targetTransform))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
         }
 
-        // if time elapsed > FailTime, fail state, error code = 2
         if (timer.IsTimeout(SubActionConsts.Eat.FailTime))
         {
             return SubActionResult.Fail(2);
         }
 
-        // if distance between transforms > MaxDistance - fail with error code 3
-        if (entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.Eat.MaxDistance) == false)
+        if (!moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Fail(3);
         }
 
-        // if target does not exist in EdibleBody lookup, fail state. code = 4
-        if (BiteLookup.HasBuffer(target) == false)
+        if (!BiteLookup.HasBuffer(target))
         {
             return SubActionResult.Fail(4);
         }
 
-        // if animal does not have AnimalStatsComponent - return fail with code 7
         if (!AnimalStatsLookup.TryGetComponent(entity, out var animalStats))
         {
             return SubActionResult.Fail(7);
         }
 
-        // Check if Fullness >= 100 - returns Success
         if (animalStats.Stats.Fullness >= 100f)
         {
             return SubActionResult.Success();
         }
 
-        // Process eating continuously based on EatingSpeed
         var biteValue = StatsIncreaseLookup[entity].AnimalStats.Fullness * timer.DeltaTime;
 
         buffer.AppendToBuffer(target, new BiteItem
@@ -486,52 +486,42 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public void Enable_MoveInto(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        InputComponent.Enable(entity);
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
+
+        MoveInputLookup.Enable(entity, 0f, movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.LayDown.Distance);
     }
 
     public void Disable_MoveInto(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        InputComponent.ResetInput(entity);
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update_MoveInto(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // Check if entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(0);
         }
 
-        // Check if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
         }
 
-        // If time elapsed > FailTime, fail state, error code = 2
         if (timer.IsTimeout(SubActionConsts.LayDown.FailTime))
         {
             return SubActionResult.Fail(2);
         }
 
-        // if entity does not have MovingSpeedComponent - return fail with code 3
-        if (!MovingSpeedLookup.HasComponent(entity))
-        {
-            return SubActionResult.Fail(3);
-        }
-
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        // After distance < Distance - returns success
-        if (entityTransform.IsTargetPositionReached(targetTransform.Position, SubActionConsts.LayDown.Distance))
+        if (moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Success();
         }
-
-        // Update target position (using crawling speed, no rotation)
-        var lookDirection = math.normalize(targetTransform.Position - entityTransform.Position);
-        InputComponent.SetTarget(entity, targetTransform.Position, 0, lookDirection, 0.01f, MovingSpeedLookup[entity].GetCrawlingSpeed(), 0f);
 
         return SubActionResult.Running();
     }
@@ -542,62 +532,54 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public void Enable_Sleep(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Nothing to enable for sleeping
+        MoveInputLookup.Enable(entity, 0f, 0f, math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.Sleeping.MaxDistance);
     }
 
     public void Disable_Sleep(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Nothing to disable for sleeping
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update_Sleep(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // if actor entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(0);
         }
 
-        // if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
         }
 
-        // if time elapsed > FailTime, fail state, error code = 2
         if (timer.IsTimeout(SubActionConsts.Sleeping.FailTime))
         {
             return SubActionResult.Fail(2);
         }
 
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        // if distance between transforms > MaxDistance - fail with error code 3
-        if (!entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.Sleeping.MaxDistance))
+        if (!moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Fail(3);
         }
 
-        // if target does not exist in SleepingPlaceComponent lookup, fail state. code = 4
-        if (!SleepingPlaceLookup.HasComponent(target))
+        if (!SleepingPlaceLookup.TryGetComponent(target, out var sleepingPlace))
         {
             return SubActionResult.Fail(4);
         }
 
-        // if animal does not have AnimalStatsComponent - fail implicitly handled by lookup
+        if (!AnimalStatsLookup.TryGetComponent(entity, out var animalStats))
+        {
+            return SubActionResult.Running();
+        }
 
-        // Check if AnimalStatsComponent.Energy >= 100 - return success
-        var animalStats = AnimalStatsLookup[entity];
         if (animalStats.Stats.Energy >= 100f)
         {
             return SubActionResult.Success();
         }
 
-        // Add to buffer StatsChangeItem EnergyReplanish * DeltaTime
-        var sleepingPlace = SleepingPlaceLookup[target];
         var energyGain = sleepingPlace.EnergyReplanish * timer.DeltaTime;
-
         var statsChange = new AnimalStatsBuilder().WithEnergy(energyGain).Build();
 
         if (StatChangeLookup.TryGetBuffer(entity, out var changeBuffer))
@@ -617,81 +599,68 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void RunFrom_SetRandomEscapeTarget(Entity entity, float3 entityPosition, float3 targetPosition, ref Random random)
     {
-        // Generate new random position
-        var movingSpeed = MovingSpeedLookup[entity];
         var safeDistance = new float2(1, 1.5f) * SubActionConsts.RunFrom.SafeDistance;
-        var escapePoition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
-        var lookDirection = math.normalize(escapePoition - entityPosition);
-
-        InputComponent.SetTarget(entity, escapePoition, 0, lookDirection, 0.01f, movingSpeed.GetRunningSpeed()*1.5f, movingSpeed.GetRunningRotationSpeed());
+        var escapePosition = LocalTransformExtensions.GenerateRandomEscapePosition(entityPosition, targetPosition, safeDistance, ref random);
+        MoveInputLookup.SetTarget(entity, escapePosition, 0.01f);
     }
 
     public void Enable_RunFrom(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Check if entity does not exist in transform lookup, skip setup
-        if (!TransformLookup.TryGetComponent(entity, out var entityTransform) || 
-            !TransformLookup.TryGetComponent(target, out var targetTransform))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var entityOutput))
         {
             return;
         }
 
-        // if entity does not have MovingSpeedComponent - skip setup
-        if (!MovingSpeedLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(target, out var targetOutput))
         {
             return;
         }
 
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
 
-        // Enable and set initial target
-        InputComponent.Enable(entity);
-        RunFrom_SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
+        MoveInputLookup.Enable(entity, movingSpeed.GetRunningSpeed(), movingSpeed.GetRunningRotationSpeed(), math.up());
+        RunFrom_SetRandomEscapeTarget(entity, entityOutput.Position, targetOutput.Position, ref random);
     }
 
     public void Disable_RunFrom(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        InputComponent.ResetInput(entity);
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update_RunFrom(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // Check if entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var entityOutput))
         {
             return SubActionResult.Fail(0);
         }
 
-        // Check if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MoveOutputLookup.TryGetComponent(target, out var targetOutput))
         {
             return SubActionResult.Fail(1);
         }
 
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        // If distance >= SafeDistance - success
-        if (entityTransform.IsDistanceGreaterThan(targetTransform, SubActionConsts.RunFrom.SafeDistance))
+        if (math.distance(entityOutput.Position, targetOutput.Position) >= SubActionConsts.RunFrom.SafeDistance)
         {
             return SubActionResult.Success();
         }
 
-        // if entity does not have MovingSpeedComponent - return fail with code 2
-        if (!MovingSpeedLookup.HasComponent(entity))
+        if (!MovingSpeedLookup.TryGetComponent(entity, out _))
         {
             return SubActionResult.Fail(2);
         }
 
-        if (!InputComponent.HasComponent(entity))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(3);
         }
 
-        var moveInput = InputComponent[entity];
-
-        // If arrived at current target, set new random target
-        if (entityTransform.IsTargetDistanceReached(moveInput.TargetPosition, moveInput.TargetScale, moveInput.Distance))
+        if (moveInput.IsTargetReached(entityOutput))
         {
-            RunFrom_SetRandomEscapeTarget(entity, entityTransform.Position, targetTransform.Position, ref random);
+            RunFrom_SetRandomEscapeTarget(entity, entityOutput.Position, targetOutput.Position, ref random);
         }
 
         return SubActionResult.Running();
@@ -703,94 +672,75 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public void Enable_StumbleUpon(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        if (GenetaliaLookup.HasComponent(entity))
+        if (GenetaliaLookup.TryGetComponent(entity, out var genitalia))
         {
-            var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = true;
             buffer.SetComponent(entity, genitalia);
         }
+
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
+
+        MoveInputLookup.Enable(entity, 0f, movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.StumbleUpon.MaxDistance);
     }
 
     public void Disable_StumbleUpon(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Disable genitalia component
-        if (GenetaliaLookup.HasComponent(entity))
+        if (GenetaliaLookup.TryGetComponent(entity, out var genitalia))
         {
-            var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = false;
             buffer.SetComponent(entity, genitalia);
         }
+
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update_StumbleUpon(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // if actor entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveOutputLookup.TryGetComponent(entity, out _))
         {
             return SubActionResult.Fail(0);
         }
 
-        // if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MoveOutputLookup.TryGetComponent(target, out _))
         {
             return SubActionResult.Fail(1);
         }
 
-        // if time elapsed > FailTime, fail state, error code = 2
         if (timer.IsTimeout(SubActionConsts.StumbleUpon.FailTime))
         {
             return SubActionResult.Fail(2);
         }
-        /*
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-        // Check if target is not reached
-        if (entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.StumbleUpon.MaxDistance) == false)
-        {
-            return SubActionResult.Running();
-        }
 
-        // Check if looking towards target
-        if (entityTransform.IsLookingTowards(targetTransform, SubActionConsts.StumbleUpon.Delta) == false)
-        {
-            return SubActionResult.Running();
-        }*/
-
-        // Check if entity has genitalia and enable it
-        if (!GenetaliaLookup.HasComponent(entity))
+        if (!GenetaliaLookup.TryGetComponent(entity, out var genitalia))
         {
             return SubActionResult.Fail(3);
         }
 
-        var genitalia = GenetaliaLookup[entity];
-
-        // If Social >= 100, fail (already satisfied)
-        if (AnimalStatsLookup.HasComponent(entity))
+        if (AnimalStatsLookup.TryGetComponent(entity, out var animalStats))
         {
-            var animalStats = AnimalStatsLookup[entity];
             if (animalStats.Stats.Social >= 100f)
             {
                 return SubActionResult.Fail(4);
             }
         }
 
-        // Check if target has genitalia and is opposite sex
-        if (!GenetaliaLookup.HasComponent(target))
+        if (!GenetaliaLookup.TryGetComponent(target, out var targetGenitalia))
         {
             return SubActionResult.Fail(5);
         }
 
-        var targetGenitalia = GenetaliaLookup[target];
-        
-        // Check if opposite sex (male with female or female with male)
         if (genitalia.IsMale != targetGenitalia.IsMale)
         {
-            // Check if target's genitalia is enabled
             if (targetGenitalia.IsEnabled)
             {
                 return SubActionResult.Success();
             }
-            
+
             return SubActionResult.Running();
         }
 
@@ -803,59 +753,56 @@ public partial struct ActionRunnerJob : IJobEntity
 
     public void Enable_Communicate(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Enable genitalia component
-        if (GenetaliaLookup.HasComponent(entity))
+        if (GenetaliaLookup.TryGetComponent(entity, out var genitalia))
         {
-            var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = true;
             buffer.SetComponent(entity, genitalia);
         }
+
+        if (!MovingSpeedLookup.TryGetComponent(entity, out var movingSpeed))
+        {
+            return;
+        }
+
+        MoveInputLookup.Enable(entity, 0f, movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.SetTarget(entity, target, SubActionConsts.Communicate.MaxDistance);
     }
 
     public void Disable_Communicate(Entity entity, Entity target, EntityCommandBuffer buffer)
     {
-        // Disable genitalia component
-        if (GenetaliaLookup.HasComponent(entity))
+        if (GenetaliaLookup.TryGetComponent(entity, out var genitalia))
         {
-            var genitalia = GenetaliaLookup[entity];
             genitalia.IsEnabled = false;
             buffer.SetComponent(entity, genitalia);
         }
+
+        MoveInputLookup.Reset(entity);
+        MoveOutputLookup.Reset(entity);
     }
 
     public SubActionResult Update_Communicate(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        // if actor entity does not exist in transform lookup, fail state. code = 0
-        if (!TransformLookup.HasComponent(entity))
+        if (!MoveInputLookup.TryGetComponent(entity, out var moveInput))
         {
             return SubActionResult.Fail(0);
         }
 
-        // if target does not exist in transform lookup, fail state. code = 1
-        if (!TransformLookup.HasComponent(target))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
         }
 
-        var entityTransform = TransformLookup[entity];
-        var targetTransform = TransformLookup[target];
-
-        // Check if target is reached
-        if (entityTransform.IsTargetDistanceReached(targetTransform, SubActionConsts.Communicate.MaxDistance) == false)
+        if (!moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Fail(2);
         }
 
-        // if entity does not have StatsIncreaseComponent - return fail with code 3
-        if (!StatsIncreaseLookup.HasComponent(entity))
+        if (!StatsIncreaseLookup.TryGetComponent(entity, out var statsIncrease))
         {
             return SubActionResult.Fail(3);
         }
 
-        // Add stat Social with increase speed from component * delta time
-        var statsIncrease = StatsIncreaseLookup[entity];
         var socialGain = statsIncrease.AnimalStats.Social * timer.DeltaTime;
-
         var statsChange = new AnimalStatsBuilder().WithSocial(socialGain).Build();
 
         if (StatChangeLookup.TryGetBuffer(entity, out var changeBuffer))
@@ -866,29 +813,24 @@ public partial struct ActionRunnerJob : IJobEntity
             });
         }
 
-        // Check if entity has stats component
-        if (!AnimalStatsLookup.HasComponent(entity))
+        if (!AnimalStatsLookup.TryGetComponent(entity, out var animalStats))
         {
             return SubActionResult.Running();
         }
 
-        var animalStats = AnimalStatsLookup[entity];
-
-        // Check if entity has genitalia and Social >= 100
-        if (GenetaliaLookup.HasComponent(entity))
+        if (!GenetaliaLookup.TryGetComponent(entity, out var entityGenitalia))
         {
-            var genitalia = GenetaliaLookup[entity];
-            
-            if (animalStats.Stats.Social >= 100f)
+            return SubActionResult.Running();
+        }
+
+        if (animalStats.Stats.Social >= 100f)
+        {
+            if (entityGenitalia.IsMale)
             {
-                // If male, add DNA to target (which will also enable reproduction on target)
-                if (genitalia.IsMale)
-                {
-                    Communicate_AddDNAToTarget(entity, target, buffer, ref random);
-                }
-                
-                return SubActionResult.Success();
+                Communicate_AddDNAToTarget(entity, target, buffer, ref random);
             }
+
+            return SubActionResult.Success();
         }
 
         return SubActionResult.Running();
@@ -896,36 +838,26 @@ public partial struct ActionRunnerJob : IJobEntity
 
     private void Communicate_AddDNAToTarget(Entity entity, Entity target, EntityCommandBuffer buffer, ref Random random)
     {
-        // Check if entity has DNA chain buffer
-        if (!DNAChainLookup.HasBuffer(entity))
+        if (!DNAChainLookup.TryGetBuffer(entity, out var fatherDNA))
         {
             return;
         }
-        
-        // Check if target has DNA storage buffer (only females have this)
+
         if (!DNAStorageLookup.HasBuffer(target))
         {
             return;
         }
-        
-        // Get mother's DNA chain
-        if (!DNAChainLookup.HasBuffer(target))
+
+        if (!DNAChainLookup.TryGetBuffer(target, out var motherDNA))
         {
             return;
         }
-        
-        // Get father's DNA chain
-        var fatherDNA = DNAChainLookup[entity];
-        
-        var motherDNA = DNAChainLookup[target];
-        
-        // Check if DNA chains are compatible
+
         if (!DNAExtensions.IsCompatible(fatherDNA, motherDNA))
         {
             return;
         }
-        
-        // Append father's DNA to target's DNA storage
+
         for (int i = 0; i < fatherDNA.Length; i++)
         {
             buffer.AppendToBuffer(target, new DNAStorageItem
@@ -934,16 +866,13 @@ public partial struct ActionRunnerJob : IJobEntity
                 Data = fatherDNA[i].Data
             });
         }
-        
-        // Set Random seed on ReproductionComponent from the ref Random parameter
-        if (ReproductionLookup.HasComponent(target))
+
+        if (ReproductionLookup.TryGetComponent(target, out var reproduction))
         {
-            var reproduction = ReproductionLookup[target];
             reproduction.Random = Random.CreateFromIndex(random.NextUInt());
             buffer.SetComponent(target, reproduction);
         }
-        
-        // Enable ReproductionComponent on target (female) to start gestation
+
         buffer.SetComponentEnabled<ReproductionComponent>(target, true);
     }
 }

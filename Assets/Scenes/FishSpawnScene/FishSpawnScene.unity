@@ -169,7 +169,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -8.4, z: 0}
-  m_LocalScale: {x: 30, y: 0.1, z: 30}
+  m_LocalScale: {x: 10, y: 0.1, z: 10}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -255,6 +255,36 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &529531455 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2257300610224309983, guid: 28eb8f3ff9638964d8ae570a4358a1a5,
+    type: 3}
+  m_PrefabInstance: {fileID: 1373518220}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &529531458
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 529531455}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0f0a58a433820e4c901ffe410202959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  BodyType: 2
+  ColliderType: 0
+  LocalPosition: {x: 0, y: 0, z: 0}
+  Scale: 5
+  Mass: 1
+  Bounciness: 0.5
+  Friction: 0.5
+  Hardness: 0.5
+  TriggerUpdateInterval: 1
+  StartVeclocity: {x: 0, y: 0, z: 0}
+  ShouldRotateOnCollision: 1
+  Main: {fileID: 2063110477}
 --- !u!1 &619924418
 GameObject:
   m_ObjectHideFlags: 0
@@ -336,8 +366,8 @@ MonoBehaviour:
     x: 0.02
     y: 0.03
   RandomSeed: 1234
-  OneTimeSpawn: 10
-  MaxCount: 100
+  OneTimeSpawn: 50
+  MaxCount: 5
   Parents:
   - {fileID: 1268306806}
   - {fileID: 882793482}
@@ -582,9 +612,9 @@ MonoBehaviour:
       y: -5
       z: 0
     Scale:
-      x: 50
+      x: 10
       y: 10
-      z: 50
+      z: 10
 --- !u!4 &882793483
 Transform:
   m_ObjectHideFlags: 0
@@ -925,9 +955,9 @@ MonoBehaviour:
       y: -5
       z: 0
     Scale:
-      x: 50
+      x: 10
       y: 10
-      z: 50
+      z: 10
 --- !u!4 &1268306807
 Transform:
   m_ObjectHideFlags: 0
@@ -1020,6 +1050,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 2063110505}
+    - targetCorrespondingSourceObject: {fileID: 2257300610224309983, guid: 28eb8f3ff9638964d8ae570a4358a1a5,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 529531458}
   m_SourcePrefab: {fileID: 100100000, guid: 28eb8f3ff9638964d8ae570a4358a1a5, type: 3}
 --- !u!1 &1576489402
 GameObject:
@@ -1065,7 +1099,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2caa372700f3de48b24cfb2ff089790, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IsUsingManagedCode: 1
+  IsUsingManagedCode: 0
 --- !u!1 &1999879274
 GameObject:
   m_ObjectHideFlags: 0

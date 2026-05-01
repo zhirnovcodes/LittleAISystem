@@ -5,6 +5,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Transforms;
 using LittlePhysics;
 
 public struct WeightedVisionItem : IEquatable<WeightedVisionItem>, IComparable<WeightedVisionItem>
@@ -75,6 +76,12 @@ public partial struct VisionSystem : ISystem
 
         var physicsTime = SystemAPI.GetSingleton<LittlePhysicsTimeComponent>();
 
+        state.Dependency = new RemoveFromVisionJob
+        {
+            ElapsedTime = physicsTime.ElapsedTime,
+            TransformLookup = SystemAPI.GetComponentLookup<LocalTransform>(true)
+        }.ScheduleParallel(state.Dependency);
+
         state.Dependency = new FillVisibleBufferJob
         {
             WeightedItems = WeightedItems,
@@ -120,8 +127,15 @@ public struct VisionJob : IJobParallelFor
 
         var body = BodiesList[index];
 
-        if (!VisionLookup.TryGetComponent(body.Main, out var vision))
+        if (body.BodyType == BodyType.Trigger == false)
+        {
             return;
+        }
+
+        if (!VisionLookup.TryGetComponent(body.Main, out var vision))
+        { 
+            return; 
+        }
 
         FillOrderList(body.Main, body.Position, vision.MaxDistance, index);
     }
@@ -209,6 +223,25 @@ public struct VisionJob : IJobParallelFor
 }
 
 [BurstCompile]
+public partial struct RemoveFromVisionJob : IJobEntity
+{
+    public double ElapsedTime;
+    [ReadOnly] public ComponentLookup<LocalTransform> TransformLookup;
+
+    const double DeleteTime = 0.5;
+
+    public void Execute(DynamicBuffer<VisibleItem> visibleBuffer)
+    {
+        for (int i = visibleBuffer.Length - 1; i >= 0; i--)
+        {
+            if (!TransformLookup.HasComponent(visibleBuffer[i].Target) ||
+                ElapsedTime - visibleBuffer[i].TimeAdded >= DeleteTime)
+                visibleBuffer.RemoveAt(i);
+        }
+    }
+}
+
+[BurstCompile]
 public struct FillVisibleBufferJob : IJobParallelFor
 {
     [ReadOnly] public LittleHashMap<WeightedVisionItem> WeightedItems;
@@ -226,13 +259,14 @@ public struct FillVisibleBufferJob : IJobParallelFor
 
         var body = BodiesList[index];
 
-        if (!VisibleItemLookup.TryGetBuffer(body.Main, out var visibleBuffer))
-            return;
-
-        for (int i = visibleBuffer.Length - 1; i >= 0; i--)
+        if (body.BodyType == BodyType.Trigger == false)
         {
-            if (ElapsedTime - visibleBuffer[i].TimeAdded >= DeleteTime)
-                visibleBuffer.RemoveAt(i);
+            return;
+        }
+
+        if (!VisibleItemLookup.TryGetBuffer(body.Main, out var visibleBuffer))
+        { 
+            return; 
         }
 
         float bestWeight = float.MinValue;
