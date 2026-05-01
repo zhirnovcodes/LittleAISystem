@@ -58,6 +58,11 @@ public class WalkToSubActionState : ISubActionState
             return SubActionResult.Fail(2);
         }
 
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(3);
+        }
+
         if (moveInput.IsTargetReached(moveOutput) && moveInput.IsLookingTowards(moveOutput))
         {
             return SubActionResult.Success();

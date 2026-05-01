@@ -64,7 +64,10 @@ public partial struct MoveLinearSystem : ISystem
             else
             {
                 if (!UpdateLookup.TryGetComponent(input.Target, out var targetUpdate))
+                {
+                    output.IsTargetDisposed = true;
                     return;
+                }
 
                 if (!targetUpdate.IsEnabled)
                     return;

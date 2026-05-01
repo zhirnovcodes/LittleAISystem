@@ -53,6 +53,11 @@ public class LayDownState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(4);
+        }
+
         if (timer.IsTimeout(SubActionConsts.LayDown.FailTime))
         {
             return SubActionResult.Fail(2);

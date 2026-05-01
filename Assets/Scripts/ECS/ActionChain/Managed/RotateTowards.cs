@@ -53,6 +53,11 @@ public class RotateTowards : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(3);
+        }
+
         if (timer.IsTimeout(SubActionConsts.RotateTowards.FailTime))
         {
             return SubActionResult.Fail(2);

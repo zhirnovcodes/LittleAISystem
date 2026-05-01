@@ -37,6 +37,7 @@ public static class MoveComponentExtensions
         output.TargetPosition = new float3(float.MaxValue);
         output.Position = new float3(float.MinValue);
         output.Rotation = quaternion.identity;
+        output.IsTargetDisposed = false;
     }
 
     public static void Enable(this ref MoveInputComponent input, float speed, float rotationSpeed, float3 up)

@@ -56,6 +56,11 @@ public class SleepingState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(5);
+        }
+
         if (timer.IsTimeout(SubActionConsts.Sleeping.FailTime))
         {
             return SubActionResult.Fail(2);

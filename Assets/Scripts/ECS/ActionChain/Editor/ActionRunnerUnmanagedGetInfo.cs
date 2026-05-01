@@ -340,7 +340,7 @@ internal static class ActionRunnerUnmanagedGetInfo
             for (int j = 0; j < methods.Count; j++)
             {
                 var methodText = methods[j];
-                if (Regex.IsMatch(methodText, $@"\b{name}\.(Enable|ResetInput|SetTarget)\(") ||
+                if (Regex.IsMatch(methodText, $@"\b{name}\.(Enable|ResetInput|SetTarget|Reset)\(") ||
                     Regex.IsMatch(methodText, $@"\b{name}\.TryGetBuffer\(") ||
                     Regex.IsMatch(methodText, $@"\b{name}\[[^\]]+\]\s*="))
                 {

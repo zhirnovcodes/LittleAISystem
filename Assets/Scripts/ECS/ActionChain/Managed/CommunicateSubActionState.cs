@@ -93,6 +93,11 @@ public class CommunicateSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(4);
+        }
+
         if (!moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Fail(2);

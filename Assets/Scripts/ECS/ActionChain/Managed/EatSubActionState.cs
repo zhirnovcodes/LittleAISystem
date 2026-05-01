@@ -65,6 +65,11 @@ public class EatSubActionState : ISubActionState
             return SubActionResult.Fail(1);
         }
 
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(8);
+        }
+
         if (timer.IsTimeout(SubActionConsts.Eat.FailTime))
         {
             return SubActionResult.Fail(2);

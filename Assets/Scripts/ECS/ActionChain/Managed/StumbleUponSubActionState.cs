@@ -63,9 +63,14 @@ public class StumbleUponSubActionState : ISubActionState
 
     public SubActionResult Update(Entity entity, Entity target, EntityCommandBuffer buffer, in SubActionTimeComponent timer, ref Random random)
     {
-        if (!MoveOutputLookup.TryGetComponent(entity, out _))
+        if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(0);
+        }
+
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(7);
         }
 
         if (!MoveOutputLookup.TryGetComponent(target, out _))
