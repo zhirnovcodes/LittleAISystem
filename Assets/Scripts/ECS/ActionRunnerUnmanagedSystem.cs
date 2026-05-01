@@ -357,6 +357,11 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Running();
         }
 
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
+        }
+
         if (moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Success();
@@ -406,6 +411,11 @@ public partial struct ActionRunnerJob : IJobEntity
         if (moveOutput.IsTargetDisposed)
         {
             return SubActionResult.Fail(3);
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
         }
 
         if (moveInput.IsTargetReached(moveOutput) && moveInput.IsLookingTowards(moveOutput))
@@ -459,6 +469,11 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(2);
         }
 
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
+        }
+
         if (!moveInput.IsTargetReached(moveOutput))
         {
             return SubActionResult.Fail(3);
@@ -501,7 +516,7 @@ public partial struct ActionRunnerJob : IJobEntity
             return;
         }
 
-        MoveInputLookup.Enable(entity, 0f, movingSpeed.GetWalkingRotationSpeed(), math.up());
+        MoveInputLookup.Enable(entity, movingSpeed.GetCrawlingSpeed(), movingSpeed.GetCrawlingRotationSpeed(), math.up());
         MoveInputLookup.SetTarget(entity, target, SubActionConsts.LayDown.Distance);
     }
 
@@ -521,6 +536,11 @@ public partial struct ActionRunnerJob : IJobEntity
         if (!MoveOutputLookup.TryGetComponent(entity, out var moveOutput))
         {
             return SubActionResult.Fail(1);
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
         }
 
         if (moveOutput.IsTargetDisposed)
@@ -569,14 +589,19 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(1);
         }
 
-        if (moveOutput.IsTargetDisposed)
-        {
-            return SubActionResult.Fail(5);
-        }
-
         if (timer.IsTimeout(SubActionConsts.Sleeping.FailTime))
         {
             return SubActionResult.Fail(2);
+        }
+
+        if (moveInput.IsWaiting(moveOutput))
+        {
+            return SubActionResult.Running();
+        }
+
+        if (moveOutput.IsTargetDisposed)
+        {
+            return SubActionResult.Fail(5);
         }
 
         if (!moveInput.IsTargetReached(moveOutput))
@@ -598,7 +623,6 @@ public partial struct ActionRunnerJob : IJobEntity
         {
             return SubActionResult.Success();
         }
-
         var energyGain = sleepingPlace.EnergyReplanish * timer.DeltaTime;
         var statsChange = new AnimalStatsBuilder().WithEnergy(energyGain).Build();
 
@@ -658,16 +682,6 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(0);
         }
 
-        if (!MoveOutputLookup.TryGetComponent(target, out var targetOutput))
-        {
-            return SubActionResult.Fail(1);
-        }
-
-        if (math.distance(entityOutput.Position, targetOutput.Position) >= SubActionConsts.RunFrom.SafeDistance)
-        {
-            return SubActionResult.Success();
-        }
-
         if (!MovingSpeedLookup.TryGetComponent(entity, out _))
         {
             return SubActionResult.Fail(2);
@@ -678,9 +692,19 @@ public partial struct ActionRunnerJob : IJobEntity
             return SubActionResult.Fail(3);
         }
 
+        if (moveInput.IsWaiting(entityOutput))
+        {
+            return SubActionResult.Running();
+        }
+
+        if (math.distance(entityOutput.Position, entityOutput.TargetPosition) >= SubActionConsts.RunFrom.SafeDistance)
+        {
+            return SubActionResult.Success();
+        }
+
         if (moveInput.IsTargetReached(entityOutput))
         {
-            RunFrom_SetRandomEscapeTarget(entity, entityOutput.Position, targetOutput.Position, ref random);
+            RunFrom_SetRandomEscapeTarget(entity, entityOutput.Position, entityOutput.TargetPosition, ref random);
         }
 
         return SubActionResult.Running();

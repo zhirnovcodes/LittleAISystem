@@ -66,11 +66,6 @@ public class RunFrom : ISubActionState
             return SubActionResult.Fail(0);
         }
 
-        if (math.distance(entityOutput.Position, entityOutput.TargetPosition) >= SubActionConsts.RunFrom.SafeDistance)
-        {
-            return SubActionResult.Success();
-        }
-
         if (!MovingSpeedLookup.TryGetComponent(entity, out _))
         {
             return SubActionResult.Fail(2);
@@ -81,14 +76,19 @@ public class RunFrom : ISubActionState
             return SubActionResult.Fail(3);
         }
 
-        if (moveInput.IsTargetReached(entityOutput))
-        {
-            SetRandomEscapeTarget(entity, entityOutput.Position, entityOutput.TargetPosition, ref random);
-        }
-
         if (moveInput.IsWaiting(entityOutput))
         {
             return SubActionResult.Running();
+        }
+
+        if (math.distance(entityOutput.Position, entityOutput.TargetPosition) >= SubActionConsts.RunFrom.SafeDistance)
+        {
+            return SubActionResult.Success();
+        }
+
+        if (moveInput.IsTargetReached(entityOutput))
+        {
+            SetRandomEscapeTarget(entity, entityOutput.Position, entityOutput.TargetPosition, ref random);
         }
 
         return SubActionResult.Running();
