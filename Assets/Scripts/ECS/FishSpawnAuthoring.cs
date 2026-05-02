@@ -10,6 +10,8 @@ public class FishSpawnAuthoring : MonoBehaviour
     [SerializeField] private uint RandomSeed = 1234;
     [SerializeField] private uint OneTimeSpawn = 1;
     [SerializeField] private uint MaxCount = 5000;
+    [Header("Scale Range (Min, Max)")]
+    [SerializeField] private Vector2 ScaleRange = new Vector2(1f, 1f);
     public List<ParentDNAAuthoring> Parents = new List<ParentDNAAuthoring>();
 
     class Baker : Baker<FishSpawnAuthoring>
@@ -39,6 +41,7 @@ public class FishSpawnAuthoring : MonoBehaviour
                 TimeElapsed = 0f,
                 SpawnPosition = transform.position,
                 SpawnScale = transform.localScale,
+                ScaleRange = new float2(authoring.ScaleRange.x, authoring.ScaleRange.y),
                 MaxCount = authoring.MaxCount,
                 Random = Unity.Mathematics.Random.CreateFromIndex(authoring.RandomSeed),
                 OneTimeSpawn = authoring.OneTimeSpawn
